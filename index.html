@@ -1,0 +1,2996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tank Protocol — Secure Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080c14;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.09);
+  --glass-hover: rgba(255,255,255,0.07);
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-dim: rgba(201,168,76,0.15);
+  --emerald: #2dd4a0;
+  --red: #f05b5b;
+  --blue: #4fa3e8;
+  --text: #d4dbe8;
+  --text-dim: #6b7a91;
+  --text-bright: #f0f4ff;
+  --display: 'Syne', sans-serif;
+  --body: 'DM Sans', sans-serif;
+  --radius: 14px;
+  --shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: var(--body);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ambient glow background */
+body::before {
+  content: '';
+  position: fixed;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(201,168,76,0.06) 0%, transparent 70%);
+  top: -100px; left: -100px;
+  pointer-events: none;
+  animation: drift 12s ease-in-out infinite alternate;
+}
+body::after {
+  content: '';
+  position: fixed;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(45,212,160,0.04) 0%, transparent 70%);
+  bottom: -100px; right: -100px;
+  pointer-events: none;
+  animation: drift2 15s ease-in-out infinite alternate;
+}
+
+@keyframes drift { from { transform: translate(0,0); } to { transform: translate(60px,40px); } }
+@keyframes drift2 { from { transform: translate(0,0); } to { transform: translate(-50px,-30px); } }
+
+/* ─── VIEWS ─────────────────────────────── */
+.view { display: none; min-height: 100vh; }
+.view.active { display: flex; }
+
+/* ─── LOGIN / FORGOT ─────────────────────── */
+#loginView, #forgotView {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(30px);
+  border-radius: var(--radius);
+  padding: 48px 44px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: var(--shadow);
+  animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) both;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.auth-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 36px;
+}
+
+.logo-mark {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 16px;
+  color: #080c14;
+  flex-shrink: 0;
+}
+
+.logo-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-bright);
+  letter-spacing: 0.5px;
+}
+
+.auth-title {
+  font-family: var(--display);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.auth-sub {
+  font-size: 0.83rem;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+  line-height: 1.5;
+}
+
+.field {
+  margin-bottom: 18px;
+}
+
+.field label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 7px;
+}
+
+.field input {
+  width: 100%;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  color: var(--text-bright);
+  font-family: var(--body);
+  font-size: 0.93rem;
+  padding: 12px 15px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.field input:focus {
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.04);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.1);
+}
+
+.field input::placeholder { color: rgba(107,122,145,0.6); }
+
+.forgot-link {
+  display: block;
+  text-align: right;
+  font-size: 0.78rem;
+  color: var(--gold);
+  text-decoration: none;
+  margin-top: -10px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.forgot-link:hover { color: var(--gold-light); }
+
+.btn-primary {
+  width: 100%;
+  padding: 13px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none;
+  border-radius: 9px;
+  color: #080c14;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(201,168,76,0.3); }
+.btn-primary:hover::after { opacity: 1; }
+.btn-primary:active { transform: translateY(0); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 0.85rem;
+  padding: 10px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-ghost:hover { border-color: rgba(255,255,255,0.2); color: var(--text); background: var(--glass-hover); }
+
+.auth-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 20px;
+}
+
+.auth-hint a { color: var(--gold); cursor: pointer; text-decoration: none; }
+.auth-hint a:hover { color: var(--gold-light); }
+
+.error-box {
+  background: rgba(240,91,91,0.1);
+  border: 1px solid rgba(240,91,91,0.3);
+  border-radius: 8px;
+  color: #f05b5b;
+  font-size: 0.8rem;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  display: none;
+}
+
+.success-box {
+  background: rgba(45,212,160,0.08);
+  border: 1px solid rgba(45,212,160,0.25);
+  border-radius: 8px;
+  color: var(--emerald);
+  font-size: 0.8rem;
+  padding: 10px 14px;
+  margin-bottom: 18px;
+  display: none;
+}
+
+
+/* ─── DASHBOARD ─────────────────────────── */
+#dashView {
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 28px;
+  background: var(--glass);
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.topbar-logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--display);
+  font-weight: 700;
+  color: var(--text-bright);
+  font-size: 1rem;
+}
+
+.topbar-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--body);
+  font-size: 0.83rem;
+  padding: 7px 14px;
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+
+.nav-btn:hover { background: var(--glass-hover); color: var(--text); }
+.nav-btn.active { background: var(--gold-dim); color: var(--gold); }
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar-btn {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #080c14;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.avatar-btn:hover { transform: scale(1.08); box-shadow: 0 4px 16px rgba(201,168,76,0.3); }
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid rgba(240,91,91,0.3);
+  border-radius: 7px;
+  color: rgba(240,91,91,0.7);
+  font-family: var(--body);
+  font-size: 0.78rem;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.logout-btn:hover { background: rgba(240,91,91,0.08); color: var(--red); border-color: var(--red); }
+
+/* ─── PAGE CONTENT ──────────────────────── */
+.page-content {
+  flex: 1;
+  padding: 36px 28px;
+  display: none;
+  animation: fadeIn 0.3s ease both;
+}
+.page-content.active { display: block; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.page-title {
+  font-family: var(--display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-bottom: 30px;
+}
+
+/* ─── PROFILE PAGE ──────────────────────── */
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .profile-layout { grid-template-columns: 1fr; }
+  .topbar-nav { display: none; }
+}
+
+.glass-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+
+.profile-avatar-wrap {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.profile-avatar {
+  width: 90px; height: 90px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  margin: 0 auto 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 2rem;
+  color: #080c14;
+  box-shadow: 0 8px 28px rgba(201,168,76,0.25);
+  position: relative;
+}
+
+.profile-avatar .online-dot {
+  position: absolute;
+  bottom: 4px; right: 4px;
+  width: 14px; height: 14px;
+  background: var(--emerald);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+
+.profile-name {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text-bright);
+}
+
+.profile-email {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+.role-badge.admin {
+  background: rgba(201,168,76,0.15);
+  color: var(--gold);
+  border: 1px solid rgba(201,168,76,0.3);
+}
+
+.role-badge.user {
+  background: rgba(79,163,232,0.12);
+  color: var(--blue);
+  border: 1px solid rgba(79,163,232,0.25);
+}
+
+.profile-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--glass-border);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-num {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--text-bright);
+}
+
+.stat-label {
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* EDIT FORM */
+.form-section-title {
+  font-family: var(--display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.form-grid.full { grid-template-columns: 1fr; }
+
+.form-field label {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 7px;
+}
+
+.form-field input, .form-field select, .form-field textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: var(--body);
+  font-size: 0.88rem;
+  padding: 10px 14px;
+  outline: none;
+  transition: all 0.2s;
+  resize: none;
+}
+
+.form-field input:focus, .form-field select:focus, .form-field textarea:focus {
+  border-color: rgba(201,168,76,0.4);
+  background: rgba(201,168,76,0.03);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+.form-field input:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.form-field select option { background: #111825; }
+
+.btn-save {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border: none;
+  border-radius: 8px;
+  color: #080c14;
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 11px 24px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-save:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,0.3); }
+
+/* ─── ADMIN PAGE ────────────────────────── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+@media (max-width: 900px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+.stat-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 22px;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+
+.stat-card.gold::before { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.stat-card.emerald::before { background: linear-gradient(90deg, var(--emerald), #43e8c0); }
+.stat-card.blue::before { background: linear-gradient(90deg, var(--blue), #79c4f8); }
+.stat-card.red::before { background: linear-gradient(90deg, var(--red), #f87171); }
+
+.stat-card-icon {
+  font-size: 1.4rem;
+  margin-bottom: 12px;
+  opacity: 0.8;
+}
+
+.stat-card-num {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.9rem;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.stat-card-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  margin-top: 5px;
+}
+
+/* User table */
+.user-table-wrap {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.table-title {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--text-bright);
+}
+
+.btn-add {
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.3);
+  border-radius: 7px;
+  color: var(--gold);
+  font-family: var(--body);
+  font-size: 0.78rem;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-add:hover { background: rgba(201,168,76,0.2); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+  padding: 11px 22px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--glass-border);
+  background: rgba(255,255,255,0.02);
+}
+
+td {
+  padding: 13px 22px;
+  font-size: 0.83rem;
+  color: var(--text);
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: rgba(255,255,255,0.02); }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.status-pill.active { background: rgba(45,212,160,0.1); color: var(--emerald); }
+.status-pill.inactive { background: rgba(240,91,91,0.1); color: var(--red); }
+.status-pill.pending { background: rgba(201,168,76,0.1); color: var(--gold); }
+
+.action-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.action-btn {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 5px;
+  color: var(--text-dim);
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.action-btn:hover { background: var(--glass-hover); color: var(--text); }
+.action-btn.danger:hover { background: rgba(240,91,91,0.1); color: var(--red); border-color: rgba(240,91,91,0.3); }
+.action-btn.success:hover { background: rgba(45,212,160,0.1); color: var(--emerald); border-color: rgba(45,212,160,0.3); }
+
+/* Permissions grid */
+.perms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.perm-card {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  padding: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.perm-icon {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.perm-name {
+  font-family: var(--display);
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: var(--text-bright);
+  margin-bottom: 3px;
+}
+
+.perm-desc {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+.toggle-switch {
+  margin-left: auto;
+  flex-shrink: 0;
+  position: relative;
+  width: 36px; height: 20px;
+  cursor: pointer;
+}
+
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.1);
+  border-radius: 20px;
+  transition: background 0.2s;
+  border: 1px solid var(--glass-border);
+}
+
+.toggle-switch input:checked + .toggle-track {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 14px; height: 14px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+}
+
+.toggle-switch input:checked + .toggle-track::after {
+  transform: translateX(16px);
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 28px; right: 28px;
+  background: rgba(20,28,44,0.95);
+  border: 1px solid rgba(45,212,160,0.3);
+  border-left: 3px solid var(--emerald);
+  border-radius: 10px;
+  color: var(--text-bright);
+  font-size: 0.83rem;
+  padding: 14px 20px;
+  z-index: 9999;
+  transform: translateY(80px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  backdrop-filter: blur(20px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+  pointer-events: none;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* Confirm modal */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: #111825;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  padding: 32px;
+  max-width: 380px;
+  width: 90%;
+  animation: slideUp 0.3s cubic-bezier(0.16,1,0.3,1) both;
+}
+.modal-title { font-family: var(--display); font-weight: 700; font-size: 1.1rem; color: var(--text-bright); margin-bottom: 10px; }
+.modal-body { font-size: 0.83rem; color: var(--text-dim); line-height: 1.6; margin-bottom: 24px; }
+.modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+.btn-danger { background: var(--red); border: none; border-radius: 7px; color: #fff; font-family: var(--body); font-size: 0.83rem; padding: 9px 18px; cursor: pointer; transition: all 0.2s; }
+.btn-danger:hover { background: #d94444; }
+
+  /* ══ SPLASH OVERLAY STYLES ══ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #080c14;
+  --glass: rgba(255,255,255,0.04);
+  --glass-border: rgba(255,255,255,0.09);
+  --gold: #c9a84c;
+  --gold-light: #e8c97a;
+  --gold-dim: rgba(201,168,76,0.15);
+  --emerald: #2dd4a0;
+  --cyan: #2dd4a0;
+  --cyan-dim: rgba(45,212,160,0.08);
+  --red: #f05b5b;
+  --blue: #4fa3e8;
+  --text: #d4dbe8;
+  --text-dim: #6b7a91;
+  --text-bright: #f0f4ff;
+  --mono: 'Share Tech Mono', monospace;
+  --cond: 'Barlow Condensed', sans-serif;
+  --display: 'Syne', sans-serif;
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: #080c14;
+  overflow: hidden;
+  cursor: none;
+}
+
+/* ── CANVAS LAYERS ── */
+#bgCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+}
+
+/* ── SCANLINES OVERLAY ── */
+.scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  animation: scanlineShift 8s linear infinite;
+}
+
+@keyframes scanlineShift {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+
+/* ── VIGNETTE ── */
+.vignette {
+  position: fixed;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(ellipse at center,
+    transparent 30%,
+    rgba(5,8,15,0.5) 70%,
+    rgba(5,8,15,0.92) 100%
+  );
+}
+
+/* ── CORNER BRACKETS ── */
+.corner {
+  position: fixed;
+  width: 60px; height: 60px;
+  z-index: 10;
+  opacity: 0;
+  animation: cornerIn 0.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+.corner svg { width: 100%; height: 100%; }
+.c-tl { top: 24px; left: 24px; animation-delay: 0.3s; }
+.c-tr { top: 24px; right: 24px; transform: scaleX(-1); animation-delay: 0.4s; }
+.c-bl { bottom: 24px; left: 24px; transform: scaleY(-1); animation-delay: 0.5s; }
+.c-br { bottom: 24px; right: 24px; transform: scale(-1,-1); animation-delay: 0.6s; }
+
+@keyframes cornerIn {
+  from { opacity: 0; transform: scale(0.6); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.c-tr  { animation-delay: 0.4s; }
+.c-tr.anim  { animation: cornerInFlip 0.6s 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+/* ── HEX GRID (canvas drawn) ── */
+
+/* ── MAIN STAGE ── */
+#stage {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── TANK ICON ── */
+.tank-wrap {
+  position: relative;
+  margin-bottom: 40px;
+  opacity: 0;
+  transform: translateY(30px);
+  animation: riseIn 1s 0.8s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+@keyframes riseIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.tank-glow {
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(circle, rgba(201,168,76,0.18) 0%, transparent 70%);
+  animation: pulse 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1.05); }
+}
+
+.tank-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(201,168,76,0.15);
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+  animation: expandRing 3s ease-out infinite;
+}
+.tank-ring:nth-child(2) { animation-delay: 1s; }
+.tank-ring:nth-child(3) { animation-delay: 2s; }
+
+@keyframes expandRing {
+  0% { width: 80px; height: 80px; opacity: 0.8; }
+  100% { width: 300px; height: 300px; opacity: 0; }
+}
+
+/* ── WORDMARK ── */
+.wordmark {
+  text-align: center;
+  position: relative;
+}
+
+.brand-pre {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 4px;
+  color: var(--gold);
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeSlide 0.8s 1.4s ease forwards;
+  display: block;
+  margin-bottom: 8px;
+}
+
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(12px); letter-spacing: 8px; }
+  to   { opacity: 1; transform: translateY(0);    letter-spacing: 4px; }
+}
+
+.brand-name {
+  font-family: var(--cond);
+  font-size: clamp(5rem, 14vw, 10rem);
+  font-weight: 800;
+  line-height: 0.88;
+  color: transparent;
+  letter-spacing: -1px;
+  position: relative;
+  opacity: 0;
+  animation: nameReveal 1.2s 1.6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+@keyframes nameReveal {
+  from { opacity: 0; transform: scaleX(0.85) translateY(20px); filter: blur(10px); }
+  to   { opacity: 1; transform: scaleX(1) translateY(0); filter: blur(0); }
+}
+
+.brand-name .t1 {
+  background: linear-gradient(170deg, var(--gold-light) 0%, var(--gold) 50%, #a07828 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  display: inline-block;
+}
+
+.brand-name .t2 {
+  color: rgba(240,240,255,0.92);
+  display: inline-block;
+}
+
+.brand-sub {
+  font-family: var(--cond);
+  font-size: 1.1rem;
+  font-weight: 300;
+  letter-spacing: 8px;
+  text-transform: uppercase;
+  color: rgba(180,195,215,0.5);
+  margin-top: 12px;
+  opacity: 0;
+  animation: fadeSlide 0.8s 2.2s ease forwards;
+  display: block;
+}
+
+/* ── DIVIDER LINE ── */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 28px auto;
+  width: 360px;
+  opacity: 0;
+  animation: fadeSlide 0.6s 2.4s ease forwards;
+}
+
+.div-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.div-diamond {
+  width: 8px; height: 8px;
+  background: var(--gold);
+  transform: rotate(45deg);
+  flex-shrink: 0;
+}
+
+/* ── STATUS ROW ── */
+.status-row {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+  opacity: 0;
+  animation: fadeSlide 0.6s 2.6s ease forwards;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+}
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 8px var(--gold);
+  animation: blink 2s ease-in-out infinite;
+}
+
+.status-dot.cyan { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); animation-delay: 0.7s; }
+.status-dot.red  { background: var(--red); box-shadow: 0 0 8px var(--red); animation-delay: 1.4s; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* ── LOADING BAR ── */
+.loader-wrap {
+  position: fixed;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  z-index: 10;
+  opacity: 0;
+  animation: fadeSlide 0.5s 2.8s ease forwards;
+}
+
+.loader-label {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.loader-track {
+  width: 100%;
+  height: 2px;
+  background: rgba(255,255,255,0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.loader-fill {
+  position: absolute;
+  top: 0; left: 0; height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+  width: 0%;
+  transition: width 0.1s linear;
+  box-shadow: 0 0 10px var(--gold);
+}
+
+.loader-fill::after {
+  content: '';
+  position: absolute;
+  right: 0; top: -3px;
+  width: 3px; height: 8px;
+  background: var(--gold-light);
+  box-shadow: 0 0 8px var(--gold-light);
+  border-radius: 2px;
+}
+
+.loader-pct {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--gold);
+  text-align: right;
+  margin-top: 6px;
+}
+
+/* ── BOOT TEXT (scrolling) ── */
+.boot-log {
+  position: fixed;
+  bottom: 100px;
+  left: 40px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: rgba(100,120,150,0.5);
+  letter-spacing: 0.5px;
+  line-height: 1.8;
+  z-index: 10;
+  opacity: 0;
+  animation: fadeIn 0.4s 3s ease forwards;
+  max-width: 280px;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+/* ── DATA TICKER (right) ── */
+.data-ticker {
+  position: fixed;
+  bottom: 100px;
+  right: 40px;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: rgba(0,212,255,0.35);
+  letter-spacing: 0.5px;
+  line-height: 2;
+  z-index: 10;
+  text-align: right;
+  opacity: 0;
+  animation: fadeIn 0.4s 3s ease forwards;
+}
+
+/* ── ENTER BUTTON ── */
+.enter-btn {
+  display: none;
+  margin-top: 36px;
+  padding: 14px 52px;
+  background: transparent;
+  border: 1px solid var(--gold);
+  color: var(--gold);
+  font-family: var(--cond);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+  animation: enterPulse 2s ease-in-out infinite;
+}
+
+@keyframes enterPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(201,168,76,0); }
+  50% { box-shadow: 0 0 20px 4px rgba(201,168,76,0.2); }
+}
+
+.enter-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(201,168,76,0.15), transparent);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.enter-btn:hover {
+  background: var(--gold-dim);
+  color: var(--gold-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(201,168,76,0.25);
+}
+
+.enter-btn:hover::before { opacity: 1; }
+
+/* ── GLITCH ── */
+.glitch {
+  position: relative;
+}
+.glitch::before, .glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  clip-path: inset(0);
+}
+.glitch::before {
+  color: rgba(0,212,255,0.5);
+  animation: glitch1 4s infinite;
+  left: 2px;
+}
+.glitch::after {
+  color: rgba(255,59,59,0.4);
+  animation: glitch2 4s infinite;
+  left: -2px;
+}
+
+@keyframes glitch1 {
+  0%,90%,100% { clip-path: inset(100% 0 0 0); transform: none; }
+  91% { clip-path: inset(20% 0 60% 0); transform: translate(-2px); }
+  93% { clip-path: inset(50% 0 30% 0); transform: translate(1px); }
+  95% { clip-path: inset(80% 0 5% 0); transform: translate(-1px); }
+}
+
+@keyframes glitch2 {
+  0%,88%,100% { clip-path: inset(100% 0 0 0); transform: none; }
+  89% { clip-path: inset(30% 0 50% 0); transform: translate(2px); }
+  91% { clip-path: inset(60% 0 20% 0); transform: translate(-1px); }
+  94% { clip-path: inset(10% 0 75% 0); transform: translate(2px); }
+}
+
+/* ── CURSOR ── */
+.cursor {
+  position: fixed;
+  width: 20px; height: 20px;
+  pointer-events: none;
+  z-index: 999;
+  transform: translate(-50%,-50%);
+  transition: transform 0.1s;
+}
+
+.cursor-ring {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--gold);
+  border-radius: 50%;
+  opacity: 0.7;
+  transition: all 0.15s;
+}
+
+.cursor-dot {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: var(--gold);
+  border-radius: 50%;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%);
+}
+
+/* ── FLASH ── */
+#flash {
+  position: fixed;
+  inset: 0;
+  background: white;
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+}
+
+
+/* ── SIGNUP SPECIFIC ─────────────────────── */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-bottom: 28px;
+}
+
+.step-dot {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 700; font-size: 0.72rem;
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.step-dot.done     { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #080c14; }
+.step-dot.active   { background: linear-gradient(135deg, var(--gold), var(--gold-light)); color: #080c14; box-shadow: 0 0 0 3px rgba(201,168,76,0.25); }
+.step-dot.inactive { background: rgba(255,255,255,0.06); color: var(--text-dim); border: 1px solid var(--glass-border); }
+
+.step-line {
+  flex: 1; height: 1px;
+  background: var(--glass-border);
+  transition: background 0.3s;
+}
+.step-line.done { background: var(--gold); }
+
+.step-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  margin-bottom: 20px;
+}
+
+.step-label-text {
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  text-align: center;
+  flex: 1;
+  letter-spacing: 0.3px;
+}
+.step-label-text.active { color: var(--gold); }
+
+.signup-step { display: none; }
+.signup-step.active { display: block; }
+
+.field-row-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.pw-strength {
+  height: 3px;
+  border-radius: 3px;
+  background: rgba(255,255,255,0.06);
+  margin-top: 6px;
+  overflow: hidden;
+}
+.pw-strength-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: all 0.3s;
+  width: 0%;
+}
+
+.pw-hint {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+.terms-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 14px 0;
+}
+.terms-row input[type=checkbox] {
+  margin-top: 2px;
+  accent-color: var(--gold);
+  flex-shrink: 0;
+}
+.terms-row label {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  line-height: 1.5;
+  cursor: pointer;
+}
+.terms-row label a { color: var(--gold); text-decoration: none; }
+
+.success-card {
+  text-align: center;
+  padding: 12px 0;
+}
+.success-icon {
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 50%;
+  margin: 0 auto 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+}
+.success-name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.3rem;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+.success-meta {
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════ SPLASH OVERLAY ═══════════════════════ -->
+<div id="splashOverlay" style="position:fixed;inset:0;z-index:9000;background:#080c14;">
+<!-- Background canvas -->
+<canvas id="bgCanvas"></canvas>
+
+<!-- Overlays -->
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<!-- Corner brackets -->
+<div class="corner c-tl">
+  <svg viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M2 30 L2 2 L30 2" stroke="#c9a84c" stroke-width="1.5"/>
+    <circle cx="2" cy="2" r="2" fill="#c9a84c"/>
+  </svg>
+</div>
+<div class="corner c-tr">
+  <svg viewBox="0 0 60 60" fill="none">
+    <path d="M2 30 L2 2 L30 2" stroke="#c9a84c" stroke-width="1.5"/>
+    <circle cx="2" cy="2" r="2" fill="#c9a84c"/>
+  </svg>
+</div>
+<div class="corner c-bl">
+  <svg viewBox="0 0 60 60" fill="none">
+    <path d="M2 30 L2 2 L30 2" stroke="#c9a84c" stroke-width="1.5"/>
+    <circle cx="2" cy="2" r="2" fill="#c9a84c"/>
+  </svg>
+</div>
+<div class="corner c-br">
+  <svg viewBox="0 0 60 60" fill="none">
+    <path d="M2 30 L2 2 L30 2" stroke="#c9a84c" stroke-width="1.5"/>
+    <circle cx="2" cy="2" r="2" fill="#c9a84c"/>
+  </svg>
+</div>
+
+<!-- Main stage -->
+<div id="stage">
+  <div class="tank-wrap" id="tankWrap">
+    <div class="tank-ring"></div>
+    <div class="tank-ring"></div>
+    <div class="tank-ring"></div>
+    <div class="tank-glow"></div>
+    <!-- Tank SVG -->
+    <svg width="120" height="90" viewBox="0 0 120 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Tank body (cylindrical floating roof tank) -->
+      <!-- Shell -->
+      <ellipse cx="60" cy="70" rx="48" ry="10" fill="rgba(201,168,76,0.08)" stroke="#c9a84c" stroke-width="1.2"/>
+      <rect x="12" y="30" width="96" height="40" fill="rgba(201,168,76,0.05)" stroke="#c9a84c" stroke-width="1.2"/>
+      <ellipse cx="60" cy="30" rx="48" ry="10" fill="rgba(201,168,76,0.12)" stroke="#c9a84c" stroke-width="1.2"/>
+      <!-- Floating roof -->
+      <ellipse cx="60" cy="44" rx="44" ry="9" fill="rgba(201,168,76,0.18)" stroke="#c9a84c" stroke-width="1.5"/>
+      <!-- Roof detail lines -->
+      <ellipse cx="60" cy="44" rx="32" ry="6.5" fill="none" stroke="rgba(201,168,76,0.3)" stroke-width="0.8"/>
+      <ellipse cx="60" cy="44" rx="18" ry="3.8" fill="none" stroke="rgba(201,168,76,0.2)" stroke-width="0.8"/>
+      <!-- Center hub -->
+      <ellipse cx="60" cy="44" rx="5" ry="2" fill="#c9a84c" opacity="0.8"/>
+      <!-- Gauge pole -->
+      <line x1="60" y1="14" x2="60" y2="44" stroke="#c9a84c" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+      <circle cx="60" cy="14" r="2.5" fill="#c9a84c" opacity="0.9"/>
+      <!-- Roof legs (small marks) -->
+      <line x1="36" y1="40" x2="36" y2="46" stroke="#c9a84c" stroke-width="0.8" opacity="0.5"/>
+      <line x1="84" y1="40" x2="84" y2="46" stroke="#c9a84c" stroke-width="0.8" opacity="0.5"/>
+      <line x1="60" y1="38" x2="60" y2="44" stroke="#c9a84c" stroke-width="0.8" opacity="0.5"/>
+      <!-- Drain pipe -->
+      <path d="M108 52 Q115 52 115 60 L115 70" stroke="#c9a84c" stroke-width="1" fill="none" opacity="0.4"/>
+      <!-- Emission glow dots -->
+      <circle cx="52" cy="10" r="1.5" fill="#2dd4a0" opacity="0.8">
+        <animate attributeName="opacity" values="0.8;0.1;0.8" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="68" cy="8" r="1" fill="#2dd4a0" opacity="0.6">
+        <animate attributeName="opacity" values="0.6;0.1;0.6" dur="2.5s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="60" cy="6" r="1.2" fill="#c9a84c" opacity="0.7">
+        <animate attributeName="opacity" values="0.7;0.1;0.7" dur="1.8s" repeatCount="indefinite"/>
+      </circle>
+      <!-- Foundation ring -->
+      <ellipse cx="60" cy="78" rx="52" ry="7" fill="none" stroke="rgba(201,168,76,0.15)" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <div class="wordmark">
+    <span class="brand-pre">// SYSTEM INITIALIZED</span>
+    <div class="brand-name glitch" data-text="TANK">
+      <span class="t1">TANK</span><span class="t2"> PROTOCOL</span>
+    </div>
+    <span class="brand-sub">Emissions Intelligence Platform</span>
+  </div>
+
+  <div class="divider">
+    <div class="div-line"></div>
+    <div class="div-diamond"></div>
+    <div class="div-line"></div>
+  </div>
+
+  <div class="status-row">
+    <div class="status-item">
+      <div class="status-dot"></div>
+      API 19.2 ACTIVE
+    </div>
+    <div class="status-item">
+      <div class="status-dot cyan"></div>
+      CALC ENGINE READY
+    </div>
+    <div class="status-item">
+      <div class="status-dot red"></div>
+      AUTH MODULE
+    </div>
+  </div>
+
+  <button class="enter-btn" id="enterBtn" onclick="enterApp()">
+    ENTER SYSTEM
+  </button>
+</div>
+
+<!-- Boot log -->
+<div class="boot-log" id="bootLog"></div>
+
+<!-- Data ticker -->
+<div class="data-ticker" id="dataTicker"></div>
+
+<!-- Loader -->
+<div class="loader-wrap" id="loaderWrap">
+  <div class="loader-label">
+    <span>INITIALIZING SYSTEMS</span>
+    <span id="loaderStatus">BOOT</span>
+  </div>
+  <div class="loader-track">
+    <div class="loader-fill" id="loaderFill"></div>
+  </div>
+  <div class="loader-pct" id="loaderPct">0%</div>
+</div>
+
+<!-- Flash for enter transition -->
+<div id="flash"></div>
+
+<!-- Custom cursor -->
+<div class="cursor" id="cursor">
+  <div class="cursor-ring"></div>
+  <div class="cursor-dot"></div>
+</div>
+</div>
+
+<!-- ═══════════════════════ LOGIN VIEW ═══════════════════════ -->
+<div class="view active" id="loginView">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-name">Tank Protocol</div>
+    </div>
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">Sign in to your secure workspace</p>
+
+    <div class="error-box" id="loginError"></div>
+
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="loginEmail" placeholder="you@company.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+
+    <a class="forgot-link" onclick="showView('forgotView')">Forgot password?</a>
+
+    <button class="btn-primary" onclick="doLogin()">Sign In</button>
+
+    <div class="auth-hint">
+      Don't have an account? <a onclick="showView('signupView')">Create account</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════ SIGNUP VIEW ═══════════════════════ -->
+<div class="view" id="signupView">
+  <div class="auth-card" style="max-width:480px;padding:40px 44px;">
+    <div class="auth-logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-name">Tank Protocol</div>
+    </div>
+    <h1 class="auth-title">Create account</h1>
+    <p class="auth-sub">Join Tank Protocol — fill in your details to get started</p>
+
+    <!-- Step indicator -->
+    <div class="step-indicator">
+      <div class="step-dot active" id="sd1">1</div>
+      <div class="step-line" id="sl1"></div>
+      <div class="step-dot inactive" id="sd2">2</div>
+      <div class="step-line" id="sl2"></div>
+      <div class="step-dot inactive" id="sd3">3</div>
+    </div>
+    <div class="step-labels">
+      <span class="step-label-text active" id="slabel1">Personal</span>
+      <span class="step-label-text" id="slabel2">Professional</span>
+      <span class="step-label-text" id="slabel3">Account</span>
+    </div>
+
+    <div class="error-box" id="signupError"></div>
+
+    <!-- ── STEP 1: Personal Info ── -->
+    <div class="signup-step active" id="step1">
+      <div class="field-row-2">
+        <div class="field">
+          <label>First Name</label>
+          <input type="text" id="su_firstName" placeholder="Shamit" autocomplete="given-name">
+        </div>
+        <div class="field">
+          <label>Last Name</label>
+          <input type="text" id="su_lastName" placeholder="Verma" autocomplete="family-name">
+        </div>
+      </div>
+      <div class="field">
+        <label>Email Address</label>
+        <input type="email" id="su_email" placeholder="you@company.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Location / City</label>
+        <input type="text" id="su_location" placeholder="e.g. Mumbai, India">
+      </div>
+      <button class="btn-primary" onclick="signupNext(1)">Continue →</button>
+    </div>
+
+    <!-- ── STEP 2: Professional Info ── -->
+    <div class="signup-step" id="step2">
+      <div class="field">
+        <label>Company Name</label>
+        <input type="text" id="su_company" placeholder="e.g. ESRAI Group">
+      </div>
+      <div class="field">
+        <label>Job Title / Designation</label>
+        <input type="text" id="su_designation" placeholder="e.g. Environmental Engineer">
+      </div>
+      <div class="field">
+        <label>Department</label>
+        <input type="text" id="su_dept" placeholder="e.g. HSE / Engineering / Consulting">
+      </div>
+      <div class="field">
+        <label>Industry</label>
+        <select id="su_industry" style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:9px;color:var(--text-bright);font-family:var(--body);font-size:0.93rem;padding:12px 15px;outline:none;appearance:none;">
+          <option value="">Select your industry…</option>
+          <option>Oil &amp; Gas</option>
+          <option>Petrochemicals</option>
+          <option>Refining</option>
+          <option>Environmental Consulting</option>
+          <option>HSE / Compliance</option>
+          <option>Regulatory / Government</option>
+          <option>Academic / Research</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn-primary" style="background:transparent;border:1px solid var(--glass-border);color:var(--text-dim);flex:0 0 auto;width:auto;padding:13px 20px;" onclick="signupBack(2)">← Back</button>
+        <button class="btn-primary" style="flex:1;" onclick="signupNext(2)">Continue →</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 3: Account Credentials ── -->
+    <div class="signup-step" id="step3">
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="su_password" placeholder="Min. 8 characters" oninput="checkPwStrength(this.value)">
+        <div class="pw-strength"><div class="pw-strength-fill" id="pwStrengthBar"></div></div>
+        <div class="pw-hint" id="pwHint">Enter a password</div>
+      </div>
+      <div class="field">
+        <label>Confirm Password</label>
+        <input type="password" id="su_confirmPass" placeholder="Re-enter password">
+      </div>
+      <div class="terms-row">
+        <input type="checkbox" id="su_terms">
+        <label for="su_terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:4px;">
+        <button class="btn-primary" style="background:transparent;border:1px solid var(--glass-border);color:var(--text-dim);flex:0 0 auto;width:auto;padding:13px 20px;" onclick="signupBack(3)">← Back</button>
+        <button class="btn-primary" style="flex:1;" onclick="signupSubmit()">Create Account</button>
+      </div>
+    </div>
+
+    <!-- ── STEP 4: Success ── -->
+    <div class="signup-step" id="step4">
+      <div class="success-card">
+        <div class="success-icon">✓</div>
+        <div class="success-name" id="su_successName">Welcome!</div>
+        <div class="success-meta" id="su_successMeta"></div>
+        <div style="margin-top:20px;padding:14px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-radius:8px;font-size:0.78rem;color:var(--text-dim);line-height:1.6;margin-bottom:20px;">
+          Your account has been created. Sign in with your email and password to access Tank Protocol.
+        </div>
+        <button class="btn-primary" onclick="signupDone()">Sign In Now →</button>
+      </div>
+    </div>
+
+    <div class="auth-hint" style="margin-top:16px;" id="signupBackLink">
+      Already have an account? <a onclick="showView('loginView')">Sign in</a>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════ FORGOT VIEW ═══════════════════════ -->
+<div class="view" id="forgotView">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-mark">T</div>
+      <div class="logo-name">Tank Protocol</div>
+    </div>
+    <h1 class="auth-title">Reset password</h1>
+    <p class="auth-sub">Enter your email and we'll send a reset link to your inbox.</p>
+
+    <div class="success-box" id="resetSuccess">✓ Reset link sent! Check your inbox.</div>
+    <div class="error-box" id="resetError"></div>
+
+    <div class="field">
+      <label>Email address</label>
+      <input type="email" id="resetEmail" placeholder="you@company.com">
+    </div>
+
+    <button class="btn-primary" onclick="doReset()">Send Reset Link</button>
+
+    <div class="auth-hint" style="margin-top:16px;">
+      Remember your password? <a onclick="showView('loginView')">Back to sign in</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ DASHBOARD VIEW ═══════════════════════ -->
+<div class="view" id="dashView" style="flex-direction:column;">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-mark" style="width:30px;height:30px;font-size:13px;">T</div>
+      Tank Protocol
+
+    <div class="topbar-nav">
+      <button class="nav-btn active" onclick="showPage('profilePage', this)">Profile</button>
+      <button class="nav-btn" onclick="showPage('adminPage', this)" id="adminNavBtn" style="display:none;">Admin Panel</button>
+    </div>
+
+    <div class="topbar-right">
+      <div id="topbarName" style="font-size:0.8rem;color:var(--text-dim);"></div>
+      <button class="avatar-btn" id="topbarAvatar" onclick="showPage('profilePage', document.querySelector('.nav-btn'))">?</button>
+      <a href="tank-protocol-profile.html" target="_blank" id="fullProfileBtn" style="display:none;font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);border:1px solid var(--border2);border-radius:6px;padding:4px 10px;text-decoration:none;transition:all 0.18s;letter-spacing:0.3px;" onmouseover="this.style.color='var(--gold)';this.style.borderColor='rgba(201,168,76,0.4)'" onmouseout="this.style.color='var(--text-dim)';this.style.borderColor='var(--border2)'">Full Profile ↗</a>
+      <button id="adminPanelBtn" onclick="showPage('adminPage', document.getElementById('adminNavBtn'))" style="display:none;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:7px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.78rem;letter-spacing:0.5px;cursor:pointer;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 18px rgba(201,168,76,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        ⬡ Admin Panel
+      </button>
+      <button class="logout-btn" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div class="page-content active" id="profilePage">
+    <div class="page-title" id="profileGreeting">My Profile</div>
+    <div class="page-sub">Manage your personal information and account settings</div>
+
+    <div id="adminPanelBanner" style="display:none;align-items:center;gap:16px;padding:14px 20px;background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(232,201,122,0.06));border:1px solid rgba(201,168,76,0.3);border-radius:10px;margin-bottom:24px;">
+      <div style="font-size:1.4rem;">⬡</div>
+      <div style="flex:1;">
+        <div style="font-family:var(--display);font-weight:700;color:var(--text-bright);font-size:0.9rem;">Admin Panel Access</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">You have elevated privileges — manage users, settings, reports and analytics.</div>
+      </div>
+      <a onclick="showPage('adminPage', document.getElementById('adminNavBtn'))" style="cursor:pointer;display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.82rem;letter-spacing:0.5px;cursor:pointer;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 18px rgba(201,168,76,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+        Open Admin Panel ↗
+      </a>
+    </div>
+
+    <div class="profile-layout">
+      <!-- Sidebar card -->
+      <div>
+        <div class="glass-card">
+          <div class="profile-avatar-wrap">
+            <div class="profile-avatar" id="profileAvatarLarge">
+              <div class="online-dot"></div>
+            </div>
+            <div class="profile-name" id="sidebarName">—</div>
+            <div class="profile-email" id="sidebarEmail">—</div>
+            <div id="sidebarBadge"></div>
+          </div>
+          <div class="profile-stats">
+            <div class="stat-item">
+              <div class="stat-num" id="statSessions">1</div>
+              <div class="stat-label">Sessions</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="statRole">—</div>
+              <div class="stat-label">Role</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num">100%</div>
+              <div class="stat-label">Uptime</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-num" id="statJoined">—</div>
+              <div class="stat-label">Joined</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Edit form -->
+      <div class="glass-card">
+        <div class="form-section-title">Personal Information</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>First Name</label>
+            <input type="text" id="editFirstName">
+          </div>
+          <div class="form-field">
+            <label>Last Name</label>
+            <input type="text" id="editLastName">
+          </div>
+          <div class="form-field">
+            <label>Email</label>
+            <input type="email" id="editEmail" disabled>
+          </div>
+          <div class="form-field">
+            <label>Department</label>
+            <input type="text" id="editDept" placeholder="e.g. Engineering">
+          </div>
+          <div class="form-field">
+            <label>Job Title / Designation</label>
+            <input type="text" id="editTitle" placeholder="e.g. Senior Engineer">
+          </div>
+          <div class="form-field">
+            <label>Phone</label>
+            <input type="tel" id="editPhone" placeholder="+1 (555) 000-0000">
+          </div>
+          <div class="form-field">
+            <label>Company Name</label>
+            <input type="text" id="editCompany" placeholder="e.g. ESRAI Group">
+          </div>
+          <div class="form-field">
+            <label>Location / City</label>
+            <input type="text" id="editLocation" placeholder="e.g. Mumbai, India">
+          </div>
+          <div class="form-field">
+            <label>Industry</label>
+            <select id="editIndustry" style="background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);border-radius:8px;color:var(--text-bright);font-family:var(--body);font-size:0.88rem;padding:10px 14px;width:100%;outline:none;">
+              <option value="">Select industry…</option>
+              <option>Oil &amp; Gas</option>
+              <option>Petrochemicals</option>
+              <option>Refining</option>
+              <option>Environmental Consulting</option>
+              <option>HSE / Compliance</option>
+              <option>Regulatory / Government</option>
+              <option>Academic / Research</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Designation / Role Title</label>
+            <input type="text" id="editDesignation" placeholder="e.g. Environmental Engineer">
+          </div>
+        </div>
+        <div class="form-grid full">
+          <div class="form-field">
+            <label>Bio</label>
+            <textarea id="editBio" rows="3" placeholder="Write a short bio..."></textarea>
+          </div>
+        </div>
+
+        <div class="form-section-title">Change Password</div>
+        <div class="form-grid">
+          <div class="form-field">
+            <label>New Password</label>
+            <input type="password" id="newPass" placeholder="••••••••">
+          </div>
+          <div class="form-field">
+            <label>Confirm Password</label>
+            <input type="password" id="confPass" placeholder="••••••••">
+          </div>
+        </div>
+
+        <button class="btn-save" onclick="saveProfile()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN PAGE -->
+  <div class="page-content" id="adminPage">
+    <div class="page-title">Admin Panel</div>
+    <div class="page-sub">Full system access — manage users, roles, and permissions</div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-card gold">
+        <div class="stat-card-icon">👥</div>
+        <div class="stat-card-num" id="adminUserCount">3</div>
+        <div class="stat-card-label">Total Users</div>
+      </div>
+      <div class="stat-card emerald">
+        <div class="stat-card-icon">✅</div>
+        <div class="stat-card-num">2</div>
+        <div class="stat-card-label">Active Sessions</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-card-icon">🛡️</div>
+        <div class="stat-card-num">1</div>
+        <div class="stat-card-label">Admins</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-card-icon">⚠️</div>
+        <div class="stat-card-num">0</div>
+        <div class="stat-card-label">Alerts</div>
+      </div>
+    </div>
+
+    <!-- User Management Table -->
+    <div class="user-table-wrap">
+      <div class="table-header">
+        <div class="table-title">User Management</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="superAdminRoleHint" style="display:none;font-family:var(--mono);font-size:0.62rem;color:var(--gold);background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.2);padding:4px 10px;letter-spacing:0.3px;">
+            &#x2B21; Role controls active &mdash; Super Admin
+          </div>
+          <button class="btn-add" onclick="addUser()">+ Add User</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Role</th>
+            <th>Department</th>
+            <th>Status</th>
+            <th>Last Active</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="userTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Permissions -->
+    <div class="glass-card" style="margin-top:0;">
+      <div class="form-section-title" style="margin-bottom:18px;">Admin Privileges &amp; Permissions</div>
+      <div class="perms-grid" id="permsGrid"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- Confirm Modal -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-title" id="modalTitle">Confirm Action</div>
+    <div class="modal-body" id="modalBody">Are you sure?</div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger" id="modalConfirmBtn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>>
+
+// ══ SPLASH OVERLAY JS ══
+
+// ── CANVAS BACKGROUND ──────────────────────────────────────────
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+
+let W, H, particles = [], hexes = [];
+let mouse = { x: -999, y: -999 };
+
+function resize() {
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+  buildHexGrid();
+}
+
+// PARTICLES
+class Particle {
+  constructor() { this.reset(); }
+  reset() {
+    this.x  = Math.random() * W;
+    this.y  = Math.random() * H;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = -Math.random() * 0.5 - 0.1;
+    this.r  = Math.random() * 1.5 + 0.3;
+    this.alpha = Math.random() * 0.4 + 0.1;
+    this.life  = 0;
+    this.maxLife = Math.random() * 400 + 200;
+    this.color = Math.random() > 0.7 ? '201,168,76' : Math.random() > 0.5 ? '45,212,160' : '180,200,230';
+  }
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life++;
+    if (this.life > this.maxLife || this.y < -10) this.reset();
+    // Mouse repulsion
+    const dx = this.x - mouse.x;
+    const dy = this.y - mouse.y;
+    const dist = Math.sqrt(dx*dx + dy*dy);
+    if (dist < 80) {
+      this.vx += dx / dist * 0.05;
+      this.vy += dy / dist * 0.05;
+    }
+  }
+  draw() {
+    const progress = this.life / this.maxLife;
+    const a = this.alpha * (1 - progress) * Math.sin(progress * Math.PI);
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(${this.color},${a})`;
+    ctx.fill();
+  }
+}
+
+// HEX GRID
+function buildHexGrid() {
+  hexes = [];
+  const size = 28;
+  const w = size * 2;
+  const h = Math.sqrt(3) * size;
+  for (let row = -1; row < H / h + 1; row++) {
+    for (let col = -1; col < W / w + 1; col++) {
+      const x = col * w * 0.75;
+      const y = row * h + (col % 2 === 0 ? 0 : h / 2);
+      hexes.push({ x, y, size, alpha: Math.random() * 0.04 + 0.01, pulse: Math.random() * Math.PI * 2 });
+    }
+  }
+}
+
+function drawHex(x, y, size, alpha) {
+  ctx.beginPath();
+  for (let i = 0; i < 6; i++) {
+    const angle = Math.PI / 180 * (60 * i - 30);
+    const px = x + size * Math.cos(angle);
+    const py = y + size * Math.sin(angle);
+    i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.strokeStyle = `rgba(201,168,76,${alpha})`;
+  ctx.lineWidth = 0.5;
+  ctx.stroke();
+}
+
+// CONNECTIONS
+function drawConnections() {
+  const linked = [];
+  for (let i = 0; i < particles.length; i++) {
+    for (let j = i + 1; j < particles.length; j++) {
+      const dx = particles[i].x - particles[j].x;
+      const dy = particles[i].y - particles[j].y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      if (dist < 100) {
+        const a = (1 - dist/100) * 0.06;
+        ctx.beginPath();
+        ctx.moveTo(particles[i].x, particles[i].y);
+        ctx.lineTo(particles[j].x, particles[j].y);
+        ctx.strokeStyle = `rgba(201,168,76,${a})`;
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+  }
+}
+
+// GRID LINES
+function drawGrid() {
+  const spacing = 60;
+  ctx.lineWidth = 0.3;
+  for (let x = 0; x < W; x += spacing) {
+    ctx.beginPath();
+    ctx.moveTo(x, 0); ctx.lineTo(x, H);
+    ctx.strokeStyle = 'rgba(201,168,76,0.025)';
+    ctx.stroke();
+  }
+  for (let y = 0; y < H; y += spacing) {
+    ctx.beginPath();
+    ctx.moveTo(0, y); ctx.lineTo(W, y);
+    ctx.strokeStyle = 'rgba(79,163,232,0.02)';
+    ctx.stroke();
+  }
+}
+
+let t = 0;
+window._splashAnimRunning = true;
+function animate() {
+  if (!window._splashAnimRunning) return;
+  ctx.clearRect(0, 0, W, H);
+
+  // Deep bg gradient
+  const grad = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)*0.7);
+  grad.addColorStop(0, 'rgba(12,18,28,1)');
+  grad.addColorStop(1, 'rgba(8,12,20,1)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+
+  drawGrid();
+
+  // Hex grid
+  t += 0.008;
+  hexes.forEach(h => {
+    const dist = Math.sqrt((h.x - mouse.x)**2 + (h.y - mouse.y)**2);
+    const boost = dist < 150 ? (1 - dist/150) * 0.12 : 0;
+    const a = h.alpha + boost + Math.sin(t + h.pulse) * 0.01;
+    drawHex(h.x, h.y, h.size, Math.max(0, a));
+  });
+
+  drawConnections();
+  particles.forEach(p => { p.update(); p.draw(); });
+
+  // Center radial glow
+  const cx = W/2, cy = H/2;
+  const glow = ctx.createRadialGradient(cx, cy, 0, cx, cy, 350);
+  glow.addColorStop(0, 'rgba(201,168,76,0.04)');
+  glow.addColorStop(0.5, 'rgba(45,212,160,0.015)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+
+  requestAnimationFrame(animate);
+}
+
+// Init particles
+window.addEventListener('resize', resize);
+resize();
+for (let i = 0; i < 120; i++) particles.push(new Particle());
+animate();
+
+// ── CUSTOM CURSOR ─────────────────────────────────────────────
+const cursor = document.getElementById('cursor');
+window.addEventListener('mousemove', e => {
+  cursor.style.left = e.clientX + 'px';
+  cursor.style.top  = e.clientY + 'px';
+  mouse.x = e.clientX;
+  mouse.y = e.clientY;
+});
+
+document.querySelectorAll('button').forEach(btn => {
+  btn.addEventListener('mouseenter', () => cursor.querySelector('.cursor-ring').style.transform = 'scale(2)');
+  btn.addEventListener('mouseleave', () => cursor.querySelector('.cursor-ring').style.transform = 'scale(1)');
+});
+
+// ── BOOT SEQUENCE ─────────────────────────────────────────────
+const bootLines = [
+  '> KERNEL v4.2.1 loaded',
+  '> Mounting API 19.2 modules...',
+  '> Emission calc engine... OK',
+  '> Auth subsystem... READY',
+  '> Tank geometry lib... OK',
+  '> Vapor pressure tables... OK',
+  '> User database... CONNECTED',
+  '> Admin privileges... VERIFIED',
+  '> All systems nominal.',
+];
+
+const tickerLines = [
+  'VOC CALC: ACTIVE',
+  'SEAL LOSS: NOMINAL',
+  'P* ENGINE: READY',
+  'DB STATUS: LIVE',
+  'AUTH: ARMED',
+  'API 19.2: LOADED',
+  'EFRT MOD: ONLINE',
+  'IFRT MOD: ONLINE',
+];
+
+let bootIdx = 0;
+const bootLogEl = document.getElementById('bootLog');
+const tickerEl  = document.getElementById('dataTicker');
+
+function addBootLine() {
+  if (bootIdx >= bootLines.length) return;
+  bootLogEl.innerHTML += bootLines[bootIdx] + '<br>';
+  bootIdx++;
+  setTimeout(addBootLine, 280);
+}
+
+function addTickerLines() {
+  tickerEl.innerHTML = tickerLines.map((l,i) =>
+    `<span style="opacity:${0.3 + i * 0.08}">${l}</span>`
+  ).join('<br>');
+}
+
+// ── LOADER ────────────────────────────────────────────────────
+const loaderFill   = document.getElementById('loaderFill');
+const loaderPct    = document.getElementById('loaderPct');
+const loaderStatus = document.getElementById('loaderStatus');
+const enterBtn     = document.getElementById('enterBtn');
+
+const phases = [
+  { to: 15,  label: 'KERNEL',    ms: 400 },
+  { to: 32,  label: 'MODULES',   ms: 600 },
+  { to: 55,  label: 'DB CONN',   ms: 500 },
+  { to: 70,  label: 'AUTH',      ms: 400 },
+  { to: 85,  label: 'ENGINES',   ms: 500 },
+  { to: 95,  label: 'FINALIZE',  ms: 300 },
+  { to: 100, label: 'READY',     ms: 400 },
+];
+
+let pct = 0;
+let phaseIdx = 0;
+
+function runLoader() {
+  if (phaseIdx >= phases.length) return;
+  const phase = phases[phaseIdx];
+  loaderStatus.textContent = phase.label;
+  const target = phase.to;
+  const step   = (target - pct) / (phase.ms / 16);
+
+  function tick() {
+    pct = Math.min(pct + step, target);
+    loaderFill.style.width = pct + '%';
+    loaderPct.textContent  = Math.round(pct) + '%';
+    if (pct < target) {
+      requestAnimationFrame(tick);
+    } else {
+      phaseIdx++;
+      if (phaseIdx < phases.length) {
+        setTimeout(runLoader, 100);
+      } else {
+        onLoadComplete();
+      }
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+function onLoadComplete() {
+  loaderStatus.textContent = 'COMPLETE';
+  setTimeout(() => {
+    document.getElementById('loaderWrap').style.opacity = '0';
+    document.getElementById('loaderWrap').style.transition = 'opacity 0.4s';
+    enterBtn.style.display = 'inline-block';
+  }, 400);
+}
+
+// ── ENTER APP ─────────────────────────────────────────────────
+function enterApp() {
+  const flash = document.getElementById('flash');
+  flash.style.transition = 'opacity 0.25s ease';
+  flash.style.opacity = '0.7';
+  setTimeout(() => {
+    flash.style.opacity = '0';
+    // Transition to login
+    const overlay = document.getElementById('splashOverlay');
+    overlay.style.transition = 'opacity 0.6s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      overlay.style.display = 'none';
+      // Stop canvas animation
+      if (window._splashAnimRunning) window._splashAnimRunning = false;
+    }, 650);
+  }, 200);
+}
+
+function showReturnMessage() {
+  const stage = document.getElementById('stage');
+  stage.innerHTML = `
+    <div style="text-align:center;animation:fadeSlide 0.6s ease both;">
+      <div style="font-family:var(--mono);font-size:0.72rem;color:var(--gold);letter-spacing:3px;margin-bottom:16px;">// ACCESS GRANTED</div>
+      <div style="font-family:var(--cond);font-size:3.5rem;font-weight:800;color:var(--text-bright);line-height:1;">WELCOME TO</div>
+      <div style="font-family:var(--cond);font-size:5rem;font-weight:800;background:linear-gradient(135deg,var(--gold-light),var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:0.9;margin-bottom:20px;">TANK<br>PROTOCOL</div>
+      <div style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);letter-spacing:1px;margin-bottom:32px;">SYSTEM READY · ALL MODULES ONLINE</div>
+      <button onclick="location.reload()" style="background:var(--gold-dim);border:1px solid rgba(201,168,76,0.4);color:var(--gold);font-family:var(--cond);font-weight:700;font-size:0.85rem;letter-spacing:3px;padding:12px 36px;cursor:pointer;transition:all 0.2s;border-radius:2px;" onmouseover="this.style.background='rgba(201,168,76,0.2)'" onmouseout="this.style.background='var(--gold-dim)'">↺ REPLAY SPLASH</button>
+    </div>
+  `;
+}
+
+// ── START SEQUENCE ────────────────────────────────────────────
+setTimeout(() => addBootLine(), 3100);
+setTimeout(() => addTickerLines(), 3100);
+setTimeout(() => runLoader(), 2900);
+
+
+// ─── SIGNUP ───────────────────────────────────────────────────────
+let signupData = {};
+let currentStep = 1;
+
+function signupNext(step) {
+  const errEl = document.getElementById('signupError');
+  errEl.style.display = 'none';
+
+  if (step === 1) {
+    const fn  = document.getElementById('su_firstName').value.trim();
+    const ln  = document.getElementById('su_lastName').value.trim();
+    const em  = document.getElementById('su_email').value.trim();
+    const loc = document.getElementById('su_location').value.trim();
+    if (!fn || !ln) { showSignupError('Please enter your first and last name.'); return; }
+    if (!em.includes('@')) { showSignupError('Please enter a valid email address.'); return; }
+    if (USERS.find(u => u.email === em)) { showSignupError('An account with this email already exists.'); return; }
+    signupData.firstName = fn;
+    signupData.lastName  = ln;
+    signupData.email     = em;
+    signupData.location  = loc;
+    goToStep(2);
+  } else if (step === 2) {
+    const co   = document.getElementById('su_company').value.trim();
+    const desg = document.getElementById('su_designation').value.trim();
+    const dept = document.getElementById('su_dept').value.trim();
+    const ind  = document.getElementById('su_industry').value;
+    if (!co)   { showSignupError('Please enter your company name.'); return; }
+    if (!desg) { showSignupError('Please enter your designation.'); return; }
+    signupData.company     = co;
+    signupData.designation = desg;
+    signupData.dept        = dept;
+    signupData.industry    = ind;
+    goToStep(3);
+  }
+}
+
+function signupBack(step) {
+  goToStep(step - 1);
+}
+
+function signupSubmit() {
+  const pw  = document.getElementById('su_password').value;
+  const cpw = document.getElementById('su_confirmPass').value;
+  const tms = document.getElementById('su_terms').checked;
+  const errEl = document.getElementById('signupError');
+  errEl.style.display = 'none';
+
+  if (pw.length < 8)   { showSignupError('Password must be at least 8 characters.'); return; }
+  if (pw !== cpw)       { showSignupError('Passwords do not match.'); return; }
+  if (!tms)             { showSignupError('Please accept the Terms of Service to continue.'); return; }
+
+  signupData.password = pw;
+
+  // Create new user
+  const newUser = {
+    id:          Date.now(),
+    email:       signupData.email,
+    password:    signupData.password,
+    firstName:   signupData.firstName,
+    lastName:    signupData.lastName,
+    role:        'user',
+    dept:        signupData.dept        || '',
+    title:       signupData.designation || '',
+    designation: signupData.designation || '',
+    company:     signupData.company     || '',
+    location:    signupData.location    || '',
+    industry:    signupData.industry    || '',
+    phone:       '',
+    bio:         '',
+    status:      'active',
+    joined:      new Date().getFullYear().toString()
+  };
+
+  USERS.push(newUser);
+
+  // Show success
+  document.getElementById('su_successName').textContent =
+    'Welcome, ' + newUser.firstName + '!';
+  document.getElementById('su_successMeta').innerHTML =
+    newUser.company + ' &nbsp;&middot;&nbsp; ' + newUser.designation +
+    (newUser.location ? '<br>📍 ' + newUser.location : '');
+  document.getElementById('signupBackLink').style.display = 'none';
+  goToStep(4);
+}
+
+function signupDone() {
+  // Pre-fill login with new email
+  document.getElementById('loginEmail').value    = signupData.email;
+  document.getElementById('loginPassword').value = '';
+  signupData = {};
+  currentStep = 1;
+  // Reset signup form
+  ['su_firstName','su_lastName','su_email','su_location',
+   'su_company','su_designation','su_dept',
+   'su_password','su_confirmPass'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('su_terms').checked = false;
+  document.getElementById('su_industry').value = '';
+  document.getElementById('signupBackLink').style.display = '';
+  goToStep(1, true);
+  showView('loginView');
+}
+
+function goToStep(n, silent) {
+  currentStep = n;
+  // Hide all steps
+  [1,2,3,4].forEach(i => {
+    document.getElementById('step' + i).classList.toggle('active', i === n);
+  });
+  // Update step dots
+  [1,2,3].forEach(i => {
+    const dot   = document.getElementById('sd' + i);
+    const label = document.getElementById('slabel' + i);
+    if (i < n)      { dot.className = 'step-dot done';     dot.textContent = '✓'; }
+    else if (i ===n){ dot.className = 'step-dot active';   dot.textContent = i; }
+    else            { dot.className = 'step-dot inactive'; dot.textContent = i; }
+    if (label) label.className = 'step-label-text' + (i === n ? ' active' : '');
+  });
+  // Update lines
+  [1,2].forEach(i => {
+    const line = document.getElementById('sl' + i);
+    if (line) line.className = 'step-line' + (i < n ? ' done' : '');
+  });
+  if (!silent) document.getElementById('signupError').style.display = 'none';
+}
+
+function showSignupError(msg) {
+  const el = document.getElementById('signupError');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function checkPwStrength(pw) {
+  const bar  = document.getElementById('pwStrengthBar');
+  const hint = document.getElementById('pwHint');
+  let score = 0;
+  if (pw.length >= 8)  score++;
+  if (pw.length >= 12) score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+
+  const levels = [
+    { pct: '0%',   color: 'transparent',     label: 'Enter a password' },
+    { pct: '20%',  color: '#f05b5b',          label: 'Very weak' },
+    { pct: '40%',  color: '#f59e0b',          label: 'Weak' },
+    { pct: '60%',  color: '#ffd166',          label: 'Fair' },
+    { pct: '80%',  color: '#2dd4a0',          label: 'Strong' },
+    { pct: '100%', color: 'var(--gold)',       label: 'Very strong ✓' },
+  ];
+  const lvl = levels[Math.min(score, 5)];
+  bar.style.width      = lvl.pct;
+  bar.style.background = lvl.color;
+  hint.textContent     = pw.length ? lvl.label : 'Enter a password';
+  hint.style.color     = pw.length ? lvl.color : 'var(--text-dim)';
+}
+</script><script>
+// ─── DATA ────────────────────────────────────────────────────
+const USERS = [
+  {
+    id: 0, email: 'esraigroup@gmail.com', password: 'super123',
+    firstName: 'ESRAI', lastName: 'Group', role: 'super_admin',
+    dept: 'Executive', title: 'Super Administrator', phone: '',
+    bio: 'Root-level platform access with all privileges.', status: 'active', joined: '2026'
+  },
+  {
+    id: 1, email: 'admin@tankprotocol.com', password: 'admin123',
+    firstName: 'Alexandra', lastName: 'Stone', role: 'admin',
+    dept: 'Management', title: 'System Administrator', phone: '+1 (555) 010-2030',
+    company: 'Tank Protocol', designation: 'System Administrator', location: 'Houston, TX', industry: 'Oil & Gas',
+    bio: 'Platform admin with full system access.', status: 'active', joined: '2023'
+  },
+  {
+    id: 2, email: 'user@tankprotocol.com', password: 'user123',
+    firstName: 'Jordan', lastName: 'Lee', role: 'user',
+    dept: 'Engineering', title: 'Senior Engineer', phone: '+1 (555) 040-5060',
+    company: 'Tank Protocol', designation: 'Senior Engineer', location: 'Austin, TX', industry: 'Petrochemicals',
+    bio: 'Works on backend systems and data pipelines.', status: 'active', joined: '2024'
+  },
+  {
+    id: 3, email: 'charlie@tankprotocol.com', password: 'charlie123',
+    firstName: 'Charlie', lastName: 'Kim', role: 'user',
+    dept: 'Design', title: 'UX Designer', phone: '',
+    bio: '', status: 'pending', joined: '2025'
+  }
+];
+
+const ADMIN_PERMS = [
+  { icon: '👤', name: 'User Management', desc: 'Create, edit, and delete user accounts' },
+  { icon: '🔐', name: 'Role Assignment', desc: 'Grant or revoke user roles and permissions' },
+  { icon: '📊', name: 'System Analytics', desc: 'Access platform-wide usage analytics' },
+  { icon: '⚙️', name: 'System Settings', desc: 'Modify global platform configuration' },
+  { icon: '🛡️', name: 'Security Audit', desc: 'View login history and security events' },
+  { icon: '📁', name: 'Data Export', desc: 'Export user data and reports' },
+  { icon: '🔔', name: 'Notifications', desc: 'Send system-wide broadcasts' },
+  { icon: '🗑️', name: 'Data Deletion', desc: 'Permanently remove records from system' },
+];
+
+let currentUser = null;
+let pendingAction = null;
+
+// ─── AUTH ─────────────────────────────────────────────────────
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const pw    = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  errEl.style.display = 'none';
+
+  const user = USERS.find(u => u.email === email && u.password === pw);
+  if (!user) {
+    errEl.textContent = 'Invalid email or password. Please try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  currentUser = user;
+
+  // Write session so admin panel can verify access
+  if (user.role === 'admin' || user.role === 'super_admin') {
+    sessionStorage.setItem('tp_session', JSON.stringify({
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role
+    }));
+  } else {
+    sessionStorage.removeItem('tp_session');
+  }
+
+  loadDashboard();
+  showView('dashView');
+}
+
+function doLogout() {
+  currentUser = null;
+  sessionStorage.removeItem('tp_session');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  showView('loginView');
+}
+
+function doReset() {
+  const email = document.getElementById('resetEmail').value.trim();
+  const err = document.getElementById('resetError');
+  const suc = document.getElementById('resetSuccess');
+  err.style.display = 'none'; suc.style.display = 'none';
+
+  if (!email.includes('@')) {
+    err.textContent = 'Please enter a valid email address.';
+    err.style.display = 'block';
+    return;
+  }
+
+  suc.style.display = 'block';
+  setTimeout(() => showView('loginView'), 2200);
+}
+
+// ─── VIEWS ────────────────────────────────────────────────────
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function showPage(id, btn) {
+  document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// ─── DASHBOARD LOAD ───────────────────────────────────────────
+function loadDashboard() {
+  const u = currentUser;
+
+  // Topbar
+  document.getElementById('topbarName').textContent = u.firstName + ' ' + u.lastName;
+  document.getElementById('topbarAvatar').textContent = u.firstName[0] + u.lastName[0];
+
+  // Show/hide admin nav
+  const isAdmin = u.role === 'admin' || u.role === 'super_admin';
+  document.getElementById('adminNavBtn').style.display = isAdmin ? '' : 'none';
+  document.getElementById('adminPanelBtn').style.display = isAdmin ? 'inline-flex' : 'none';
+  document.getElementById('fullProfileBtn').style.display = 'inline-block';
+  // Show super admin role controls hint
+  const roleHint = document.getElementById('superAdminRoleHint');
+  if (roleHint) roleHint.style.display = u.role === 'super_admin' ? '' : 'none';
+
+  // Profile sidebar
+  document.getElementById('profileAvatarLarge').innerHTML =
+    `<span>${u.firstName[0]}${u.lastName[0]}</span><div class="online-dot"></div>`;
+  document.getElementById('sidebarName').textContent = u.firstName + ' ' + u.lastName;
+  document.getElementById('sidebarEmail').textContent = u.email;
+  document.getElementById('statRole').textContent = u.role === 'super_admin' ? 'S.Admin' : u.role === 'admin' ? 'Admin' : 'User';
+  document.getElementById('statJoined').textContent = u.joined;
+  document.getElementById('sidebarBadge').innerHTML =
+    `<span class="role-badge ${u.role === 'super_admin' ? 'admin' : u.role}">${u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'admin' ? '⭐ Admin' : '● Member'}</span>`;
+
+  // Profile greeting
+  document.getElementById('profileGreeting').textContent = `Welcome, ${u.firstName}`;
+  document.getElementById('adminPanelBanner').style.display = isAdmin ? 'flex' : 'none';
+
+  // Fill edit form
+  document.getElementById('editFirstName').value   = u.firstName;
+  document.getElementById('editLastName').value    = u.lastName;
+  document.getElementById('editEmail').value       = u.email;
+  document.getElementById('editDept').value        = u.dept;
+  document.getElementById('editTitle').value       = u.title;
+  document.getElementById('editPhone').value       = u.phone;
+  document.getElementById('editBio').value         = u.bio;
+  document.getElementById('editCompany').value     = u.company     || '';
+  document.getElementById('editLocation').value    = u.location    || '';
+  document.getElementById('editDesignation').value = u.designation || '';
+  if (document.getElementById('editIndustry')) {
+    document.getElementById('editIndustry').value  = u.industry    || '';
+  }
+
+  // Sidebar new fields
+  document.getElementById('sidebarDesignation').textContent = u.designation || u.title || '';
+  document.getElementById('sidebarCompany').textContent     = u.company     || '';
+  const locEl = document.getElementById('sidebarLocationText');
+  if (locEl) locEl.textContent = u.location || '';
+  document.getElementById('sidebarLocation').style.display  = u.location ? '' : 'none';
+
+  // Load admin stuff
+  if (isAdmin) {
+    renderUserTable();
+    renderPerms();
+  }
+
+  // Reset to profile page
+  showPage('profilePage', document.querySelector('.nav-btn'));
+}
+
+// ─── PROFILE SAVE ─────────────────────────────────────────────
+function saveProfile() {
+  const np = document.getElementById('newPass').value;
+  const cp = document.getElementById('confPass').value;
+  if (np && np !== cp) { toast('Passwords do not match!', true); return; }
+
+  currentUser.firstName    = document.getElementById('editFirstName').value;
+  currentUser.lastName     = document.getElementById('editLastName').value;
+  currentUser.dept         = document.getElementById('editDept').value;
+  currentUser.title        = document.getElementById('editTitle').value;
+  currentUser.phone        = document.getElementById('editPhone').value;
+  currentUser.bio          = document.getElementById('editBio').value;
+  currentUser.company      = document.getElementById('editCompany').value;
+  currentUser.location     = document.getElementById('editLocation').value;
+  currentUser.designation  = document.getElementById('editDesignation').value;
+  if (document.getElementById('editIndustry'))
+    currentUser.industry   = document.getElementById('editIndustry').value;
+  if (np) currentUser.password = np;
+
+  // Refresh new sidebar fields
+  document.getElementById('sidebarDesignation').textContent = currentUser.designation || currentUser.title || '';
+  document.getElementById('sidebarCompany').textContent     = currentUser.company || '';
+  const locEl2 = document.getElementById('sidebarLocationText');
+  if (locEl2) locEl2.textContent = currentUser.location || '';
+  document.getElementById('sidebarLocation').style.display = currentUser.location ? '' : 'none';
+
+  // Refresh sidebar
+  document.getElementById('sidebarName').textContent = currentUser.firstName + ' ' + currentUser.lastName;
+  document.getElementById('topbarName').textContent  = currentUser.firstName + ' ' + currentUser.lastName;
+  document.getElementById('topbarAvatar').textContent = currentUser.firstName[0] + currentUser.lastName[0];
+  document.getElementById('profileAvatarLarge').innerHTML =
+    `<span>${currentUser.firstName[0]}${currentUser.lastName[0]}</span><div class="online-dot"></div>`;
+
+  document.getElementById('newPass').value = '';
+  document.getElementById('confPass').value = '';
+
+  toast('Profile updated successfully ✓');
+}
+
+// ─── ADMIN TABLE ──────────────────────────────────────────────
+function getRoleBadge(role) {
+  if (role === 'super_admin') return '<span class="role-badge admin" style="margin:0;background:rgba(232,201,122,0.15);border-color:rgba(232,201,122,0.4);color:#e8c97a;">👑 Super Admin</span>';
+  if (role === 'admin')       return '<span class="role-badge admin" style="margin:0;">⭐ Admin</span>';
+  return '<span class="role-badge user" style="margin:0;">● Member</span>';
+}
+
+function getRoleActions(u) {
+  const isSelf    = u.id === currentUser.id;
+  const isSuperMe = currentUser.role === 'super_admin';
+  const target_is_super = u.role === 'super_admin';
+
+  if (isSelf) return '<span style="font-size:0.7rem;color:var(--text-dim);padding:0 4px;">You</span>';
+  if (target_is_super) return '<span style="font-size:0.7rem;color:var(--text-dim);padding:0 4px;">Protected</span>';
+
+  let btns = '<button class="action-btn" onclick="editUser(' + u.id + ')">Edit</button>';
+  btns    += '<button class="action-btn success" onclick="toggleStatus(' + u.id + ')">' + (u.status === 'active' ? 'Suspend' : 'Activate') + '</button>';
+
+  // Role promote/demote — super_admin only
+  if (isSuperMe) {
+    if (u.role === 'user') {
+      btns += '<button class="action-btn" style="background:rgba(201,168,76,0.1);border-color:rgba(201,168,76,0.3);color:var(--gold);" onclick="confirmRoleChange(' + u.id + ','admin')">⬆ Make Admin</button>';
+    } else if (u.role === 'admin') {
+      btns += '<button class="action-btn" style="background:rgba(79,163,232,0.1);border-color:rgba(79,163,232,0.25);color:var(--blue);" onclick="confirmRoleChange(' + u.id + ','user')">⬇ Remove Admin</button>';
+    }
+  }
+
+  btns += '<button class="action-btn danger" onclick="confirmDelete(' + u.id + ')">Delete</button>';
+  return btns;
+}
+
+function renderUserTable() {
+  const tbody = document.getElementById('userTableBody');
+  document.getElementById('adminUserCount').textContent = USERS.length;
+  tbody.innerHTML = USERS.map(u => {
+    const avatarBg = u.role === 'super_admin'
+      ? 'linear-gradient(135deg,#e8c97a,#c9a84c)'
+      : u.role === 'admin'
+      ? 'linear-gradient(135deg,var(--gold),var(--gold-light))'
+      : 'linear-gradient(135deg,var(--blue),#79c4f8)';
+    return \`
+    <tr>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:32px;height:32px;border-radius:50%;background:\${avatarBg};display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:700;font-size:0.72rem;color:#080c14;">\${u.firstName[0]}\${u.lastName[0]}</div>
+          <div>
+            <div style="font-weight:500;color:var(--text-bright);">\${u.firstName} \${u.lastName}</div>
+            <div style="font-size:0.7rem;color:var(--text-dim);">\${u.email}</div>
+          </div>
+        </div>
+      </td>
+      <td>\${getRoleBadge(u.role)}</td>
+      <td style="color:var(--text-dim);">\${u.dept}</td>
+      <td><span class="status-pill \${u.status}">\${u.status}</span></td>
+      <td style="color:var(--text-dim);font-size:0.78rem;">Just now</td>
+      <td><div class="action-btns">\${getRoleActions(u)}</div></td>
+    </tr>\`;
+  }).join('');
+}
+
+function renderPerms() {
+  document.getElementById('permsGrid').innerHTML = ADMIN_PERMS.map((p, i) => `
+    <div class="perm-card">
+      <div class="perm-icon">${p.icon}</div>
+      <div style="flex:1;">
+        <div class="perm-name">${p.name}</div>
+        <div class="perm-desc">${p.desc}</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" checked onchange="toast('Permission updated')">
+        <div class="toggle-track"></div>
+      </label>
+    </div>
+  `).join('');
+}
+
+function addUser() {
+  const name = prompt('Enter new user name:');
+  if (!name) return;
+  const email = prompt('Enter email:');
+  if (!email) return;
+  const parts = name.trim().split(' ');
+  USERS.push({
+    id: Date.now(), email, password: 'newuser123',
+    firstName: parts[0], lastName: parts[1] || 'User',
+    role: 'user', dept: '—', title: '—', phone: '', bio: '',
+    status: 'pending', joined: '2026'
+  });
+  renderUserTable();
+  toast(`User ${name} added ✓`);
+}
+
+function editUser(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  const newName = prompt(`Edit name for ${u.firstName} ${u.lastName}:`, `${u.firstName} ${u.lastName}`);
+  if (!newName) return;
+  const parts = newName.trim().split(' ');
+  u.firstName = parts[0];
+  u.lastName  = parts[1] || u.lastName;
+  renderUserTable();
+  toast('User updated ✓');
+}
+
+function toggleStatus(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  u.status = u.status === 'active' ? 'inactive' : 'active';
+  renderUserTable();
+  toast(`User ${u.status === 'active' ? 'activated' : 'suspended'} ✓`);
+}
+
+function confirmDelete(id) {
+  const u = USERS.find(x => x.id === id);
+  document.getElementById('modalTitle').textContent = 'Delete User';
+  document.getElementById('modalBody').textContent  = `Are you sure you want to permanently delete ${u.firstName} ${u.lastName}? This action cannot be undone.`;
+  document.getElementById('modalConfirmBtn').onclick = () => {
+    USERS.splice(USERS.findIndex(x => x.id === id), 1);
+    renderUserTable();
+    closeModal();
+    toast('User deleted');
+  };
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function confirmRoleChange(id, newRole) {
+  const u = USERS.find(x => x.id === id);
+  const isPromotion = newRole === 'admin';
+  const actionLabel = isPromotion ? 'Promote to Admin' : 'Remove Admin Role';
+  const actionDesc  = isPromotion
+    ? `Grant Admin privileges to ${u.firstName} ${u.lastName}? They will be able to manage users and access the admin panel.`
+    : `Remove Admin privileges from ${u.firstName} ${u.lastName}? They will revert to a standard Member account.`;
+
+  document.getElementById('modalTitle').textContent = actionLabel;
+  document.getElementById('modalBody').textContent  = actionDesc;
+
+  const confirmBtn = document.getElementById('modalConfirmBtn');
+  confirmBtn.textContent = isPromotion ? '⬆ Promote' : '⬇ Demote';
+  confirmBtn.style.background = isPromotion ? 'linear-gradient(135deg,var(--gold),var(--gold-light))' : 'var(--blue)';
+  confirmBtn.style.color = '#080c14';
+  confirmBtn.style.border = 'none';
+
+  confirmBtn.onclick = () => {
+    changeUserRole(id, newRole);
+    closeModal();
+  };
+
+  document.getElementById('confirmModal').classList.add('show');
+}
+
+function changeUserRole(id, newRole) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  if (currentUser.role !== 'super_admin') {
+    toast('Only Super Admins can change roles.');
+    return;
+  }
+  if (u.role === 'super_admin') {
+    toast('Cannot modify Super Admin role.');
+    return;
+  }
+  const oldRole = u.role;
+  u.role = newRole;
+  renderUserTable();
+  const msg = newRole === 'admin'
+    ? `✓ ${u.firstName} ${u.lastName} promoted to Admin`
+    : `✓ ${u.firstName} ${u.lastName} removed from Admin role`;
+  toast(msg);
+  // Update admin count stat
+  const adminCount = USERS.filter(x => x.role === 'admin').length;
+  const adminStatEl = document.querySelector('.stat-card.gold + .stat-card.emerald + .stat-card.blue .stat-num');
+  if (adminStatEl) adminStatEl.textContent = adminCount;
+}
+
+function closeModal() {
+  document.getElementById('confirmModal').classList.remove('show');
+  // Reset confirm button to default danger style
+  const btn = document.getElementById('modalConfirmBtn');
+  btn.textContent = 'Confirm';
+  btn.style.background = '';
+  btn.style.color = '';
+  btn.style.border = '';
+}
+
+
+function toast(msg, isError = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.style.borderLeftColor = isError ? 'var(--red)' : 'var(--emerald)';
+  el.style.borderColor = isError ? 'rgba(240,91,91,0.3)' : 'rgba(45,212,160,0.3)';
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Enter key on login
+document.getElementById('loginPassword').addEventListener('keydown', e => {
+  if (e.key === 'Enter') doLogin();
+});
+
+// ─── SIGNUP ───────────────────────────────────────────────────────
+let signupData = {};
+let currentStep = 1;
+
+function signupNext(step) {
+  const errEl = document.getElementById('signupError');
+  errEl.style.display = 'none';
+  if (step === 1) {
+    const fn  = document.getElementById('su_firstName').value.trim();
+    const ln  = document.getElementById('su_lastName').value.trim();
+    const em  = document.getElementById('su_email').value.trim();
+    const loc = document.getElementById('su_location').value.trim();
+    if (!fn || !ln) { showSignupError('Please enter your first and last name.'); return; }
+    if (!em.includes('@')) { showSignupError('Please enter a valid email address.'); return; }
+    if (USERS.find(u => u.email === em)) { showSignupError('An account with this email already exists.'); return; }
+    signupData.firstName = fn; signupData.lastName = ln;
+    signupData.email = em; signupData.location = loc;
+    goToStep(2);
+  } else if (step === 2) {
+    const co   = document.getElementById('su_company').value.trim();
+    const desg = document.getElementById('su_designation').value.trim();
+    const dept = document.getElementById('su_dept').value.trim();
+    const ind  = document.getElementById('su_industry').value;
+    if (!co)   { showSignupError('Please enter your company name.'); return; }
+    if (!desg) { showSignupError('Please enter your designation.'); return; }
+    signupData.company = co; signupData.designation = desg;
+    signupData.dept = dept; signupData.industry = ind;
+    goToStep(3);
+  }
+}
+
+function signupBack(step) { goToStep(step - 1); }
+
+function signupSubmit() {
+  const pw  = document.getElementById('su_password').value;
+  const cpw = document.getElementById('su_confirmPass').value;
+  const tms = document.getElementById('su_terms').checked;
+  document.getElementById('signupError').style.display = 'none';
+  if (pw.length < 8)   { showSignupError('Password must be at least 8 characters.'); return; }
+  if (pw !== cpw)       { showSignupError('Passwords do not match.'); return; }
+  if (!tms)             { showSignupError('Please accept the Terms of Service to continue.'); return; }
+  signupData.password = pw;
+  const newUser = {
+    id: Date.now(), email: signupData.email, password: signupData.password,
+    firstName: signupData.firstName, lastName: signupData.lastName,
+    role: 'user', dept: signupData.dept || '', title: signupData.designation || '',
+    designation: signupData.designation || '', company: signupData.company || '',
+    location: signupData.location || '', industry: signupData.industry || '',
+    phone: '', bio: '', status: 'active', joined: new Date().getFullYear().toString()
+  };
+  USERS.push(newUser);
+  document.getElementById('su_successName').textContent = 'Welcome, ' + newUser.firstName + '!';
+  document.getElementById('su_successMeta').innerHTML =
+    newUser.company + ' &nbsp;&middot;&nbsp; ' + newUser.designation +
+    (newUser.location ? '<br>&#128205; ' + newUser.location : '');
+  document.getElementById('signupBackLink').style.display = 'none';
+  goToStep(4);
+}
+
+function signupDone() {
+  document.getElementById('loginEmail').value    = signupData.email;
+  document.getElementById('loginPassword').value = '';
+  signupData = {}; currentStep = 1;
+  ['su_firstName','su_lastName','su_email','su_location',
+   'su_company','su_designation','su_dept','su_password','su_confirmPass'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  const termsEl = document.getElementById('su_terms');
+  if (termsEl) termsEl.checked = false;
+  const indEl = document.getElementById('su_industry');
+  if (indEl) indEl.value = '';
+  document.getElementById('signupBackLink').style.display = '';
+  goToStep(1, true);
+  showView('loginView');
+}
+
+function goToStep(n, silent) {
+  currentStep = n;
+  [1,2,3,4].forEach(i => {
+    document.getElementById('step' + i).classList.toggle('active', i === n);
+  });
+  [1,2,3].forEach(i => {
+    const dot   = document.getElementById('sd' + i);
+    const label = document.getElementById('slabel' + i);
+    if (i < n)       { dot.className = 'step-dot done';     dot.textContent = '✓'; }
+    else if (i === n){ dot.className = 'step-dot active';   dot.textContent = i; }
+    else             { dot.className = 'step-dot inactive'; dot.textContent = i; }
+    if (label) label.className = 'step-label-text' + (i === n ? ' active' : '');
+  });
+  [1,2].forEach(i => {
+    const line = document.getElementById('sl' + i);
+    if (line) line.className = 'step-line' + (i < n ? ' done' : '');
+  });
+  if (!silent) document.getElementById('signupError').style.display = 'none';
+}
+
+function showSignupError(msg) {
+  const el = document.getElementById('signupError');
+  el.textContent = msg; el.style.display = 'block';
+}
+
+function checkPwStrength(pw) {
+  const bar  = document.getElementById('pwStrengthBar');
+  const hint = document.getElementById('pwHint');
+  let score = 0;
+  if (pw.length >= 8)   score++;
+  if (pw.length >= 12)  score++;
+  if (/[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^A-Za-z0-9]/.test(pw)) score++;
+  const levels = [
+    { pct: '0%',   color: 'transparent',   label: 'Enter a password' },
+    { pct: '20%',  color: '#f05b5b',        label: 'Very weak' },
+    { pct: '40%',  color: '#f59e0b',        label: 'Weak' },
+    { pct: '60%',  color: '#ffd166',        label: 'Fair' },
+    { pct: '80%',  color: '#2dd4a0',        label: 'Strong' },
+    { pct: '100%', color: 'var(--gold)',    label: 'Very strong ✓' },
+  ];
+  const lvl = levels[Math.min(score, 5)];
+  bar.style.width = lvl.pct; bar.style.background = lvl.color;
+  hint.textContent = pw.length ? lvl.label : 'Enter a password';
+  hint.style.color = pw.length ? lvl.color : 'var(--text-dim)';
+}
+</script>
+</body>
+</html>
