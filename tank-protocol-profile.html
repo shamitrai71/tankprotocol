@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tank Protocol — Profile</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #080c14;
+  --surface:     #0f1520;
+  --surface2:    #141c2a;
+  --border:      #1e2d42;
+  --border2:     #253548;
+  --gold:        #c9a84c;
+  --gold-light:  #e8c97a;
+  --gold-dim:    rgba(201,168,76,0.12);
+  --gold-glow:   rgba(201,168,76,0.25);
+  --emerald:     #2dd4a0;
+  --red:         #f05b5b;
+  --blue:        #4fa3e8;
+  --amber:       #f59e0b;
+  --text:        #c8d6e5;
+  --text-dim:    #5a6e85;
+  --text-bright: #eaf2ff;
+  --display:     'Syne', sans-serif;
+  --body:        'DM Sans', sans-serif;
+  --mono:        'Share Tech Mono', monospace;
+  --r:           12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  font-family: var(--body);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ─ TOPBAR ──────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 58px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 100;
+}
+
+.topbar-brand {
+  display: flex; align-items: center; gap: 10px;
+  font-family: var(--display);
+  font-weight: 800; font-size: 1rem;
+  text-decoration: none;
+}
+
+.brand-mark {
+  width: 30px; height: 30px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; color: #080c14;
+}
+
+.brand-name {
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.topbar-right {
+  display: flex; align-items: center; gap: 12px;
+}
+
+.topbar-viewing {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  color: var(--text-dim);
+  padding: 3px 10px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  display: none;
+}
+
+.topbar-viewing.show { display: block; }
+.topbar-viewing span { color: var(--gold); }
+
+.btn-back {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--border2);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--body); font-size: 0.78rem;
+  cursor: pointer; text-decoration: none;
+  transition: all 0.18s;
+}
+.btn-back:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
+
+/* ─ MAIN LAYOUT ─────────────────────── */
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 36px 24px 80px;
+}
+
+/* ─ HERO BAND ───────────────────────── */
+.profile-hero {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: visible;
+  margin-bottom: 24px;
+}
+
+.hero-cover {
+  height: 140px;
+  background: linear-gradient(135deg, #0f1a2e 0%, #111d30 40%, #0d1720 100%);
+  border-radius: var(--r) var(--r) 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Geometric cover pattern */
+.hero-cover::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    linear-gradient(rgba(201,168,76,0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(201,168,76,0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.hero-cover::after {
+  content: '';
+  position: absolute;
+  right: -60px; top: -60px;
+  width: 280px; height: 280px;
+  background: radial-gradient(circle, rgba(201,168,76,0.1) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cover-edit-btn {
+  position: absolute;
+  bottom: 10px; right: 14px;
+  background: rgba(8,12,20,0.7);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  padding: 4px 10px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.18s;
+  display: none;
+}
+.cover-edit-btn:hover { border-color: var(--gold); color: var(--gold); }
+.cover-edit-btn.editable { display: flex; align-items: center; gap: 5px; }
+
+.hero-body {
+  padding: 0 28px 24px;
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  position: relative;
+}
+
+/* ─ AVATAR ──────────────────────────── */
+.avatar-wrap {
+  position: relative;
+  margin-top: -44px;
+  flex-shrink: 0;
+}
+
+.avatar-circle {
+  width: 96px; height: 96px;
+  border-radius: 50%;
+  border: 3px solid var(--bg);
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800; font-size: 2rem; color: #080c14;
+  box-shadow: 0 4px 24px rgba(201,168,76,0.2);
+  cursor: pointer;
+  position: relative;
+}
+
+.avatar-circle img {
+  width: 100%; height: 100%; object-fit: cover;
+  position: absolute; inset: 0;
+}
+
+.avatar-edit-overlay {
+  position: absolute; inset: 0;
+  background: rgba(8,12,20,0.6);
+  border-radius: 50%;
+  display: none;
+  align-items: center; justify-content: center;
+  font-size: 1.2rem;
+  backdrop-filter: blur(2px);
+  transition: all 0.2s;
+}
+
+.avatar-circle:hover .avatar-edit-overlay { display: flex; }
+.avatar-edit-overlay.editable { display: none; }
+.avatar-circle:hover .avatar-edit-overlay.editable { display: flex; }
+
+.avatar-online {
+  position: absolute;
+  bottom: 4px; right: 4px;
+  width: 14px; height: 14px;
+  background: var(--emerald);
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+  box-shadow: 0 0 6px var(--emerald);
+}
+
+/* ─ COMPANY LOGO ────────────────────── */
+.company-logo-wrap {
+  position: absolute;
+  bottom: 24px; right: 28px;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 4px;
+}
+
+.company-logo-box {
+  width: 64px; height: 64px;
+  border-radius: 10px;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.company-logo-box:hover { border-color: rgba(201,168,76,0.4); }
+
+.company-logo-box img {
+  width: 100%; height: 100%; object-fit: contain;
+  padding: 6px;
+}
+
+.company-logo-placeholder {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-align: center;
+  padding: 6px;
+  letter-spacing: 0.3px;
+}
+
+.logo-edit-hint {
+  font-family: var(--mono);
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+  display: none;
+}
+.logo-edit-hint.show { display: block; }
+
+/* ─ HERO INFO ───────────────────────── */
+.hero-info {
+  flex: 1;
+  padding-top: 12px;
+}
+
+.hero-name {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 1.6rem;
+  color: var(--text-bright);
+  line-height: 1.1;
+}
+
+.hero-designation {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+
+.hero-company {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--gold);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+}
+
+.hero-tags {
+  display: flex; gap: 8px; flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  letter-spacing: 0.3px;
+}
+
+.role-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-top: 8px;
+}
+.role-pill.admin { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
+.role-pill.super_admin { background: linear-gradient(135deg, rgba(232,201,122,0.15), rgba(201,168,76,0.08)); color: var(--gold-light); border: 1px solid rgba(232,201,122,0.35); }
+.role-pill.user { background: rgba(79,163,232,0.1); color: var(--blue); border: 1px solid rgba(79,163,232,0.25); }
+
+/* ─ EDIT / VIEW MODE TOGGLE ─────────── */
+.edit-toggle-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  border-top: 1px solid var(--border);
+  background: rgba(255,255,255,0.01);
+}
+
+.edit-mode-info {
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.edit-mode-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text-dim);
+}
+.edit-mode-dot.editing { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+
+.btn-edit-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-family: var(--body); font-size: 0.82rem; font-weight: 500;
+  cursor: pointer; transition: all 0.18s; border: 1px solid;
+}
+
+.btn-edit-toggle.view-mode {
+  background: var(--gold-dim);
+  border-color: rgba(201,168,76,0.3);
+  color: var(--gold);
+}
+.btn-edit-toggle.view-mode:hover { background: rgba(201,168,76,0.2); }
+
+.btn-edit-toggle.edit-mode {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-color: transparent;
+  color: #080c14;
+  font-weight: 700;
+}
+.btn-edit-toggle.edit-mode:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(201,168,76,0.3); }
+
+.btn-cancel {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text-dim);
+  font-family: var(--body); font-size: 0.82rem;
+  cursor: pointer; transition: all 0.18s; margin-right: 8px;
+}
+.btn-cancel:hover { border-color: var(--red); color: var(--red); }
+
+/* ─ CONTENT GRID ────────────────────── */
+.content-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .content-grid { grid-template-columns: 1fr; }
+}
+
+/* ─ CARDS ───────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 24px;
+  margin-bottom: 20px;
+}
+
+.card-header {
+  font-family: var(--display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  display: flex; align-items: center; gap: 8px;
+}
+.card-header::before {
+  content: ''; width: 3px; height: 13px;
+  background: var(--gold); border-radius: 2px;
+}
+
+/* ─ FORM FIELDS ─────────────────────── */
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.field-grid.full { grid-template-columns: 1fr; }
+.field-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+
+.form-field label {
+  display: block;
+  font-size: 0.68rem; font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+/* VIEW MODE: static display */
+.field-value {
+  font-size: 0.88rem; color: var(--text-bright);
+  padding: 9px 0;
+  border-bottom: 1px solid rgba(30,45,66,0.4);
+  min-height: 36px;
+  line-height: 1.5;
+}
+.field-value.empty { color: var(--text-dim); font-style: italic; font-size: 0.8rem; }
+
+/* EDIT MODE: inputs */
+.field-input {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: var(--body); font-size: 0.85rem;
+  padding: 9px 13px; outline: none;
+  transition: all 0.18s;
+  display: none;
+  resize: none;
+}
+.field-input:focus {
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.03);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+.field-input option { background: #0f1520; }
+
+/* Toggle between view/edit */
+body.editing .field-value  { display: none; }
+body.editing .field-input  { display: block; }
+body.editing .cover-edit-btn.editable { display: flex; }
+
+/* ─ REPORTS SECTION ─────────────────── */
+.report-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 13px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+.report-item:hover { border-color: var(--border2); }
+
+.report-file-icon {
+  width: 38px; height: 38px;
+  border-radius: 8px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+
+.report-info { flex: 1; min-width: 0; }
+.report-title {
+  font-size: 0.83rem; font-weight: 500;
+  color: var(--text-bright);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.report-meta {
+  font-family: var(--mono); font-size: 0.63rem;
+  color: var(--text-dim); margin-top: 3px;
+}
+
+.btn-dl {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 6px;
+  color: var(--gold);
+  font-family: var(--mono); font-size: 0.65rem;
+  cursor: pointer; transition: all 0.15s;
+  white-space: nowrap; flex-shrink: 0;
+  text-decoration: none;
+}
+.btn-dl:hover { background: rgba(201,168,76,0.2); }
+
+.report-delete-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: none;
+}
+.report-delete-btn:hover { border-color: rgba(240,91,91,0.3); color: var(--red); }
+body.editing .report-delete-btn { display: block; }
+
+.reports-empty {
+  text-align: center;
+  padding: 32px;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  border: 1px dashed var(--border);
+  border-radius: 9px;
+}
+
+/* ─ SIDEBAR CARDS ───────────────────── */
+.info-row {
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(30,45,66,0.5);
+}
+.info-row:last-child { border-bottom: none; }
+
+.info-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; opacity: 0.7; }
+.info-label { font-size: 0.65rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+.info-val   { font-size: 0.83rem; color: var(--text-bright); }
+.info-val.empty { color: var(--text-dim); font-style: italic; font-size: 0.78rem; }
+
+/* Stats row */
+.stat-mini-grid {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.stat-mini {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+.stat-mini-num {
+  font-family: var(--display);
+  font-weight: 800; font-size: 1.4rem;
+  color: var(--text-bright); line-height: 1;
+}
+.stat-mini-label {
+  font-size: 0.65rem; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+/* Progress bar */
+.prog-row { margin-bottom: 10px; }
+.prog-label-row {
+  display: flex; justify-content: space-between;
+  font-size: 0.72rem; margin-bottom: 4px;
+}
+.prog-label-row span:last-child {
+  font-family: var(--mono); color: var(--gold); font-size: 0.68rem;
+}
+.prog-track {
+  height: 4px; background: rgba(255,255,255,0.05);
+  border-radius: 4px; overflow: hidden;
+}
+.prog-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+}
+
+/* Badge */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 600;
+}
+.badge.gold   { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+.badge.green  { background: rgba(45,212,160,0.1);  color: var(--emerald); border: 1px solid rgba(45,212,160,0.2); }
+.badge.blue   { background: rgba(79,163,232,0.1);  color: var(--blue); border: 1px solid rgba(79,163,232,0.2); }
+
+/* Toast */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface);
+  border: 1px solid rgba(45,212,160,0.3);
+  border-left: 3px solid var(--emerald);
+  border-radius: 8px; color: var(--text-bright);
+  font-size: 0.8rem; padding: 12px 18px;
+  z-index: 9999; transform: translateY(60px); opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none; backdrop-filter: blur(16px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* Hidden file inputs */
+.hidden-file { display: none; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* Admin viewer badge */
+.admin-view-banner {
+  display: none;
+  align-items: center; gap: 10px;
+  padding: 10px 16px;
+  background: rgba(232,201,122,0.06);
+  border: 1px solid rgba(232,201,122,0.2);
+  border-radius: 8px;
+  margin-bottom: 20px;
+  font-size: 0.78rem; color: var(--text-dim);
+}
+.admin-view-banner.show { display: flex; }
+.admin-view-banner strong { color: var(--gold-light); }
+
+</style>
+</head>
+<body>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <a href="tank-protocol-app.html" class="topbar-brand">
+    <div class="brand-mark">T</div>
+    <div class="brand-name">Tank Protocol</div>
+  </a>
+  <div class="topbar-right">
+    <div class="topbar-viewing" id="viewingBanner">
+      Viewing: <span id="viewingName"></span>
+    </div>
+    <a href="tank-protocol-app.html" class="btn-back">← Back to Portal</a>
+  </div>
+</div>
+
+<!-- HIDDEN FILE INPUTS -->
+<input type="file" class="hidden-file" id="avatarFileInput" accept="image/*" onchange="handleAvatarUpload(event)">
+<input type="file" class="hidden-file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)">
+
+<div class="page">
+
+  <!-- Admin viewing banner -->
+  <div class="admin-view-banner" id="adminViewBanner">
+    <span>👑</span>
+    <span>Super Admin mode — you are editing <strong id="adminViewName"></strong>'s profile</span>
+  </div>
+
+  <!-- ══ HERO ══════════════════════════════════════════════ -->
+  <div class="profile-hero">
+    <div class="hero-cover" id="heroCover">
+      <button class="cover-edit-btn editable" onclick="changeCover()">✏ Change Cover</button>
+    </div>
+
+    <div class="hero-body">
+      <!-- Avatar -->
+      <div class="avatar-wrap">
+        <div class="avatar-circle" id="avatarCircle" onclick="triggerAvatarUpload()">
+          <span id="avatarInitials">?</span>
+          <img id="avatarImg" src="" alt="" style="display:none;">
+          <div class="avatar-edit-overlay editable">📷</div>
+        </div>
+        <div class="avatar-online"></div>
+      </div>
+
+      <!-- Name + info -->
+      <div class="hero-info">
+        <div class="hero-name" id="heroName">—</div>
+        <div class="hero-designation" id="heroDesignation"></div>
+        <div class="hero-company" id="heroCompany"></div>
+        <div class="hero-tags" id="heroTags"></div>
+      </div>
+
+      <!-- Company logo -->
+      <div class="company-logo-wrap">
+        <div class="company-logo-box" id="companyLogoBox" onclick="triggerLogoUpload()">
+          <img id="companyLogoImg" src="" alt="" style="display:none;">
+          <div class="company-logo-placeholder" id="companyLogoPlaceholder">
+            🏢<br>Company<br>Logo
+          </div>
+        </div>
+        <div class="logo-edit-hint" id="logoEditHint">Click to upload</div>
+      </div>
+    </div>
+
+    <!-- Edit toggle bar -->
+    <div class="edit-toggle-bar">
+      <div class="edit-mode-info">
+        <div class="edit-mode-dot" id="editModeDot"></div>
+        <span id="editModeLabel">View mode</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">✕ Cancel</button>
+        <button class="btn-edit-toggle view-mode" id="editToggleBtn" onclick="toggleEdit()">✏ Edit Profile</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MAIN CONTENT ════════════════════════════════════════ -->
+  <div class="content-grid">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- Personal Information -->
+      <div class="card">
+        <div class="card-header">Personal Information</div>
+
+        <div class="field-grid">
+          <div class="form-field">
+            <label>First Name</label>
+            <div class="field-value" id="v_firstName">—</div>
+            <input class="field-input" id="e_firstName" type="text" placeholder="First Name">
+          </div>
+          <div class="form-field">
+            <label>Last Name</label>
+            <div class="field-value" id="v_lastName">—</div>
+            <input class="field-input" id="e_lastName" type="text" placeholder="Last Name">
+          </div>
+          <div class="form-field">
+            <label>Email Address</label>
+            <div class="field-value" id="v_email">—</div>
+            <input class="field-input" id="e_email" type="email" placeholder="email@company.com" disabled style="opacity:0.5;">
+          </div>
+          <div class="form-field">
+            <label>Phone Number</label>
+            <div class="field-value" id="v_phone"></div>
+            <input class="field-input" id="e_phone" type="tel" placeholder="+1 (555) 000-0000">
+          </div>
+          <div class="form-field">
+            <label>Location / City</label>
+            <div class="field-value" id="v_location"></div>
+            <input class="field-input" id="e_location" type="text" placeholder="e.g. Mumbai, India">
+          </div>
+          <div class="form-field">
+            <label>LinkedIn</label>
+            <div class="field-value" id="v_linkedin"></div>
+            <input class="field-input" id="e_linkedin" type="url" placeholder="https://linkedin.com/in/yourname">
+          </div>
+        </div>
+
+        <div class="field-grid full">
+          <div class="form-field">
+            <label>Professional Bio</label>
+            <div class="field-value" id="v_bio"></div>
+            <textarea class="field-input" id="e_bio" rows="4" placeholder="Write a short professional bio…"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Business / Professional Details -->
+      <div class="card">
+        <div class="card-header">Business &amp; Professional Details</div>
+
+        <div class="field-grid">
+          <div class="form-field">
+            <label>Company Name</label>
+            <div class="field-value" id="v_company">—</div>
+            <input class="field-input" id="e_company" type="text" placeholder="e.g. ESRAI Group">
+          </div>
+          <div class="form-field">
+            <label>Job Title / Designation</label>
+            <div class="field-value" id="v_designation">—</div>
+            <input class="field-input" id="e_designation" type="text" placeholder="e.g. Environmental Engineer">
+          </div>
+          <div class="form-field">
+            <label>Department</label>
+            <div class="field-value" id="v_dept">—</div>
+            <input class="field-input" id="e_dept" type="text" placeholder="e.g. HSE / Engineering">
+          </div>
+          <div class="form-field">
+            <label>Industry</label>
+            <div class="field-value" id="v_industry">—</div>
+            <select class="field-input" id="e_industry">
+              <option value="">Select industry…</option>
+              <option>Oil &amp; Gas</option>
+              <option>Petrochemicals</option>
+              <option>Refining</option>
+              <option>Environmental Consulting</option>
+              <option>HSE / Compliance</option>
+              <option>Regulatory / Government</option>
+              <option>Academic / Research</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label>Company Website</label>
+            <div class="field-value" id="v_website">—</div>
+            <input class="field-input" id="e_website" type="url" placeholder="https://yourcompany.com">
+          </div>
+          <div class="form-field">
+            <label>Years of Experience</label>
+            <div class="field-value" id="v_experience">—</div>
+            <select class="field-input" id="e_experience">
+              <option value="">Select…</option>
+              <option>0-2 years</option>
+              <option>2-5 years</option>
+              <option>5-10 years</option>
+              <option>10-15 years</option>
+              <option>15-20 years</option>
+              <option>20+ years</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-grid full">
+          <div class="form-field">
+            <label>Specialisations / Areas of Expertise</label>
+            <div class="field-value" id="v_specialisations"></div>
+            <input class="field-input" id="e_specialisations" type="text" placeholder="e.g. VOC Emissions, API 19.2, Environmental Compliance">
+          </div>
+        </div>
+
+        <!-- Save button — only visible in edit mode -->
+        <div id="saveSection" style="display:none;margin-top:8px;">
+          <button onclick="saveProfile()" style="display:inline-flex;align-items:center;gap:7px;padding:11px 24px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.88rem;cursor:pointer;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 18px rgba(201,168,76,0.3)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
+            ✓ Save Changes
+          </button>
+        </div>
+      </div>
+
+      <!-- My Reports -->
+      <div class="card">
+        <div class="card-header" style="justify-content:space-between;">
+          <span style="display:flex;align-items:center;gap:8px;">
+            <span style="content:'';width:3px;height:13px;background:var(--gold);border-radius:2px;display:inline-block;"></span>
+            My Reports
+          </span>
+          <span class="badge gold" id="reportCountBadge">0 reports</span>
+        </div>
+
+        <div id="reportsContainer">
+          <div class="reports-empty">No reports generated yet. Run a calculation to generate your first report.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+
+      <!-- Quick Stats -->
+      <div class="card">
+        <div class="card-header">Activity</div>
+        <div class="stat-mini-grid">
+          <div class="stat-mini">
+            <div class="stat-mini-num" id="statCalcs">0</div>
+            <div class="stat-mini-label">Calculations</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-num" id="statReports">0</div>
+            <div class="stat-mini-label">Reports</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-num" id="statYear">—</div>
+            <div class="stat-mini-label">Member Since</div>
+          </div>
+          <div class="stat-mini">
+            <div class="stat-mini-num">●</div>
+            <div class="stat-mini-label" style="color:var(--emerald);">Online</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="card">
+        <div class="card-header">Contact</div>
+        <div class="info-row">
+          <div class="info-icon">✉</div>
+          <div>
+            <div class="info-label">Email</div>
+            <div class="info-val" id="ci_email">—</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">📞</div>
+          <div>
+            <div class="info-label">Phone</div>
+            <div class="info-val" id="ci_phone">—</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">📍</div>
+          <div>
+            <div class="info-label">Location</div>
+            <div class="info-val" id="ci_location">—</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">🔗</div>
+          <div>
+            <div class="info-label">LinkedIn</div>
+            <div class="info-val" id="ci_linkedin">—</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">🌐</div>
+          <div>
+            <div class="info-label">Website</div>
+            <div class="info-val" id="ci_website">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Completion -->
+      <div class="card">
+        <div class="card-header">Profile Completion</div>
+        <div id="completionBars"></div>
+        <div style="margin-top:12px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;font-size:0.72rem;color:var(--text-dim);text-align:center;">
+          <span id="completionPct" style="font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--gold);">0%</span>
+          <div style="margin-top:2px;letter-spacing:0.3px;">Profile Complete</div>
+        </div>
+      </div>
+
+      <!-- Account Info -->
+      <div class="card">
+        <div class="card-header">Account</div>
+        <div class="info-row">
+          <div class="info-icon">🏷</div>
+          <div>
+            <div class="info-label">Role</div>
+            <div class="info-val"><span id="ci_role">—</span></div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">📅</div>
+          <div>
+            <div class="info-label">Member Since</div>
+            <div class="info-val" id="ci_joined">—</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">🏭</div>
+          <div>
+            <div class="info-label">Industry</div>
+            <div class="info-val" id="ci_industry">—</div>
+          </div>
+        </div>
+        <div class="info-row">
+          <div class="info-icon">⏱</div>
+          <div>
+            <div class="info-label">Experience</div>
+            <div class="info-val" id="ci_experience">—</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div><!-- .page -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DEMO USER DATA ─────────────────────────────────────────────
+// In production this would come from sessionStorage / API
+const DEMO_USERS = [
+  {
+    id: 0, email: 'esraigroup@gmail.com', firstName: 'ESRAI', lastName: 'Group',
+    role: 'super_admin', dept: 'Executive', title: 'Super Administrator',
+    company: 'ESRAI Group', designation: 'Super Administrator',
+    location: 'Mumbai, India', industry: 'Oil & Gas',
+    phone: '', bio: 'Root-level platform access with all privileges.',
+    linkedin: '', website: 'https://esraigroup.com', experience: '20+ years',
+    specialisations: 'Environmental Compliance, VOC Emissions, API Standards',
+    joined: '2022', calcs: 142, reports: 18,
+    avatar: '', logo: '',
+    myReports: [
+      { name: 'ESRAI_TK-01_CrudeOil_Report', tank: 'TK-01', liquid: 'Crude Oil Light', date: 'Mar 21, 2026', type: 'EFRT', size: '152 KB' },
+      { name: 'ESRAI_TK-04_Gasoline_Report', tank: 'TK-04', liquid: 'Gasoline RVP 10', date: 'Mar 18, 2026', type: 'EFRT', size: '148 KB' },
+      { name: 'ESRAI_TK-07_Diesel_Report',   tank: 'TK-07', liquid: 'Diesel No. 2',   date: 'Mar 14, 2026', type: 'IFRT', size: '141 KB' },
+    ]
+  },
+  {
+    id: 1, email: 'admin@tankprotocol.com', firstName: 'Alexandra', lastName: 'Stone',
+    role: 'admin', dept: 'Management', title: 'System Administrator',
+    company: 'Tank Protocol', designation: 'System Administrator',
+    location: 'Houston, TX', industry: 'Oil & Gas',
+    phone: '+1 (555) 010-2030', bio: 'Platform admin with full system access.',
+    linkedin: 'https://linkedin.com/in/alexandrastone', website: '', experience: '10-15 years',
+    specialisations: 'Platform Administration, User Management',
+    joined: '2023', calcs: 58, reports: 7,
+    avatar: '', logo: '',
+    myReports: [
+      { name: 'Alexandra_TK-22_Gasoline_Report', tank: 'TK-22', liquid: 'Gasoline RVP 7', date: 'Mar 19, 2026', type: 'EFRT', size: '146 KB' },
+    ]
+  },
+  {
+    id: 2, email: 'user@tankprotocol.com', firstName: 'Jordan', lastName: 'Lee',
+    role: 'user', dept: 'Engineering', title: 'Senior Engineer',
+    company: 'Tank Protocol', designation: 'Senior Engineer',
+    location: 'Austin, TX', industry: 'Petrochemicals',
+    phone: '+1 (555) 040-5060', bio: 'Works on backend systems and data pipelines.',
+    linkedin: '', website: '', experience: '5-10 years',
+    specialisations: 'Process Engineering, Emissions Modelling',
+    joined: '2024', calcs: 34, reports: 4,
+    avatar: '', logo: '',
+    myReports: [
+      { name: 'Jordan_TK-33_JetA_Report', tank: 'TK-33', liquid: 'Jet A', date: 'Mar 16, 2026', type: 'EFRT', size: '143 KB' },
+    ]
+  }
+];
+
+// ── SESSION & INIT ─────────────────────────────────────────────
+// Read from sessionStorage (written by login page)
+// Fallback to super admin for demo purposes
+let sessionUser = null;
+let viewingUser = null;  // the user whose profile is shown
+let isSuperAdmin = false;
+let isEditable = false;
+let pendingChanges = {};
+
+function init() {
+  // Try reading session
+  const raw = sessionStorage.getItem('tp_session');
+  if (raw) {
+    try { sessionUser = JSON.parse(raw); } catch(e) {}
+  }
+
+  // Fallback demo: use super admin
+  if (!sessionUser) {
+    sessionUser = { id: 0, firstName: 'ESRAI', lastName: 'Group', role: 'super_admin', email: 'esraigroup@gmail.com' };
+  }
+
+  isSuperAdmin = sessionUser.role === 'super_admin';
+
+  // Check URL param: ?view=userId  (super admin can view others)
+  const params = new URLSearchParams(window.location.search);
+  const viewId = params.get('view');
+
+  if (viewId && isSuperAdmin) {
+    viewingUser = DEMO_USERS.find(u => u.id === parseInt(viewId)) || DEMO_USERS.find(u => u.id === sessionUser.id);
+    if (viewingUser.id !== sessionUser.id) {
+      document.getElementById('adminViewBanner').classList.add('show');
+      document.getElementById('adminViewName').textContent = viewingUser.firstName + ' ' + viewingUser.lastName;
+      document.getElementById('viewingBanner').classList.add('show');
+      document.getElementById('viewingName').textContent = viewingUser.firstName + ' ' + viewingUser.lastName;
+    }
+  } else {
+    viewingUser = DEMO_USERS.find(u => u.id === sessionUser.id) || DEMO_USERS[0];
+  }
+
+  // Can edit if own profile OR super admin
+  isEditable = (viewingUser.id === sessionUser.id) || isSuperAdmin;
+
+  if (!isEditable) {
+    document.getElementById('editToggleBtn').style.display = 'none';
+  }
+
+  renderProfile();
+}
+
+// ── RENDER PROFILE ─────────────────────────────────────────────
+function renderProfile() {
+  const u = viewingUser;
+
+  // Hero
+  document.getElementById('heroName').textContent        = u.firstName + ' ' + u.lastName;
+  document.getElementById('heroDesignation').textContent = u.designation || u.title || '';
+  document.getElementById('heroCompany').textContent     = u.company ? '🏢 ' + u.company : '';
+
+  // Tags
+  const tags = [u.industry, u.location, u.experience].filter(Boolean);
+  document.getElementById('heroTags').innerHTML = tags.map(t =>
+    `<span class="hero-tag">${t}</span>`
+  ).join('') + `<span class="role-pill ${u.role}">${u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'admin' ? '⭐ Admin' : '● Member'}</span>`;
+
+  // Avatar
+  document.getElementById('avatarInitials').textContent = (u.firstName[0] + (u.lastName[0] || '')).toUpperCase();
+  if (u.avatar) {
+    document.getElementById('avatarImg').src = u.avatar;
+    document.getElementById('avatarImg').style.display = '';
+    document.getElementById('avatarInitials').style.display = 'none';
+  }
+
+  // Company logo
+  if (u.logo) {
+    document.getElementById('companyLogoImg').src = u.logo;
+    document.getElementById('companyLogoImg').style.display = '';
+    document.getElementById('companyLogoPlaceholder').style.display = 'none';
+  }
+
+  // View fields
+  setField('firstName', u.firstName);
+  setField('lastName', u.lastName);
+  setField('email', u.email);
+  setField('phone', u.phone);
+  setField('location', u.location);
+  setField('linkedin', u.linkedin, true);
+  setField('bio', u.bio);
+  setField('company', u.company);
+  setField('designation', u.designation || u.title);
+  setField('dept', u.dept);
+  setField('industry', u.industry);
+  setField('website', u.website, true);
+  setField('experience', u.experience);
+  setField('specialisations', u.specialisations);
+
+  // Sidebar contact
+  setText('ci_email', u.email);
+  setText('ci_phone', u.phone || '—');
+  setText('ci_location', u.location || '—');
+  setText('ci_industry', u.industry || '—');
+  setText('ci_experience', u.experience || '—');
+  setText('ci_joined', u.joined);
+  document.getElementById('ci_role').innerHTML = `<span class="badge ${u.role === 'super_admin' ? 'gold' : u.role === 'admin' ? 'gold' : 'blue'}">${u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'admin' ? '⭐ Admin' : '● Member'}</span>`;
+
+  const liEl = document.getElementById('ci_linkedin');
+  if (u.linkedin) {
+    liEl.innerHTML = `<a href="${u.linkedin}" target="_blank" style="color:var(--blue);text-decoration:none;">${u.linkedin.replace('https://','')}</a>`;
+  } else { liEl.textContent = '—'; }
+
+  const wsEl = document.getElementById('ci_website');
+  if (u.website) {
+    wsEl.innerHTML = `<a href="${u.website}" target="_blank" style="color:var(--blue);text-decoration:none;">${u.website.replace('https://','')}</a>`;
+  } else { wsEl.textContent = '—'; }
+
+  // Stats
+  document.getElementById('statCalcs').textContent  = u.calcs || 0;
+  document.getElementById('statReports').textContent = u.reports || 0;
+  document.getElementById('statYear').textContent   = u.joined || '—';
+
+  // Reports
+  renderReports(u.myReports || []);
+
+  // Completion
+  calcCompletion();
+}
+
+function setField(id, val, isLink) {
+  const vEl = document.getElementById('v_' + id);
+  const eEl = document.getElementById('e_' + id);
+  if (!vEl) return;
+  if (val) {
+    if (isLink && val.startsWith('http')) {
+      vEl.innerHTML = `<a href="${val}" target="_blank" style="color:var(--blue);text-decoration:none;">${val}</a>`;
+    } else {
+      vEl.textContent = val;
+    }
+    vEl.classList.remove('empty');
+  } else {
+    vEl.textContent = 'Not set';
+    vEl.classList.add('empty');
+  }
+  if (eEl) {
+    if (eEl.tagName === 'SELECT') {
+      for (let i = 0; i < eEl.options.length; i++) {
+        if (eEl.options[i].text === val || eEl.options[i].value === val) {
+          eEl.selectedIndex = i; break;
+        }
+      }
+    } else {
+      eEl.value = val || '';
+    }
+  }
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val || '—';
+}
+
+// ── REPORTS ───────────────────────────────────────────────────
+function renderReports(reports) {
+  const c = document.getElementById('reportsContainer');
+  const badge = document.getElementById('reportCountBadge');
+  badge.textContent = reports.length + (reports.length === 1 ? ' report' : ' reports');
+
+  if (!reports.length) {
+    c.innerHTML = `<div class="reports-empty">No reports generated yet.<br>Run a calculation to generate your first report.</div>`;
+    return;
+  }
+
+  c.innerHTML = reports.map((r, idx) => `
+    <div class="report-item" id="ritem_${idx}">
+      <div class="report-file-icon">📄</div>
+      <div class="report-info">
+        <div class="report-title">${r.name}</div>
+        <div class="report-meta">
+          Tank: ${r.tank} &nbsp;·&nbsp; ${r.liquid} &nbsp;·&nbsp;
+          <span class="badge ${r.type === 'EFRT' ? 'gold' : 'blue'}" style="padding:1px 6px;font-size:0.58rem;">${r.type}</span>
+          &nbsp;·&nbsp; ${r.date} &nbsp;·&nbsp; ${r.size}
+        </div>
+      </div>
+      <button class="btn-dl" onclick="downloadReport('${r.name}')">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+          <path d="M5.5 1v7M2.5 5.5l3 3 3-3M1 10h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Download
+      </button>
+      <button class="report-delete-btn" onclick="deleteReport(${idx})" title="Remove report">🗑</button>
+    </div>
+  `).join('');
+}
+
+function downloadReport(name) {
+  showToast('Downloading ' + name + '.html');
+}
+
+function deleteReport(idx) {
+  viewingUser.myReports.splice(idx, 1);
+  viewingUser.reports = viewingUser.myReports.length;
+  renderReports(viewingUser.myReports);
+  document.getElementById('statReports').textContent = viewingUser.myReports.length;
+  showToast('Report removed');
+}
+
+// ── EDIT MODE ─────────────────────────────────────────────────
+let editingActive = false;
+
+function toggleEdit() {
+  editingActive = !editingActive;
+  applyEditMode();
+}
+
+function applyEditMode() {
+  if (editingActive) {
+    document.body.classList.add('editing');
+    document.getElementById('editToggleBtn').className  = 'btn-edit-toggle edit-mode';
+    document.getElementById('editToggleBtn').textContent = '✓ Save Changes';
+    document.getElementById('editToggleBtn').onclick = saveProfile;
+    document.getElementById('cancelBtn').style.display = '';
+    document.getElementById('saveSection').style.display = 'block';
+    document.getElementById('editModeDot').classList.add('editing');
+    document.getElementById('editModeLabel').textContent = 'Editing profile';
+    document.getElementById('logoEditHint').classList.add('show');
+  } else {
+    document.body.classList.remove('editing');
+    document.getElementById('editToggleBtn').className  = 'btn-edit-toggle view-mode';
+    document.getElementById('editToggleBtn').textContent = '✏ Edit Profile';
+    document.getElementById('editToggleBtn').onclick = toggleEdit;
+    document.getElementById('cancelBtn').style.display = 'none';
+    document.getElementById('saveSection').style.display = 'none';
+    document.getElementById('editModeDot').classList.remove('editing');
+    document.getElementById('editModeLabel').textContent = 'View mode';
+    document.getElementById('logoEditHint').classList.remove('show');
+  }
+}
+
+function cancelEdit() {
+  editingActive = false;
+  applyEditMode();
+  renderProfile(); // restore original values
+  showToast('Changes discarded');
+}
+
+function saveProfile() {
+  const u = viewingUser;
+
+  // Read all editable fields
+  u.firstName       = document.getElementById('e_firstName').value.trim()       || u.firstName;
+  u.lastName        = document.getElementById('e_lastName').value.trim()         || u.lastName;
+  u.phone           = document.getElementById('e_phone').value.trim();
+  u.location        = document.getElementById('e_location').value.trim();
+  u.linkedin        = document.getElementById('e_linkedin').value.trim();
+  u.bio             = document.getElementById('e_bio').value.trim();
+  u.company         = document.getElementById('e_company').value.trim();
+  u.designation     = document.getElementById('e_designation').value.trim();
+  u.dept            = document.getElementById('e_dept').value.trim();
+  u.industry        = document.getElementById('e_industry').value;
+  u.website         = document.getElementById('e_website').value.trim();
+  u.experience      = document.getElementById('e_experience').value;
+  u.specialisations = document.getElementById('e_specialisations').value.trim();
+  u.title           = u.designation;
+
+  editingActive = false;
+  applyEditMode();
+  renderProfile();
+  showToast('Profile saved successfully ✓');
+}
+
+// ── AVATAR & LOGO UPLOAD ──────────────────────────────────────
+function triggerAvatarUpload() {
+  if (!isEditable) return;
+  document.getElementById('avatarFileInput').click();
+}
+
+function handleAvatarUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    viewingUser.avatar = ev.target.result;
+    document.getElementById('avatarImg').src = ev.target.result;
+    document.getElementById('avatarImg').style.display = '';
+    document.getElementById('avatarInitials').style.display = 'none';
+    showToast('Profile photo updated ✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function triggerLogoUpload() {
+  if (!isEditable) return;
+  document.getElementById('logoFileInput').click();
+}
+
+function handleLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    viewingUser.logo = ev.target.result;
+    document.getElementById('companyLogoImg').src = ev.target.result;
+    document.getElementById('companyLogoImg').style.display = '';
+    document.getElementById('companyLogoPlaceholder').style.display = 'none';
+    showToast('Company logo updated ✓');
+  };
+  reader.readAsDataURL(file);
+}
+
+function changeCover() {
+  // Cycle through preset gradient covers
+  const covers = [
+    'linear-gradient(135deg, #0f1a2e 0%, #111d30 40%, #0d1720 100%)',
+    'linear-gradient(135deg, #1a0e2e 0%, #1d1130 40%, #170d20 100%)',
+    'linear-gradient(135deg, #0e1a18 0%, #101d1b 40%, #0d1714 100%)',
+    'linear-gradient(135deg, #1a1a0e 0%, #1d1d10 40%, #17170d 100%)',
+    'linear-gradient(135deg, #1a0e0e 0%, #1d1010 40%, #170d0d 100%)',
+  ];
+  const current = document.getElementById('heroCover').style.background;
+  const idx = covers.findIndex(c => c === current);
+  document.getElementById('heroCover').style.background = covers[(idx + 1) % covers.length];
+  showToast('Cover updated');
+}
+
+// ── PROFILE COMPLETION ────────────────────────────────────────
+function calcCompletion() {
+  const u = viewingUser;
+  const fields = [
+    { label: 'Personal Info', val: u.firstName && u.lastName && u.phone && u.location },
+    { label: 'Business Details', val: u.company && u.designation && u.industry },
+    { label: 'Bio',            val: !!u.bio },
+    { label: 'Profile Photo',  val: !!u.avatar },
+    { label: 'Company Logo',   val: !!u.logo },
+    { label: 'Contact Links',  val: !!u.linkedin || !!u.website },
+  ];
+
+  const done  = fields.filter(f => f.val).length;
+  const total = fields.length;
+  const pct   = Math.round((done / total) * 100);
+
+  document.getElementById('completionPct').textContent = pct + '%';
+
+  document.getElementById('completionBars').innerHTML = fields.map(f => `
+    <div class="prog-row">
+      <div class="prog-label-row">
+        <span style="font-size:0.72rem;color:${f.val ? 'var(--text)' : 'var(--text-dim)'};">${f.val ? '✓' : '○'} ${f.label}</span>
+        <span>${f.val ? '100%' : '0%'}</span>
+      </div>
+      <div class="prog-track">
+        <div class="prog-fill" style="width:${f.val ? '100%' : '0%'};background:${f.val ? 'linear-gradient(90deg,var(--gold),var(--gold-light))' : 'transparent'}"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── START ─────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
