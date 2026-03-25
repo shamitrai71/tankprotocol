@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tank Protocol — Admin Panel</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:          #080c14;
+  --surface:     #0f1520;
+  --surface2:    #141c2a;
+  --border:      #1e2d42;
+  --border2:     #253548;
+  --gold:        #c9a84c;
+  --gold-light:  #e8c97a;
+  --gold-dim:    rgba(201,168,76,0.12);
+  --gold-glow:   rgba(201,168,76,0.25);
+  --emerald:     #2dd4a0;
+  --red:         #f05b5b;
+  --blue:        #4fa3e8;
+  --amber:       #f59e0b;
+  --text:        #c8d6e5;
+  --text-dim:    #5a6e85;
+  --text-bright: #eaf2ff;
+  --display:     'Syne', sans-serif;
+  --body:        'DM Sans', sans-serif;
+  --mono:        'Share Tech Mono', monospace;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+
+/* ── SIDEBAR ─────────────────────────── */
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800; font-size: 15px;
+  color: #080c14; flex-shrink: 0;
+}
+
+.brand-text .b-name {
+  font-family: var(--display);
+  font-weight: 800; font-size: 0.95rem;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  letter-spacing: 0.5px; line-height: 1;
+}
+
+.brand-text .b-sub {
+  font-family: var(--mono);
+  font-size: 0.58rem; color: var(--text-dim);
+  letter-spacing: 0.8px; margin-top: 2px;
+  text-transform: uppercase;
+}
+
+.sidebar-section {
+  padding: 18px 12px 6px;
+}
+
+.sidebar-section-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  font-weight: 400;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+  user-select: none;
+}
+
+.nav-item:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.nav-item.active {
+  background: var(--gold-dim);
+  color: var(--gold);
+  border-color: rgba(201,168,76,0.25);
+  font-weight: 500;
+}
+
+.nav-icon {
+  font-size: 1rem; flex-shrink: 0; width: 18px; text-align: center;
+}
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--gold-dim);
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+.sidebar-footer span { color: var(--gold); }
+
+/* ── MAIN CONTENT ─────────────────────── */
+.main {
+  margin-left: 240px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ──────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 60px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+
+.topbar-left {
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+.topbar-left span {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-left: 10px;
+  letter-spacing: 0.5px;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--emerald);
+  background: rgba(45,212,160,0.08);
+  border: 1px solid rgba(45,212,160,0.2);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+.status-dot-live {
+  width: 6px; height: 6px;
+  background: var(--emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--emerald);
+  animation: livePulse 2s infinite;
+}
+
+@keyframes livePulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+
+.admin-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800; font-size: 0.72rem;
+  color: #080c14; cursor: pointer;
+  transition: transform 0.2s;
+}
+.admin-avatar:hover { transform: scale(1.08); }
+
+/* ── PAGE AREA ───────────────────────── */
+.page {
+  flex: 1;
+  padding: 28px;
+  display: none;
+  animation: pageIn 0.25s ease both;
+}
+.page.active { display: block; }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TYPOGRAPHY ──────────────────────── */
+.page-heading {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+}
+
+/* ── CARDS ───────────────────────────── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+.card-title {
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-title::before {
+  content: '';
+  width: 3px; height: 13px;
+  background: var(--gold);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── STAT GRID ───────────────────────── */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.stat-card:hover { border-color: var(--border2); }
+
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 12px 12px 0 0;
+}
+
+.stat-card.gold::after   { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+.stat-card.green::after  { background: linear-gradient(90deg, var(--emerald), #43e8c0); }
+.stat-card.blue::after   { background: linear-gradient(90deg, var(--blue), #79c4f8); }
+.stat-card.red::after    { background: linear-gradient(90deg, var(--red), #f87171); }
+.stat-card.amber::after  { background: linear-gradient(90deg, var(--amber), #fbbf24); }
+
+.stat-icon { font-size: 1.3rem; margin-bottom: 10px; }
+
+.stat-num {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 5px;
+}
+
+.stat-delta {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.stat-delta.up   { background: rgba(45,212,160,0.1); color: var(--emerald); }
+.stat-delta.down { background: rgba(240,91,91,0.1);  color: var(--red); }
+
+/* ── GRIDS ───────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+/* ── CHARTS (CSS-drawn) ──────────────── */
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 8px; }
+
+.bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+.bar-fill {
+  width: 100%;
+  background: linear-gradient(to top, var(--gold), rgba(232,201,122,0.6));
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  position: relative;
+  transition: opacity 0.2s;
+}
+
+.bar-fill:hover { opacity: 0.8; }
+.bar-fill.emerald { background: linear-gradient(to top, var(--emerald), rgba(45,212,160,0.5)); }
+.bar-fill.blue    { background: linear-gradient(to top, var(--blue), rgba(79,163,232,0.5)); }
+
+.bar-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+.bar-val {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+/* Donut chart */
+.donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.donut-svg { flex-shrink: 0; }
+
+.donut-legend { flex: 1; }
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+}
+
+.legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legend-label { color: var(--text-dim); flex: 1; }
+.legend-val   { font-family: var(--mono); font-size: 0.72rem; color: var(--text-bright); }
+
+/* ── TABLES ──────────────────────────── */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+.data-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(30,45,66,0.5);
+  color: var(--text);
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ── BADGES ──────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 600;
+}
+
+.badge.gold    { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+.badge.green   { background: rgba(45,212,160,0.1);  color: var(--emerald); border: 1px solid rgba(45,212,160,0.2); }
+.badge.red     { background: rgba(240,91,91,0.1);   color: var(--red); border: 1px solid rgba(240,91,91,0.2); }
+.badge.blue    { background: rgba(79,163,232,0.1);  color: var(--blue); border: 1px solid rgba(79,163,232,0.2); }
+.badge.amber   { background: rgba(245,158,11,0.1);  color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+
+/* ── FORMS ───────────────────────────── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid.full  { grid-template-columns: 1fr; }
+
+.form-field label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: var(--body);
+  font-size: 0.85rem;
+  padding: 9px 13px;
+  outline: none;
+  transition: all 0.18s;
+  resize: none;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.03);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+.form-field select option { background: #0f1520; }
+
+/* Toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(30,45,66,0.5);
+}
+
+.toggle-row:last-child { border-bottom: none; }
+
+.toggle-info .toggle-name  { font-size: 0.83rem; color: var(--text-bright); font-weight: 500; }
+.toggle-info .toggle-desc  { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+
+.toggle {
+  position: relative;
+  width: 40px; height: 22px;
+  cursor: pointer; flex-shrink: 0;
+}
+
+.toggle input { opacity: 0; width: 0; height: 0; }
+
+.toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+.toggle input:checked + .toggle-track {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+.toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+.toggle input:checked + .toggle-track::after {
+  transform: translateX(18px);
+}
+
+/* Buttons */
+.btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-family: var(--body);
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #080c14;
+  font-weight: 700;
+}
+.btn-gold:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(201,168,76,0.3); }
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border2);
+  color: var(--text-dim);
+}
+.btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); border-color: var(--border2); }
+
+.btn-danger {
+  background: rgba(240,91,91,0.1);
+  border-color: rgba(240,91,91,0.25);
+  color: var(--red);
+}
+.btn-danger:hover { background: rgba(240,91,91,0.18); }
+
+.btn-row { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+
+/* Progress bar */
+.progress-bar {
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+}
+
+/* Map placeholder */
+.map-placeholder {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Search */
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.search-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: var(--body);
+  font-size: 0.83rem;
+  padding: 9px 14px;
+  outline: none;
+  transition: all 0.18s;
+}
+
+.search-input:focus {
+  border-color: rgba(201,168,76,0.4);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+/* Report row */
+.report-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+
+.report-row:hover { border-color: var(--border2); }
+
+.report-icon {
+  width: 36px; height: 36px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+
+.report-info { flex: 1; min-width: 0; }
+.report-name { font-size: 0.83rem; font-weight: 500; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.report-meta { font-family: var(--mono); font-size: 0.63rem; color: var(--text-dim); margin-top: 3px; }
+
+.btn-dl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 6px;
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-dl:hover { background: rgba(201,168,76,0.2); }
+
+/* Colour accent strip for inline charts */
+.mini-chart {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 32px;
+}
+
+.mini-bar {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--gold-dim);
+  min-height: 4px;
+  transition: background 0.2s;
+}
+
+.mini-bar:hover { background: rgba(201,168,76,0.3); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--surface);
+  border: 1px solid rgba(45,212,160,0.3);
+  border-left: 3px solid var(--emerald);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-size: 0.8rem;
+  padding: 12px 18px;
+  z-index: 9999;
+  transform: translateY(60px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .two-col   { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { width: 200px; }
+  .main    { margin-left: 200px; }
+}
+
+  /* Access denied overlay */
+  .access-denied {
+    position: fixed; inset: 0;
+    background: #080c14;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .access-denied.show { display: flex; }
+  .denied-icon { font-size: 3rem; }
+  .denied-title { font-family: var(--display); font-weight: 800; font-size: 1.6rem; color: var(--red); }
+  .denied-msg { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.5px; text-align: center; line-height: 1.8; }
+  .denied-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border: none; border-radius: 8px; color: #080c14; font-family: var(--display); font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+  .denied-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(201,168,76,0.3); }
+  .role-tag { font-family: var(--mono); font-size: 0.6rem; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.5px; }
+  .role-tag.super_admin { background: linear-gradient(135deg, rgba(232,201,122,0.2), rgba(201,168,76,0.1)); color: var(--gold-light); border: 1px solid rgba(232,201,122,0.35); }
+  .role-tag.admin { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+</style>
+</head>
+<body>
+
+<!-- ACCESS DENIED OVERLAY -->
+<div class="access-denied" id="accessDenied">
+  <div class="denied-icon">🔒</div>
+  <div class="denied-title">Access Restricted</div>
+  <div class="denied-msg">This panel requires Admin or Super Admin privileges.<br>Please sign in with an authorised account.</div>
+  <button class="denied-btn" onclick="window.location.href='index.html'">← Return to Site</button>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">T</div>
+    <div class="brand-text">
+      <div class="b-name">Tank Protocol</div>
+      <div class="b-sub">Admin Console</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <div class="nav-item active" onclick="nav(this,'dashboard')">
+      <span class="nav-icon">⬡</span> Dashboard
+    </div>
+    <div id="superAdminSection" style="display:none;">
+      <div class="nav-item" onclick="showToast('Super Admin tools — coming soon')" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
+        <span class="nav-icon">👑</span> Super Admin
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Analytics</div>
+    <div class="nav-item" onclick="nav(this,'statistics')">
+      <span class="nav-icon">📊</span> Site Statistics
+    </div>
+    <div class="nav-item" onclick="nav(this,'demographics')">
+      <span class="nav-icon">👥</span> User Demographics
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Content</div>
+    <div class="nav-item" onclick="nav(this,'reports')">
+      <span class="nav-icon">📁</span> Reports Library
+      <span class="nav-badge">24</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Configuration</div>
+    <div class="nav-item" onclick="nav(this,'settings')">
+      <span class="nav-icon">⚙️</span> Site Settings
+    </div>
+    <div class="nav-item" onclick="nav(this,'users')">
+      <span class="nav-icon">🔐</span> User Management
+    </div>
+    <div class="nav-item" onclick="nav(this,'notifications')">
+      <span class="nav-icon">🔔</span> Notifications
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <span>TANK PROTOCOL</span> v1.0<br>
+    API 19.2 · EPA AP-42<br>
+    &copy; 2026 All Rights Reserved
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left" id="topbarTitle">
+      Dashboard
+      <span id="topbarSub">Overview &amp; Key Metrics</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-status">
+        <div class="status-dot-live"></div>
+        SYSTEMS ONLINE
+      </div>
+      <span class="role-tag admin" id="roleTag">⭐ ADMIN</span>
+      <span id="adminUserName" style="font-size:0.78rem;color:var(--text-dim);"></span>
+      <div class="admin-avatar" id="adminAvatarInitials" title="Signed in user">AS</div>
+      <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ─────────────────────── -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-heading">Command Center</div>
+    <div class="page-sub">Real-time overview of Tank Protocol platform activity</div>
+
+    <div class="stat-grid">
+      <div class="stat-card gold">
+        <div class="stat-icon">📊</div>
+        <div class="stat-delta up">+12%</div>
+        <div class="stat-num">1,842</div>
+        <div class="stat-label">Calculations Run</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">👤</div>
+        <div class="stat-delta up">+5%</div>
+        <div class="stat-num">347</div>
+        <div class="stat-label">Registered Users</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">📁</div>
+        <div class="stat-delta up">+28%</div>
+        <div class="stat-num">24</div>
+        <div class="stat-label">Reports Generated</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-delta down">-3%</div>
+        <div class="stat-num">1.8s</div>
+        <div class="stat-label">Avg Session Time</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Monthly Calculations</div>
+        <div class="bar-chart" id="calcChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Calculation Type Split</div>
+        <div class="donut-wrap">
+          <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#1e2d42" stroke-width="16"/>
+            <!-- EFRT 68% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#c9a84c" stroke-width="16"
+              stroke-dasharray="170.9 251.3" stroke-dashoffset="62.8" transform="rotate(-90 55 55)"/>
+            <!-- IFRT 22% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#2dd4a0" stroke-width="16"
+              stroke-dasharray="55.3 251.3" stroke-dashoffset="-108.1" transform="rotate(-90 55 55)"/>
+            <!-- Other 10% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#4fa3e8" stroke-width="16"
+              stroke-dasharray="25.1 251.3" stroke-dashoffset="-163.4" transform="rotate(-90 55 55)"/>
+            <text x="55" y="51" text-anchor="middle" fill="#eaf2ff" font-family="Syne" font-weight="800" font-size="14">68%</text>
+            <text x="55" y="64" text-anchor="middle" fill="#5a6e85" font-family="Share Tech Mono" font-size="8">EFRT</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><div class="legend-label">EFRT Tanks</div><div class="legend-val">68%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div><div class="legend-label">IFRT Tanks</div><div class="legend-val">22%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><div class="legend-label">Custom Input</div><div class="legend-val">10%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Recent Activity</div>
+        <table class="data-table">
+          <thead><tr><th>User</th><th>Action</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>J. Martinez</td><td>Calc — Crude TK-07</td><td>2 min ago</td><td><span class="badge green">● Done</span></td></tr>
+            <tr><td>R. Patel</td><td>Report Downloaded</td><td>8 min ago</td><td><span class="badge gold">↓ PDF</span></td></tr>
+            <tr><td>S. Kim</td><td>Calc — Gasoline TK-12</td><td>14 min ago</td><td><span class="badge green">● Done</span></td></tr>
+            <tr><td>admin</td><td>Settings Updated</td><td>1 hr ago</td><td><span class="badge blue">✓ Saved</span></td></tr>
+            <tr><td>T. Okonkwo</td><td>New Registration</td><td>2 hr ago</td><td><span class="badge amber">⊕ New</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">System Health</div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>API 19.2 Engine</span><span style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">NOMINAL</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Database</span><span style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">CONNECTED</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Auth Module</span><span style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">ACTIVE</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Server Load</span><span style="color:var(--amber);font-family:var(--mono);font-size:0.7rem;">32%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:32%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Storage Used</span><span style="color:var(--text-dim);font-family:var(--mono);font-size:0.7rem;">61%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:61%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATISTICS ─────────────────────── -->
+  <div class="page" id="page-statistics">
+    <div class="page-heading">Site Statistics</div>
+    <div class="page-sub">Platform usage analytics and performance metrics</div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card gold"><div class="stat-icon">📈</div><div class="stat-delta up">+18%</div><div class="stat-num">12.4K</div><div class="stat-label">Page Views / Month</div></div>
+      <div class="stat-card green"><div class="stat-icon">⏱️</div><div class="stat-delta up">+6%</div><div class="stat-num">3.2m</div><div class="stat-label">Avg Session Duration</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🔄</div><div class="stat-delta down">-2%</div><div class="stat-num">34%</div><div class="stat-label">Bounce Rate</div></div>
+      <div class="stat-card amber"><div class="stat-icon">🌐</div><div class="stat-delta up">+9%</div><div class="stat-num">28</div><div class="stat-label">Countries Reached</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Daily Calculations — Last 14 Days</div>
+        <div class="bar-chart" id="dailyChart" style="height:140px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Traffic by Source</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Direct</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--gold);">42%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:42%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Google Search</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--emerald);">28%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:28%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>LinkedIn</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--blue);">16%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:16%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Industry Forums</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--amber);">9%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:9%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Other</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">5%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:5%;background:rgba(255,255,255,0.2)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Top Calculation Types</div>
+        <table class="data-table">
+          <thead><tr><th>Type</th><th>Count</th><th>Share</th><th>Trend</th></tr></thead>
+          <tbody>
+            <tr><td>Gasoline (EFRT)</td><td style="font-family:var(--mono);">614</td><td><span class="badge gold">33%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +8%</td></tr>
+            <tr><td>Crude Oil Light (EFRT)</td><td style="font-family:var(--mono);">428</td><td><span class="badge gold">23%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +12%</td></tr>
+            <tr><td>Crude Oil Heavy (IFRT)</td><td style="font-family:var(--mono);">312</td><td><span class="badge blue">17%</span></td><td style="color:var(--red);font-family:var(--mono);font-size:0.7rem;">↓ -3%</td></tr>
+            <tr><td>Jet A / Kerosene</td><td style="font-family:var(--mono);">241</td><td><span class="badge blue">13%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +5%</td></tr>
+            <tr><td>Custom Liquid</td><td style="font-family:var(--mono);">247</td><td><span class="badge amber">14%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +21%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly Report Downloads</div>
+        <div class="bar-chart" id="dlChart" style="height:140px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DEMOGRAPHICS ────────────────────── -->
+  <div class="page" id="page-demographics">
+    <div class="page-heading">User Demographics</div>
+    <div class="page-sub">Who uses Tank Protocol — roles, industries, and geographic distribution</div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card gold"><div class="stat-icon">👥</div><div class="stat-num">347</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-delta up">+14</div><div class="stat-num">284</div><div class="stat-label">Active (30 days)</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🆕</div><div class="stat-delta up">+22</div><div class="stat-num">63</div><div class="stat-label">New This Month</div></div>
+      <div class="stat-card amber"><div class="stat-icon">🌍</div><div class="stat-num">28</div><div class="stat-label">Countries</div></div>
+    </div>
+
+    <div class="three-col">
+      <div class="card">
+        <div class="card-title">By Industry</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Oil &amp; Gas</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">38%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:38%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Petrochemicals</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">24%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:24%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Environmental Consulting</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--emerald);">18%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:18%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Refining</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--blue);">13%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:13%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Regulatory / Govt</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--amber);">7%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:7%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">By Job Role</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Environmental Engineer</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">31%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:31%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Process Engineer</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">22%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:22%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Compliance Manager</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--emerald);">18%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:18%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>HSE Specialist</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--blue);">15%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:15%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Other</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">14%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:14%;background:rgba(255,255,255,0.15)"></div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">By Experience Level</div>
+        <div class="donut-wrap" style="flex-direction:column;align-items:flex-start;gap:14px;">
+          <div style="display:flex;flex-direction:column;gap:9px;width:100%;">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><div class="legend-label">Senior (10+ yrs)</div><div class="legend-val">44%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div><div class="legend-label">Mid (5-10 yrs)</div><div class="legend-val">33%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><div class="legend-label">Junior (1-5 yrs)</div><div class="legend-val">17%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--text-dim)"></div><div class="legend-label">Student</div><div class="legend-val">6%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Top Countries</div>
+        <table class="data-table">
+          <thead><tr><th>Country</th><th>Users</th><th>Share</th><th>Calcs</th></tr></thead>
+          <tbody>
+            <tr><td>🇺🇸 United States</td><td style="font-family:var(--mono);">124</td><td><span class="badge gold">36%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">681</td></tr>
+            <tr><td>🇸🇦 Saudi Arabia</td><td style="font-family:var(--mono);">48</td><td><span class="badge gold">14%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">295</td></tr>
+            <tr><td>🇮🇳 India</td><td style="font-family:var(--mono);">41</td><td><span class="badge blue">12%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">214</td></tr>
+            <tr><td>🇬🇧 United Kingdom</td><td style="font-family:var(--mono);">36</td><td><span class="badge blue">10%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">188</td></tr>
+            <tr><td>🇦🇪 UAE</td><td style="font-family:var(--mono);">29</td><td><span class="badge amber">8%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">156</td></tr>
+            <tr><td>🇦🇺 Australia</td><td style="font-family:var(--mono);">22</td><td><span class="badge amber">6%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">119</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">New User Growth — Monthly</div>
+        <div class="bar-chart" id="growthChart" style="height:160px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REPORTS LIBRARY ─────────────────── -->
+  <div class="page" id="page-reports">
+    <div class="page-heading">Reports Library</div>
+    <div class="page-sub">All generated emission reports available for download and management</div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="stat-card gold"><div class="stat-icon">📁</div><div class="stat-num">24</div><div class="stat-label">Total Reports</div></div>
+      <div class="stat-card green"><div class="stat-icon">↓</div><div class="stat-num">18</div><div class="stat-label">Downloaded</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🏭</div><div class="stat-num">11</div><div class="stat-label">Companies</div></div>
+      <div class="stat-card amber"><div class="stat-icon">📅</div><div class="stat-num">7</div><div class="stat-label">This Month</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">All Reports</div>
+      <div class="search-bar">
+        <input class="search-input" type="text" id="reportSearch" placeholder="Search by company, tank ID, or location…" oninput="filterReports()">
+        <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 13px;font-family:var(--body);font-size:0.83rem;outline:none;" id="reportFilter" onchange="filterReports()">
+          <option value="">All Types</option>
+          <option value="EFRT">EFRT</option>
+          <option value="IFRT">IFRT</option>
+        </select>
+        <button class="btn btn-ghost" onclick="showToast('Export initiated — CSV preparing...')">⬇ Export CSV</button>
+      </div>
+      <div id="reportsContainer"></div>
+    </div>
+  </div>
+
+  <!-- ── SITE SETTINGS ───────────────────── -->
+  <div class="page" id="page-settings">
+    <div class="page-heading">Site Settings</div>
+    <div class="page-sub">Configure platform behaviour, branding, and calculation defaults</div>
+
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title">General Settings</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Platform Name</label><input type="text" value="Tank Protocol"></div>
+            <div class="form-field"><label>Version Tag</label><input type="text" value="v1.0"></div>
+            <div class="form-field"><label>Support Email</label><input type="email" value="support@tankprotocol.com"></div>
+            <div class="form-field"><label>Default Timezone</label>
+              <select><option>UTC</option><option selected>UTC+5:30 (IST)</option><option>UTC-5 (EST)</option><option>UTC-6 (CST)</option></select>
+            </div>
+          </div>
+          <div class="form-grid full">
+            <div class="form-field"><label>Platform Tagline</label><input type="text" value="Emissions Intelligence Platform"></div>
+          </div>
+          <div class="btn-row"><button class="btn btn-gold" onclick="showToast('General settings saved ✓')">Save Changes</button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Calculation Defaults</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Default Roof Type</label>
+              <select><option selected>EFRT</option><option>IFRT</option></select>
+            </div>
+            <div class="form-field"><label>Default Seal</label>
+              <select><option selected>Mechanical Shoe</option><option>Liquid Foam</option><option>Vapor Foam</option><option>Resilient Filled</option></select>
+            </div>
+            <div class="form-field"><label>Default Wind Speed (mph)</label><input type="number" value="7.0" step="0.1"></div>
+            <div class="form-field"><label>Pressure Units</label>
+              <select><option selected>psia</option><option>kPa</option><option>bar</option></select>
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn btn-gold" onclick="showToast('Calculation defaults saved ✓')">Save Defaults</button></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-title">Feature Toggles</div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">User Registration</div><div class="toggle-desc">Allow new users to sign up</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Report Downloads</div><div class="toggle-desc">Enable HTML report export</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Reference Data Tab</div><div class="toggle-desc">Show VP reference tables</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Admin Analytics</div><div class="toggle-desc">Track usage statistics</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Maintenance Mode</div><div class="toggle-desc">Show maintenance page to users</div></div>
+            <label class="toggle"><input type="checkbox" onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Debug Logging</div><div class="toggle-desc">Enable verbose error logging</div></div>
+            <label class="toggle"><input type="checkbox" onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Report Settings</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Report Header Logo</label>
+              <select><option selected>T (Gold Mark)</option><option>Full Wordmark</option><option>None</option></select>
+            </div>
+            <div class="form-field"><label>Report Format</label>
+              <select><option selected>HTML (Print-ready)</option><option>PDF (planned)</option></select>
+            </div>
+          </div>
+          <div class="form-grid full">
+            <div class="form-field"><label>Report Footer Text</label>
+              <input type="text" value="Tank Protocol — Emissions Intelligence Platform">
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn btn-gold" onclick="showToast('Report settings saved ✓')">Save</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── USER MANAGEMENT ─────────────────── -->
+  <div class="page" id="page-users">
+    <div class="page-heading">User Management</div>
+    <div class="page-sub">Manage accounts, roles and access levels</div>
+
+    <div class="card">
+      <div class="card-title">All Users</div>
+      <div class="search-bar">
+        <input class="search-input" type="text" placeholder="Search users…">
+        <button class="btn btn-gold" onclick="showToast('+ New user form coming soon')">+ Add User</button>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Industry</th><th>Status</th><th>Last Active</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">AS</div><span style="font-weight:500;color:var(--text-bright);">Alexandra Stone</span></div></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6f0e0b0206012f1b0e01041f1d001b000c0003410c0002">[email&#160;protected]</a></td>
+            <td><span class="badge gold">⭐ Admin</span></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">Management</td>
+            <td><span class="badge green">● Active</span></td>
+            <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">Now</td>
+            <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('Edit user')">Edit</button></div></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#79c4f8);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">JL</div><span style="font-weight:500;color:var(--text-bright);">Jordan Lee</span></div></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f287819780b286939c9982809d869d919d9edc919d9f">[email&#160;protected]</a></td>
+            <td><span class="badge blue">● Member</span></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">Engineering</td>
+            <td><span class="badge green">● Active</span></td>
+            <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">2h ago</td>
+            <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('Edit user')">Edit</button><button class="btn btn-danger" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('User suspended')">Suspend</button></div></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),#43e8c0);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">CK</div><span style="font-weight:500;color:var(--text-bright);">Charlie Kim</span></div></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f99a91988b95909cb98d989792898b968d969a9695d79a9694">[email&#160;protected]</a></td>
+            <td><span class="badge blue">● Member</span></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">Design</td>
+            <td><span class="badge amber">⊡ Pending</span></td>
+            <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">3d ago</td>
+            <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('User approved ✓')">Approve</button><button class="btn btn-danger" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('User removed')">Remove</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── NOTIFICATIONS ───────────────────── -->
+  <div class="page" id="page-notifications">
+    <div class="page-heading">Notifications</div>
+    <div class="page-sub">System alerts, user activity, and scheduled reports</div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Recent Alerts</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(45,212,160,0.05);border:1px solid rgba(45,212,160,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">✅</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">All systems operational</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">API 19.2 Engine · Auth · Database — all online</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Today, 09:14 AM</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">Server load spike detected</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">Load reached 78% for 4 minutes — auto-scaled</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Yesterday, 02:31 PM</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">🆕</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">22 new user registrations</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">Monthly signup target exceeded by 47%</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Mar 18, 2026</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(79,163,232,0.05);border:1px solid rgba(79,163,232,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">📁</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">7 new reports this month</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">Report generation up 28% from last month</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Mar 15, 2026</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Notification Settings</div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">New User Alerts</div><div class="toggle-desc">Notify when new users register</div></div><label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Report Generation</div><div class="toggle-desc">Alert when reports are downloaded</div></div><label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">System Health Alerts</div><div class="toggle-desc">CPU / memory threshold warnings</div></div><label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Weekly Digest Email</div><div class="toggle-desc">Summary email every Monday</div></div><label class="toggle"><input type="checkbox" onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div style="margin-top:18px;">
+          <div class="form-field"><label>Alert Email Address</label><input type="email" value="admin@tankprotocol.com"></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-gold" onclick="showToast('Notification settings saved ✓')">Save Settings</button></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end .main -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ── NAVIGATION ─────────────────────────────────────────
+const PAGES = { dashboard:'Dashboard', statistics:'Site Statistics', demographics:'User Demographics', reports:'Reports Library', settings:'Site Settings', users:'User Management', notifications:'Notifications' };
+const SUBS  = { dashboard:'Overview & Key Metrics', statistics:'Usage analytics and performance', demographics:'Audience breakdown and geography', reports:'Generated emission reports', settings:'Platform configuration', users:'Accounts, roles and access', notifications:'Alerts and system events' };
+
+function nav(el, pageId) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.getElementById('topbarTitle').childNodes[0].textContent = PAGES[pageId];
+  document.getElementById('topbarSub').textContent = SUBS[pageId];
+}
+
+// ── BAR CHARTS ─────────────────────────────────────────
+function buildBarChart(id, data, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...data.map(d => d.v));
+  el.innerHTML = data.map(d => `
+    <div class="bar-item">
+      <div class="bar-val">${d.v}</div>
+      <div class="bar-fill ${color||''}" style="height:${Math.max(8,(d.v/max)*100)}%"></div>
+      <div class="bar-label">${d.l}</div>
+    </div>`).join('');
+}
+
+buildBarChart('calcChart', [
+  {l:'Aug',v:98},{l:'Sep',v:124},{l:'Oct',v:141},{l:'Nov',v:109},{l:'Dec',v:88},
+  {l:'Jan',v:152},{l:'Feb',v:178},{l:'Mar',v:203}
+]);
+
+buildBarChart('dailyChart', [
+  {l:'8',v:12},{l:'9',v:18},{l:'10',v:8},{l:'11',v:22},{l:'12',v:31},{l:'13',v:15},
+  {l:'14',v:28},{l:'15',v:19},{l:'16',v:34},{l:'17',v:27},{l:'18',v:41},{l:'19',v:33},
+  {l:'20',v:38},{l:'21',v:44}
+], 'emerald');
+
+buildBarChart('dlChart', [
+  {l:'Aug',v:1},{l:'Sep',v:3},{l:'Oct',v:2},{l:'Nov',v:4},{l:'Dec',v:3},
+  {l:'Jan',v:5},{l:'Feb',v:6},{l:'Mar',v:7}
+], 'blue');
+
+buildBarChart('growthChart', [
+  {l:'Aug',v:18},{l:'Sep',v:24},{l:'Oct',v:31},{l:'Nov',v:22},{l:'Dec',v:19},
+  {l:'Jan',v:38},{l:'Feb',v:45},{l:'Mar',v:63}
+]);
+
+// ── REPORTS DATA ───────────────────────────────────────
+const REPORTS = [
+  { name:'Acme_Refining_TK-101_EmissionReport', company:'Acme Refining Co.', tank:'TK-101', location:'Houston, TX', type:'EFRT', liquid:'Gasoline RVP 10', date:'Mar 21, 2026', size:'148 KB' },
+  { name:'Saudi_Aramco_TK-07_EmissionReport',   company:'Saudi Aramco', tank:'TK-07', location:'Dhahran, SA', type:'EFRT', liquid:'Crude Oil Light', date:'Mar 20, 2026', size:'152 KB' },
+  { name:'BPCL_TankFarm_T3_EmissionReport',      company:'BPCL Ltd', tank:'T-3', location:'Mumbai, IN', type:'IFRT', liquid:'Diesel No. 2', date:'Mar 19, 2026', size:'141 KB' },
+  { name:'Shell_Rotterdam_ST-22_EmissionReport', company:'Shell Rotterdam', tank:'ST-22', location:'Rotterdam, NL', type:'EFRT', liquid:'Crude Oil Medium', date:'Mar 18, 2026', size:'156 KB' },
+  { name:'BP_Gelsenkirchen_TK14_Report',         company:'BP Refinery', tank:'TK-14', location:'Gelsenkirchen, DE', type:'EFRT', liquid:'Jet A', date:'Mar 17, 2026', size:'143 KB' },
+  { name:'ExxonMobil_Beaumont_TK9_Report',       company:'ExxonMobil', tank:'TK-9', location:'Beaumont, TX', type:'EFRT', liquid:'Gasoline RVP 7', date:'Mar 15, 2026', size:'149 KB' },
+  { name:'Chevron_Richmond_TK3_Report',          company:'Chevron', tank:'TK-3', location:'Richmond, CA', type:'IFRT', liquid:'Crude Oil Heavy', date:'Mar 14, 2026', size:'138 KB' },
+  { name:'Reliance_Jamnagar_V12_Report',         company:'Reliance Industries', tank:'V-12', location:'Jamnagar, IN', type:'EFRT', liquid:'Custom', date:'Mar 12, 2026', size:'161 KB' },
+  { name:'Adnoc_Ruwais_TK40_Report',             company:'ADNOC Refining', tank:'TK-40', location:'Ruwais, AE', type:'EFRT', liquid:'Crude Oil Light', date:'Mar 10, 2026', size:'147 KB' },
+  { name:'Woodside_Karratha_FT2_Report',         company:'Woodside Energy', tank:'FT-2', location:'Karratha, AU', type:'EFRT', liquid:'Ethanol', date:'Mar 8, 2026', size:'139 KB' },
+];
+
+function renderReports(data) {
+  const container = document.getElementById('reportsContainer');
+  if (!data.length) {
+    container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-dim);font-family:var(--mono);font-size:0.78rem;">NO REPORTS MATCH YOUR SEARCH</div>`;
+    return;
+  }
+  container.innerHTML = data.map(r => `
+    <div class="report-row">
+      <div class="report-icon">📄</div>
+      <div class="report-info">
+        <div class="report-name">${r.company} — ${r.tank}</div>
+        <div class="report-meta">${r.location} &nbsp;·&nbsp; ${r.liquid} &nbsp;·&nbsp; <span class="badge ${r.type==='EFRT'?'gold':'blue'}" style="padding:1px 6px;font-size:0.58rem;">${r.type}</span> &nbsp;·&nbsp; ${r.date} &nbsp;·&nbsp; ${r.size}</div>
+      </div>
+      <button class="btn-dl" onclick="mockDownload('${r.name}')">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v7M2.5 5.5l3 3 3-3M1 10h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download
+      </button>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:0.7rem;" onclick="showToast('Report deleted')">🗑</button>
+    </div>`).join('');
+}
+
+renderReports(REPORTS);
+
+function filterReports() {
+  const q    = document.getElementById('reportSearch').value.toLowerCase();
+  const type = document.getElementById('reportFilter').value;
+  const filtered = REPORTS.filter(r =>
+    (!type || r.type === type) &&
+    (!q || [r.company, r.tank, r.location, r.liquid].some(s => s.toLowerCase().includes(q)))
+  );
+  renderReports(filtered);
+}
+
+function mockDownload(name) {
+  showToast('Downloading ' + name + '.html');
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── ACCESS CONTROL ─────────────────────────────────────
+(function() {
+  const raw = sessionStorage.getItem('tp_session');
+  if (!raw) {
+    document.getElementById('accessDenied').classList.add('show');
+    return;
+  }
+  let session;
+  try { session = JSON.parse(raw); } catch(e) {
+    document.getElementById('accessDenied').classList.add('show');
+    return;
+  }
+  const allowed = ['admin', 'super_admin'];
+  if (!allowed.includes(session.role)) {
+    document.getElementById('accessDenied').classList.add('show');
+    return;
+  }
+  // Personalise topbar
+  const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
+  document.getElementById('adminAvatarInitials').textContent = initials;
+  document.getElementById('adminUserName').textContent = session.firstName + ' ' + session.lastName;
+  const roleTag = document.getElementById('roleTag');
+  roleTag.textContent = session.role === 'super_admin' ? '👑 SUPER ADMIN' : '⭐ ADMIN';
+  roleTag.className = 'role-tag ' + session.role;
+  if (session.role === 'super_admin') {
+    document.getElementById('superAdminSection').style.display = 'block';
+  }
+})();
+</script>
+</body>
+</html>
