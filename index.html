@@ -846,6 +846,11 @@ html, body {
   width: 100%; height: 100%;
   background: #080c14;
   overflow: hidden;
+  cursor: auto;
+}
+
+/* Custom cursor only while splash is visible */
+#splashOverlay {
   cursor: none;
 }
 
@@ -2398,17 +2403,14 @@ body.editing .report-delete-btn { display: block; }
 
     <div class="topbar-nav">
       <button class="nav-btn active" onclick="showPage('profilePage', this)">Profile</button>
-      <button class="nav-btn" onclick="showPage('adminPage', this)" id="adminNavBtn" style="display:none;">Admin Panel</button>
+      <button class="nav-btn" onclick="showPage('adminPage', this)" id="adminNavBtn" style="display:none;">⬡ Admin Panel</button>
     </div>
 
     <div class="topbar-right">
       <a href="#" onclick="if(currentUser){showPage('profilePage',document.querySelector('.nav-btn'));showView('dashView');}return false;" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Main Site</a>
       <div id="topbarName" style="font-size:0.8rem;color:var(--text-dim);"></div>
       <button class="avatar-btn" id="topbarAvatar" onclick="showPage('profilePage', document.querySelector('.nav-btn'))">?</button>
-      
-      <button id="adminPanelBtn" onclick="showPage('adminPage', document.getElementById('adminNavBtn'))" style="display:none;align-items:center;gap:6px;padding:7px 14px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border:none;border-radius:7px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.78rem;letter-spacing:0.5px;cursor:pointer;text-decoration:none;transition:all 0.2s;" onmouseover="this.style.transform='translateY(-1px)';this.style.boxShadow='0 5px 18px rgba(201,168,76,0.35)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
-        ⬡ Admin Panel
-      </button>
+
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
     </div>
   </div>
@@ -2425,7 +2427,7 @@ body.editing .report-delete-btn { display: block; }
     <div class="topbar-viewing" id="viewingBanner">
       Viewing: <span id="viewingName"></span>
     </div>
-    <a href="index.html" class="btn-back">← Back to Portal</a>
+    <a href="#" class="btn-back" onclick="showPage('profilePage', document.querySelector('.nav-btn'));return false;">← Dashboard</a>
   </div>
 </div>
 
@@ -3114,6 +3116,9 @@ function enterApp() {
       overlay.style.display = 'none';
       // Stop canvas animation
       if (window._splashAnimRunning) window._splashAnimRunning = false;
+      // Restore normal cursor
+      const cur = document.getElementById('cursor');
+      if (cur) cur.style.display = 'none';
     }, 650);
   }, 200);
 }
@@ -3255,48 +3260,66 @@ function showPage(id, btn) {
 // ─── DASHBOARD LOAD ───────────────────────────────────────────
 function loadDashboard() {
   const u = currentUser;
+  const _s = id => document.getElementById(id);
 
   // Topbar
-  document.getElementById('topbarName').textContent = u.firstName + ' ' + u.lastName;
-  document.getElementById('topbarAvatar').textContent = u.firstName[0] + u.lastName[0];
+  if (_s('topbarName'))   _s('topbarName').textContent   = u.firstName + ' ' + u.lastName;
+  if (_s('topbarAvatar')) _s('topbarAvatar').textContent = u.firstName[0] + u.lastName[0];
 
   // Show/hide admin nav
   const isAdmin = u.role === 'admin' || u.role === 'super_admin';
-  document.getElementById('adminNavBtn').style.display = isAdmin ? '' : 'none';
-  document.getElementById('adminPanelBtn').style.display = isAdmin ? 'inline-flex' : 'none';
-  // Show super admin role controls hint
-  const roleHint = document.getElementById('superAdminRoleHint');
-  if (roleHint) roleHint.style.display = u.role === 'super_admin' ? '' : 'none';
+  if (_s('adminNavBtn'))    _s('adminNavBtn').style.display    = isAdmin ? '' : 'none';
+  if (_s('superAdminRoleHint')) _s('superAdminRoleHint').style.display = u.role === 'super_admin' ? '' : 'none';
 
-  // Profile sidebar
-  document.getElementById('profileAvatarLarge').innerHTML =
-    `<span>${u.firstName[0]}${u.lastName[0]}</span><div class="online-dot"></div>`;
-  document.getElementById('sidebarName').textContent = u.firstName + ' ' + u.lastName;
-  document.getElementById('sidebarEmail').textContent = u.email;
-  document.getElementById('statRole').textContent = u.role === 'super_admin' ? 'S.Admin' : u.role === 'admin' ? 'Admin' : 'User';
-  document.getElementById('statJoined').textContent = u.joined;
-  document.getElementById('sidebarBadge').innerHTML =
-    `<span class="role-badge ${u.role === 'super_admin' ? 'admin' : u.role}">${u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'admin' ? '⭐ Admin' : '● Member'}</span>`;
+  // ── Rich profile hero fields ──────────────────────────────────────
+  if (_s('heroName'))        _s('heroName').textContent        = u.firstName + ' ' + u.lastName;
+  if (_s('heroDesignation')) _s('heroDesignation').textContent = u.designation || u.title || '';
+  if (_s('heroCompany'))     _s('heroCompany').textContent     = u.company ? '🏢 ' + u.company : '';
 
-  // Profile greeting
-  document.getElementById('profileGreeting').textContent = `Welcome, ${u.firstName}`;
-  document.getElementById('adminPanelBanner').style.display = isAdmin ? 'flex' : 'none';
+  // Avatar initials
+  if (_s('avatarInitials')) _s('avatarInitials').textContent = (u.firstName[0] + (u.lastName[0]||'')).toUpperCase();
 
-  // Fill edit form
-  const _s = id => document.getElementById(id);
-  if (_s('editFirstName'))   _s('editFirstName').value   = u.firstName || '';
-  if (_s('editLastName'))    _s('editLastName').value    = u.lastName  || '';
-  if (_s('editEmail'))       _s('editEmail').value       = u.email     || '';
-  if (_s('editDept'))        _s('editDept').value        = u.dept      || '';
-  if (_s('editTitle'))       _s('editTitle').value       = u.title     || '';
-  if (_s('editPhone'))       _s('editPhone').value       = u.phone     || '';
-  if (_s('editBio'))         _s('editBio').value         = u.bio       || '';
-  if (_s('editCompany'))     _s('editCompany').value     = u.company   || '';
-  if (_s('editLocation'))    _s('editLocation').value    = u.location  || '';
+  // Hero tags
+  if (_s('heroTags')) {
+    const tags = [u.industry, u.location].filter(Boolean);
+    const roleLabel = u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'admin' ? '⭐ Admin' : '● Member';
+    const roleCls   = u.role === 'super_admin' ? 'admin' : u.role;
+    _s('heroTags').innerHTML = tags.map(t => `<span class="hero-tag">${t}</span>`).join('') +
+      `<span class="role-pill ${roleCls}">${roleLabel}</span>`;
+  }
+
+  // Contact card
+  if (_s('ci_email'))    _s('ci_email').textContent    = u.email || '—';
+  if (_s('ci_phone'))    _s('ci_phone').textContent    = u.phone || '—';
+  if (_s('ci_location')) _s('ci_location').textContent = u.location || '—';
+  if (_s('ci_industry')) _s('ci_industry').textContent = u.industry || '—';
+  if (_s('ci_experience')) _s('ci_experience').textContent = u.experience || '—';
+  if (_s('ci_joined'))   _s('ci_joined').textContent   = u.joined || '—';
+  if (_s('ci_role')) _s('ci_role').innerHTML = `<span class="badge ${u.role==='super_admin'||u.role==='admin'?'gold':'blue'}">${u.role==='super_admin'?'👑 Super Admin':u.role==='admin'?'⭐ Admin':'● Member'}</span>`;
+
+  // Stats
+  if (_s('statCalcs'))   _s('statCalcs').textContent   = u.calcs   || 0;
+  if (_s('statReports')) _s('statReports').textContent = u.reports || (u.myReports ? u.myReports.length : 0);
+  if (_s('statYear'))    _s('statYear').textContent    = u.joined  || '—';
+
+  if (_s('adminViewBanner'))  _s('adminViewBanner').style.display  = 'none';
+
+  // Edit form fields (with null guards)
+  if (_s('editFirstName'))   _s('editFirstName').value   = u.firstName   || '';
+  if (_s('editLastName'))    _s('editLastName').value    = u.lastName    || '';
+  if (_s('editEmail'))       _s('editEmail').value       = u.email       || '';
+  if (_s('editDept'))        _s('editDept').value        = u.dept        || '';
+  if (_s('editTitle'))       _s('editTitle').value       = u.title       || '';
+  if (_s('editPhone'))       _s('editPhone').value       = u.phone       || '';
+  if (_s('editBio'))         _s('editBio').value         = u.bio         || '';
+  if (_s('editCompany'))     _s('editCompany').value     = u.company     || '';
+  if (_s('editLocation'))    _s('editLocation').value    = u.location    || '';
   if (_s('editDesignation')) _s('editDesignation').value = u.designation || '';
-  if (_s('editIndustry'))    _s('editIndustry').value    = u.industry  || '';
+  if (_s('editIndustry'))    _s('editIndustry').value    = u.industry    || '';
 
-  // Sidebar new fields
+  // Sidebar legacy fields (kept for compatibility)
+  if (_s('sidebarName'))        _s('sidebarName').textContent        = u.firstName + ' ' + u.lastName;
+  if (_s('sidebarEmail'))       _s('sidebarEmail').textContent       = u.email;
   if (_s('sidebarDesignation')) _s('sidebarDesignation').textContent = u.designation || u.title || '';
   if (_s('sidebarCompany'))     _s('sidebarCompany').textContent     = u.company     || '';
   if (_s('sidebarLocationText')) _s('sidebarLocationText').textContent = u.location  || '';
@@ -3312,9 +3335,9 @@ function loadDashboard() {
   showPage('profilePage', document.querySelector('.nav-btn'));
   // Init rich profile
   if (typeof initProfile === 'function') setTimeout(initProfile, 50);
+
 }
 
-// ─── PROFILE SAVE ─────────────────────────────────────────────
 function saveProfile() {
   const np = document.getElementById('newPass').value;
   const cp = document.getElementById('confPass').value;
@@ -3339,12 +3362,18 @@ function saveProfile() {
   if (_g('sidebarLocationText')) _g('sidebarLocationText').textContent = currentUser.location || '';
   if (_g('sidebarLocation'))    _g('sidebarLocation').style.display  = currentUser.location ? '' : 'none';
 
-  // Refresh sidebar
-  document.getElementById('sidebarName').textContent = currentUser.firstName + ' ' + currentUser.lastName;
-  document.getElementById('topbarName').textContent  = currentUser.firstName + ' ' + currentUser.lastName;
-  document.getElementById('topbarAvatar').textContent = currentUser.firstName[0] + currentUser.lastName[0];
-  document.getElementById('profileAvatarLarge').innerHTML =
-    `<span>${currentUser.firstName[0]}${currentUser.lastName[0]}</span><div class="online-dot"></div>`;
+  // Refresh rich profile hero
+  const _r = id => document.getElementById(id);
+  if (_r('topbarName'))      _r('topbarName').textContent      = currentUser.firstName + ' ' + currentUser.lastName;
+  if (_r('topbarAvatar'))    _r('topbarAvatar').textContent    = currentUser.firstName[0] + currentUser.lastName[0];
+  if (_r('heroName'))        _r('heroName').textContent        = currentUser.firstName + ' ' + currentUser.lastName;
+  if (_r('heroDesignation')) _r('heroDesignation').textContent = currentUser.designation || currentUser.title || '';
+  if (_r('heroCompany'))     _r('heroCompany').textContent     = currentUser.company ? '🏢 ' + currentUser.company : '';
+  if (_r('avatarInitials'))  _r('avatarInitials').textContent  = (currentUser.firstName[0] + (currentUser.lastName[0]||'')).toUpperCase();
+  if (_r('ci_email'))        _r('ci_email').textContent        = currentUser.email || '—';
+  if (_r('ci_phone'))        _r('ci_phone').textContent        = currentUser.phone || '—';
+  if (_r('ci_location'))     _r('ci_location').textContent     = currentUser.location || '—';
+  if (_r('sidebarName'))     _r('sidebarName').textContent     = currentUser.firstName + ' ' + currentUser.lastName;
 
   document.getElementById('newPass').value = '';
   document.getElementById('confPass').value = '';
@@ -3743,10 +3772,8 @@ function initProfile() {
     try { sessionUser = JSON.parse(raw); } catch(e) {}
   }
 
-  // Fallback demo: use super admin
-  if (!sessionUser) {
-    sessionUser = { id: 0, firstName: 'ESRAI', lastName: 'Group', role: 'super_admin', email: 'esraigroup@gmail.com' };
-  }
+  // If no session found, exit - user must log in first
+  if (!sessionUser) return;
 
   isSuperAdmin = sessionUser.role === 'super_admin';
 
