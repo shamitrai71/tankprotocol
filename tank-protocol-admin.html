@@ -790,7 +790,7 @@ body {
   <div class="denied-icon">🔒</div>
   <div class="denied-title">Access Restricted</div>
   <div class="denied-msg">This panel requires Admin or Super Admin privileges.<br>Please sign in with an authorised account.</div>
-  <button class="denied-btn" onclick="window.location.href='index.html'">← Return to Site</button>
+  <button class="denied-btn" onclick="goToMain()">← Return to Site</button>
 </div>
 
 <!-- ═══════════════ SIDEBAR ═══════════════ -->
@@ -870,7 +870,7 @@ body {
       <span class="role-tag admin" id="roleTag">⭐ ADMIN</span>
       <span id="adminUserName" style="font-size:0.78rem;color:var(--text-dim);"></span>
       <div class="admin-avatar" id="adminAvatarInitials" title="Signed in user">AS</div>
-      <a href="index.html" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+      <a href="#" onclick="goToMain();return false;" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
     </div>
   </div>
 
@@ -1260,7 +1260,7 @@ body {
         <tbody>
           <tr>
             <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">AS</div><span style="font-weight:500;color:var(--text-bright);">Alexandra Stone</span></div></td>
-            <td style="color:var(--text-dim);font-size:0.78rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6f0e0b0206012f1b0e01041f1d001b000c0003410c0002">[email&#160;protected]</a></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">admin@tankprotocol.com</td>
             <td><span class="badge gold">⭐ Admin</span></td>
             <td style="color:var(--text-dim);font-size:0.78rem;">Management</td>
             <td><span class="badge green">● Active</span></td>
@@ -1269,7 +1269,7 @@ body {
           </tr>
           <tr>
             <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#79c4f8);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">JL</div><span style="font-weight:500;color:var(--text-bright);">Jordan Lee</span></div></td>
-            <td style="color:var(--text-dim);font-size:0.78rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f287819780b286939c9982809d869d919d9edc919d9f">[email&#160;protected]</a></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">user@tankprotocol.com</td>
             <td><span class="badge blue">● Member</span></td>
             <td style="color:var(--text-dim);font-size:0.78rem;">Engineering</td>
             <td><span class="badge green">● Active</span></td>
@@ -1278,7 +1278,7 @@ body {
           </tr>
           <tr>
             <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),#43e8c0);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">CK</div><span style="font-weight:500;color:var(--text-bright);">Charlie Kim</span></div></td>
-            <td style="color:var(--text-dim);font-size:0.78rem;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="f99a91988b95909cb98d989792898b968d969a9695d79a9694">[email&#160;protected]</a></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">charlie@tankprotocol.com</td>
             <td><span class="badge blue">● Member</span></td>
             <td style="color:var(--text-dim);font-size:0.78rem;">Design</td>
             <td><span class="badge amber">⊡ Pending</span></td>
@@ -1337,7 +1337,7 @@ body {
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 // ── NAVIGATION ─────────────────────────────────────────
 const PAGES = { dashboard:'Dashboard', statistics:'Site Statistics', demographics:'User Demographics', reports:'Reports Library', settings:'Site Settings', users:'User Management', notifications:'Notifications' };
 const SUBS  = { dashboard:'Overview & Key Metrics', statistics:'Usage analytics and performance', demographics:'Audience breakdown and geography', reports:'Generated emission reports', settings:'Platform configuration', users:'Accounts, roles and access', notifications:'Alerts and system events' };
@@ -1442,6 +1442,14 @@ function showToast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── NAVIGATION HELPER ──────────────────────────────────
+function goToMain() {
+  // Works on both root domains and GitHub Pages subdirectory deployments
+  var path = window.location.pathname;
+  var base = path.substring(0, path.lastIndexOf('/') + 1);
+  window.location.href = base + 'index.html';
 }
 
 // ── ACCESS CONTROL ─────────────────────────────────────
