@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Tank Protocol — Secure Portal</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <style>
@@ -847,6 +847,8 @@ html, body {
   background: #080c14;
   overflow: hidden;
   cursor: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Custom cursor only while splash is visible */
@@ -927,6 +929,7 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  touch-action: none;
 }
 
 /* ── TANK ICON ── */
@@ -1202,9 +1205,24 @@ html, body {
   text-transform: uppercase;
   cursor: pointer;
   position: relative;
+  z-index: 20;
   overflow: hidden;
   transition: all 0.3s;
   animation: enterPulse 2s ease-in-out infinite;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  min-height: 48px;
+  min-width: 160px;
+}
+@media (max-width: 768px) {
+  .enter-btn {
+    padding: 18px 44px;
+    font-size: 0.85rem;
+    letter-spacing: 3px;
+    min-height: 56px;
+  }
 }
 
 @keyframes enterPulse {
@@ -4484,6 +4502,27 @@ window.addEventListener('mousemove', e => {
   mouse.y = e.clientY;
 });
 
+// ── MOBILE: Enter button touch support ────────────────────────────────────────
+(function addTouchSupport() {
+  var btn = document.getElementById('enterBtn');
+  if (!btn) return;
+  btn.addEventListener('touchstart', function() {
+    this.style.background = 'rgba(201,168,76,0.12)';
+    this.style.boxShadow  = '0 0 24px rgba(201,168,76,0.35)';
+  }, { passive: true });
+  btn.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    enterApp();
+  }, { passive: false });
+  // Update mouse position on touch for particle effects
+  window.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 0) {
+      mouse.x = e.touches[0].clientX;
+      mouse.y = e.touches[0].clientY;
+    }
+  }, { passive: true });
+})();
+
 document.querySelectorAll('button').forEach(btn => {
   btn.addEventListener('mouseenter', () => cursor.querySelector('.cursor-ring').style.transform = 'scale(2)');
   btn.addEventListener('mouseleave', () => cursor.querySelector('.cursor-ring').style.transform = 'scale(1)');
@@ -6156,22 +6195,6 @@ function renderReports(data) {
       </button>
       <button class="btn btn-ghost" style="padding:5px 10px;font-size:0.7rem;" onclick="showToast('Report deleted')">🗑</button>
     </div>`).join('');
-}
-
-renderReports(REPORTS);
-
-function filterReports() {
-  const q    = document.getElementById('reportSearch').value.toLowerCase();
-  const type = document.getElementById('reportFilter').value;
-  const filtered = REPORTS.filter(r =>
-    (!type || r.type === type) &&
-    (!q || [r.company, r.tank, r.location, r.liquid].some(s => s.toLowerCase().includes(q)))
-  );
-  renderReports(filtered);
-}
-
-function mockDownload(name) {
-  showToast('Downloading ' + name + '.html');
 }
 </script>
 </body>
