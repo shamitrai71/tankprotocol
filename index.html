@@ -996,7 +996,7 @@ html, body {
 
 .brand-name {
   font-family: var(--cond);
-  font-size: clamp(5rem, 14vw, 10rem);
+  font-size: clamp(1.25rem, 3.5vw, 2.5rem);
   font-weight: 800;
   line-height: 0.88;
   color: transparent;
@@ -1450,17 +1450,12 @@ html, body {
   --r:           12px;
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+#profilePage * { box-sizing: border-box; margin: 0; padding: 0; }
 
-body {
-  background: var(--bg);
-  font-family: var(--body);
-  color: var(--text);
-  min-height: 100vh;
-}
+/* body rule scoped - removed (global body handled above) */
 
 /* ─ TOPBAR ──────────────────────────── */
-.topbar {
+#profilePage .topbar-brand {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1471,7 +1466,7 @@ body {
   position: sticky; top: 0; z-index: 100;
 }
 
-.topbar-brand {
+#profilePage .topbar-brand {
   display: flex; align-items: center; gap: 10px;
   font-family: var(--display);
   font-weight: 800; font-size: 1rem;
@@ -1491,11 +1486,11 @@ body {
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 
-.topbar-right {
+#profilePage .topbar-right {
   display: flex; align-items: center; gap: 12px;
 }
 
-.topbar-viewing {
+#profilePage .topbar-viewing {
   font-family: var(--mono);
   font-size: 0.62rem;
   color: var(--text-dim);
@@ -1507,8 +1502,8 @@ body {
   display: none;
 }
 
-.topbar-viewing.show { display: block; }
-.topbar-viewing span { color: var(--gold); }
+#profilePage .topbar-viewing.show { display: block; }
+#profilePage .topbar-viewing span { color: var(--gold); }
 
 .btn-back {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1524,7 +1519,7 @@ body {
 .btn-back:hover { border-color: rgba(201,168,76,0.4); color: var(--gold); }
 
 /* ─ MAIN LAYOUT ─────────────────────── */
-.page {
+#profilePage .profile-inner-page {
   max-width: 1080px;
   margin: 0 auto;
   padding: 36px 24px 80px;
@@ -1885,9 +1880,9 @@ body {
 .field-input option { background: #0f1520; }
 
 /* Toggle between view/edit */
-body.editing .field-value  { display: none; }
-body.editing .field-input  { display: block; }
-body.editing .cover-edit-btn.editable { display: flex; }
+#profilePage body.editing .field-value  { display: none; }
+#profilePage body.editing .field-input  { display: block; }
+#profilePage body.editing .cover-edit-btn.editable { display: flex; }
 
 /* ─ REPORTS SECTION ─────────────────── */
 .report-item {
@@ -1947,7 +1942,7 @@ body.editing .cover-edit-btn.editable { display: flex; }
   display: none;
 }
 .report-delete-btn:hover { border-color: rgba(240,91,91,0.3); color: var(--red); }
-body.editing .report-delete-btn { display: block; }
+#profilePage body.editing .report-delete-btn { display: block; }
 
 .reports-empty {
   text-align: center;
@@ -2043,9 +2038,9 @@ body.editing .report-delete-btn { display: block; }
 .hidden-file { display: none; }
 
 /* Scrollbar */
-::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+#profilePage ::-webkit-scrollbar { width: 5px; }
+#profilePage ::-webkit-scrollbar-track { background: transparent; }
+#profilePage ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
 
 /* Admin viewer badge */
 .admin-view-banner {
@@ -2418,19 +2413,6 @@ body.editing .report-delete-btn { display: block; }
   <!-- PROFILE PAGE -->
   <div class="page-content active" id="profilePage">
 
-    <input type="file" class="hidden-file" id="avatarFileInput" accept="image/*" onchange="handleAvatarUpload(event)">
-<input type="file" class="hidden-file" id="logoFileInput" accept="image/*" onchange="handleLogoUpload(event)">
-
-        <div class="brand-name">Tank Protocol</div>
-  </a>
-  <div class="topbar-right">
-    <div class="topbar-viewing" id="viewingBanner">
-      Viewing: <span id="viewingName"></span>
-    </div>
-    <a href="#" class="btn-back" onclick="showPage('profilePage', document.querySelector('.nav-btn'));return false;">← Dashboard</a>
-  </div>
-</div>
-
 <!-- HIDDEN FILE INPUTS -->
 
 
@@ -2441,57 +2423,34 @@ body.editing .report-delete-btn { display: block; }
     <span>Super Admin mode — you are editing <strong id="adminViewName"></strong>'s profile</span>
   </div>
 
-  <!-- ══ HERO ══════════════════════════════════════════════ -->
-  <div class="profile-hero">
-    <div class="hero-cover" id="heroCover">
-      <button class="cover-edit-btn editable" onclick="changeCover()">✏ Change Cover</button>
-    </div>
-
-    <div class="hero-body">
+  <!-- ── PROFILE HEADER ── -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 0 24px;border-bottom:1px solid var(--glass-border);margin-bottom:28px;flex-wrap:wrap;gap:14px;">
+    <div style="display:flex;align-items:center;gap:16px;">
       <!-- Avatar -->
-      <div class="avatar-wrap">
-        <div class="avatar-circle" id="avatarCircle" onclick="triggerAvatarUpload()">
-          <span id="avatarInitials">?</span>
-          <img id="avatarImg" src="" alt="" style="display:none;">
-          <div class="avatar-edit-overlay editable">📷</div>
-        </div>
-        <div class="avatar-online"></div>
+      <div id="avatarCircle" onclick="triggerAvatarUpload()" style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:1.4rem;color:#080c14;cursor:pointer;flex-shrink:0;position:relative;overflow:hidden;">
+        <span id="avatarInitials">?</span>
+        <img id="avatarImg" src="" alt="" style="display:none;position:absolute;inset:0;width:100%;height:100%;object-fit:cover;">
       </div>
-
-      <!-- Name + info -->
-      <div class="hero-info">
-        <div class="hero-name" id="heroName">—</div>
-        <div class="hero-designation" id="heroDesignation"></div>
-        <div class="hero-company" id="heroCompany"></div>
-        <div class="hero-tags" id="heroTags"></div>
-      </div>
-
-      <!-- Company logo -->
-      <div class="company-logo-wrap">
-        <div class="company-logo-box" id="companyLogoBox" onclick="triggerLogoUpload()">
-          <img id="companyLogoImg" src="" alt="" style="display:none;">
-          <div class="company-logo-placeholder" id="companyLogoPlaceholder">
-            🏢<br>Company<br>Logo
-          </div>
-        </div>
-        <div class="logo-edit-hint" id="logoEditHint">Click to upload</div>
+      <input type="file" id="avatarFileInput" accept="image/*" style="display:none;" onchange="handleAvatarUpload(event)">
+      <input type="file" id="logoFileInput" accept="image/*" style="display:none;" onchange="handleLogoUpload(event)">
+      <div>
+        <div id="heroName" style="font-family:var(--display);font-weight:800;font-size:1.3rem;color:var(--text-bright);line-height:1.1;"></div>
+        <div id="heroDesignation" style="font-size:0.82rem;color:var(--text-dim);margin-top:2px;"></div>
+        <div id="heroCompany" style="font-family:var(--mono);font-size:0.72rem;color:var(--gold);margin-top:3px;letter-spacing:0.3px;"></div>
+        <div id="heroTags" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;"></div>
       </div>
     </div>
-
-    <!-- Edit toggle bar -->
-    <div class="edit-toggle-bar">
-      <div class="edit-mode-info">
-        <div class="edit-mode-dot" id="editModeDot"></div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);display:flex;align-items:center;gap:6px;">
+        <div id="editModeDot" style="width:6px;height:6px;border-radius:50%;background:var(--text-dim);"></div>
         <span id="editModeLabel">View mode</span>
       </div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;">✕ Cancel</button>
-        <button class="btn-edit-toggle view-mode" id="editToggleBtn" onclick="toggleEdit()">✏ Edit Profile</button>
-      </div>
+      <button class="btn-cancel" id="cancelBtn" onclick="cancelEdit()" style="display:none;background:transparent;border:1px solid var(--border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;padding:7px 12px;cursor:pointer;">✕ Cancel</button>
+      <button id="editToggleBtn" onclick="toggleEdit()" style="padding:8px 18px;background:var(--gold-dim);border:1px solid rgba(201,168,76,0.3);border-radius:7px;color:var(--gold);font-family:var(--body);font-weight:500;font-size:0.82rem;cursor:pointer;transition:all 0.18s;">✏ Edit Profile</button>
     </div>
   </div>
 
-  <!-- ══ MAIN CONTENT ════════════════════════════════════════ -->
+    <!-- ══ MAIN CONTENT ════════════════════════════════════════ -->
   <div class="content-grid">
 
     <!-- LEFT COLUMN -->
@@ -2750,6 +2709,26 @@ body.editing .report-delete-btn { display: block; }
   <div class="page-content" id="adminPage">
     <div class="page-title">Admin Panel</div>
     <div class="page-sub">Full system access — manage users, roles, and permissions</div>
+
+    <!-- Quick Access Tools -->
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
+      <a href="floating-roof-tank-calculator.html" target="_blank" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">⚗</div>
+        <div>
+          <div style="font-family:var(--display);font-weight:700;font-size:0.88rem;color:var(--text-bright);">Emissions Calculator</div>
+          <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);margin-top:2px;">API MPMS Chapter 19.2 · Floating Roof Tank</div>
+        </div>
+        <div style="margin-left:auto;font-size:0.7rem;color:var(--gold);">↗</div>
+      </a>
+      <a href="tank-protocol-admin.html" target="_blank" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
+        <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">⬡</div>
+        <div>
+          <div style="font-family:var(--display);font-weight:700;font-size:0.88rem;color:var(--text-bright);">Full Admin Dashboard</div>
+          <div style="font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);margin-top:2px;">Analytics · Demographics · Reports · Settings</div>
+        </div>
+        <div style="margin-left:auto;font-size:0.7rem;color:var(--gold);">↗</div>
+      </a>
+    </div>
 
     <!-- Stats row -->
     <div class="stats-row">
@@ -3203,18 +3182,14 @@ function doLogin() {
 
   currentUser = user;
 
-  // Write session so admin panel can verify access
-  if (user.role === 'admin' || user.role === 'super_admin') {
-    sessionStorage.setItem('tp_session', JSON.stringify({
-      id: user.id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      role: user.role
-    }));
-  } else {
-    sessionStorage.removeItem('tp_session');
-  }
+  // Write session for all users (used for auth guard on refresh)
+  sessionStorage.setItem('tp_session', JSON.stringify({
+    id: user.id,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    role: user.role
+  }));
 
   loadDashboard();
   showView('dashView');
@@ -3246,11 +3221,26 @@ function doReset() {
 
 // ─── VIEWS ────────────────────────────────────────────────────
 function showView(id) {
+  // Guard: dashView requires login
+  if (id === 'dashView' && !currentUser) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('loginView').classList.add('active');
+    return;
+  }
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
 
 function showPage(id, btn) {
+  // Guard: only super_admin can access adminPage
+  if (id === 'adminPage') {
+    if (!currentUser || currentUser.role !== 'super_admin') {
+      console.warn('Access denied: admin panel requires super_admin role');
+      return;
+    }
+  }
+  // Guard: must be logged in to access any page-content
+  if (!currentUser) return;
   document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -3268,7 +3258,7 @@ function loadDashboard() {
 
   // Show/hide admin nav
   const isAdmin = u.role === 'admin' || u.role === 'super_admin';
-  if (_s('adminNavBtn'))    _s('adminNavBtn').style.display    = isAdmin ? '' : 'none';
+  if (_s('adminNavBtn'))    _s('adminNavBtn').style.display    = u.role === 'super_admin' ? '' : 'none';
   if (_s('superAdminRoleHint')) _s('superAdminRoleHint').style.display = u.role === 'super_admin' ? '' : 'none';
 
   // ── Rich profile hero fields ──────────────────────────────────────
@@ -3579,6 +3569,24 @@ function toast(msg, isError = false) {
 document.getElementById('loginPassword').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
 });
+
+// ── PAGE LOAD AUTH CHECK ─────────────────────────────────────────────────────
+// If a valid session exists, auto-restore the dashboard (skip login on refresh)
+(function checkSession() {
+  const raw = sessionStorage.getItem('tp_session');
+  if (!raw) return; // no session → stay on login
+  try {
+    const session = JSON.parse(raw);
+    const user = USERS.find(u => u.id === session.id && u.email === session.email);
+    if (!user) { sessionStorage.removeItem('tp_session'); return; }
+    // Valid session found - restore dashboard
+    currentUser = user;
+    loadDashboard();
+    showView('dashView');
+  } catch(e) {
+    sessionStorage.removeItem('tp_session');
+  }
+})();
 
 // ─── SIGNUP ───────────────────────────────────────────────────────
 let signupData = {};
@@ -3967,26 +3975,23 @@ function toggleEdit() {
 }
 
 function applyEditMode() {
+  const _e = id => document.getElementById(id);
   if (editingActive) {
     document.body.classList.add('editing');
-    document.getElementById('editToggleBtn').className  = 'btn-edit-toggle edit-mode';
-    document.getElementById('editToggleBtn').textContent = '✓ Save Changes';
-    document.getElementById('editToggleBtn').onclick = saveProfile;
-    document.getElementById('cancelBtn').style.display = '';
-    document.getElementById('saveSection').style.display = 'block';
-    document.getElementById('editModeDot').classList.add('editing');
-    document.getElementById('editModeLabel').textContent = 'Editing profile';
-    document.getElementById('logoEditHint').classList.add('show');
+    if (_e('editToggleBtn')) { _e('editToggleBtn').className = 'btn-edit-toggle edit-mode'; _e('editToggleBtn').textContent = '✓ Save Changes'; _e('editToggleBtn').onclick = saveProfile; }
+    if (_e('cancelBtn'))     _e('cancelBtn').style.display = '';
+    if (_e('saveSection'))   _e('saveSection').style.display = 'block';
+    if (_e('editModeDot'))   _e('editModeDot').classList.add('editing');
+    if (_e('editModeLabel')) _e('editModeLabel').textContent = 'Editing profile';
+    if (_e('logoEditHint'))  _e('logoEditHint').classList.add('show');
   } else {
     document.body.classList.remove('editing');
-    document.getElementById('editToggleBtn').className  = 'btn-edit-toggle view-mode';
-    document.getElementById('editToggleBtn').textContent = '✏ Edit Profile';
-    document.getElementById('editToggleBtn').onclick = toggleEdit;
-    document.getElementById('cancelBtn').style.display = 'none';
-    document.getElementById('saveSection').style.display = 'none';
-    document.getElementById('editModeDot').classList.remove('editing');
-    document.getElementById('editModeLabel').textContent = 'View mode';
-    document.getElementById('logoEditHint').classList.remove('show');
+    if (_e('editToggleBtn')) { _e('editToggleBtn').className = 'btn-edit-toggle view-mode'; _e('editToggleBtn').textContent = '✏ Edit Profile'; _e('editToggleBtn').onclick = toggleEdit; }
+    if (_e('cancelBtn'))     _e('cancelBtn').style.display = 'none';
+    if (_e('saveSection'))   _e('saveSection').style.display = 'none';
+    if (_e('editModeDot'))   _e('editModeDot').classList.remove('editing');
+    if (_e('editModeLabel')) _e('editModeLabel').textContent = 'View mode';
+    if (_e('logoEditHint'))  _e('logoEditHint').classList.remove('show');
   }
 }
 

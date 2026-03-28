@@ -1464,14 +1464,14 @@ function goToMain() {
     document.getElementById('accessDenied').classList.add('show');
     return;
   }
-  const allowed = ['admin', 'super_admin'];
+  const allowed = ['super_admin']; // Only super_admin can access the full admin panel
   if (!allowed.includes(session.role)) {
     document.getElementById('accessDenied').classList.add('show');
     return;
   }
   // Personalise topbar
   const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
-  document.getElementById('adminAvatarInitials').textContent = initials;
+    document.getElementById('adminAvatarInitials').textContent = initials;
   document.getElementById('adminUserName').textContent = session.firstName + ' ' + session.lastName;
   const roleTag = document.getElementById('roleTag');
   roleTag.textContent = session.role === 'super_admin' ? '👑 SUPER ADMIN' : '⭐ ADMIN';
