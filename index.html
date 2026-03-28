@@ -3618,14 +3618,13 @@ body.editing .report-delete-btn { display: block; }
 
 <!-- ═══════════════════════ ADMIN PANEL OVERLAY ═══════════════════════ -->
 <div id="adminOverlay" style="display:none;position:fixed;inset:0;z-index:800;background:#080c14;overflow:auto;">
-  <!-- Close admin overlay button -->
-  <button onclick="closeAdminOverlay()" style="position:fixed;top:16px;right:72px;z-index:900;display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:7px;color:var(--gold);font-family:var(--body);font-size:0.78rem;cursor:pointer;transition:all 0.18s;" onmouseover="this.style.background='rgba(201,168,76,0.2)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">✕ Close</button>
+
   <!-- ACCESS DENIED OVERLAY -->
 <div class="access-denied" id="accessDenied">
   <div class="denied-icon">🔒</div>
   <div class="denied-title">Access Restricted</div>
   <div class="denied-msg">This panel requires Admin or Super Admin privileges.<br>Please sign in with an authorised account.</div>
-  <button class="denied-btn" onclick="goToMain()">← Return to Site</button>
+  <button class="denied-btn" onclick="window.open('floating-roof-tank-calculator.html','_blank')">← View Site</button>
 </div>
 
 <!-- ═══════════════ SIDEBAR ═══════════════ -->
@@ -3709,7 +3708,7 @@ body.editing .report-delete-btn { display: block; }
       Dashboard
       <span id="topbarSub">Overview &amp; Key Metrics</span>
     </div>
-    <div class="topbar-right">
+    <div class="topbar-right" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;">
       <div class="topbar-status">
         <div class="status-dot-live"></div>
         SYSTEMS ONLINE
@@ -3717,7 +3716,8 @@ body.editing .report-delete-btn { display: block; }
       <span class="role-tag admin" id="roleTag">⭐ ADMIN</span>
       <span id="adminUserName" style="font-size:0.78rem;color:var(--text-dim);"></span>
       <div class="admin-avatar" id="adminAvatarInitials" title="Signed in user">AS</div>
-      <a href="#" onclick="goToMain();return false;" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+      <a href="floating-roof-tank-calculator.html" target="_blank" onclick="return true;" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+      <button onclick="closeAdminOverlay()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;background:rgba(240,91,91,0.1);border:1px solid rgba(240,91,91,0.3);border-radius:6px;color:var(--red);font-family:var(--body);font-size:0.75rem;cursor:pointer;transition:all 0.18s;" onmouseover="this.style.background='rgba(240,91,91,0.18)'" onmouseout="this.style.background='rgba(240,91,91,0.1)'">✕ Close</button>
     </div>
   </div>
 
@@ -5117,9 +5117,16 @@ function doLogin() {
     role: user.role
   }));
 
-  // Route by role after login
-  if (user.role === 'user') {
-    // Regular members go straight to the calculator
+  // Check if member account is approved
+  if (user.role === 'user' || user.role === 'gold') {
+    if (user.approved === false) {
+      currentUser = null;
+      sessionStorage.removeItem('tp_session');
+      errEl.textContent = 'Your account is pending approval. You will receive an email once approved.';
+      errEl.style.display = 'block';
+      return;
+    }
+    // Approved members go straight to the calculator
     window.location.href = 'floating-roof-tank-calculator.html';
   } else {
     // Admin / Super Admin stay in the app dashboard
@@ -6165,19 +6172,6 @@ function filterReports() {
 
 function mockDownload(name) {
   showToast('Downloading ' + name + '.html');
-}
-
-// ── TOAST ──────────────────────────────────────────────
-function showToast(msg) {
-  const el = document.getElementById('toast');
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 2800);
-}
-
-// ── NAVIGATION HELPER ──────────────────────────────────
-function goToMain() {
-  closeAdminOverlay();
 }
 </script>
 </body>
