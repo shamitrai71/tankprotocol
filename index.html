@@ -4977,32 +4977,49 @@ function showAdminToast(msg) {
 // Extend openAdminOverlay to refresh approval badge
 const _origOpenAdmin = typeof openAdminOverlay === 'function' ? openAdminOverlay : null;
 function openAdminOverlay() {
-  if (_origOpenAdmin) _origOpenAdmin();
-  const overlay = document.getElementById('adminOverlay');
-  if (overlay) overlay.style.display = 'block';
-  const raw = sessionStorage.getItem('tp_session');
-  if (raw) {
-    try {
-      const session = JSON.parse(raw);
-      const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
-      const ai = document.getElementById('adminAvatarInitials');
-      const au = document.getElementById('adminUserName');
-      const rt = document.getElementById('roleTag');
-      if (ai) ai.textContent = initials;
-      if (au) au.textContent = session.firstName + ' ' + session.lastName;
-      if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin'; }
-      const ss = document.getElementById('superAdminSection');
-      if (ss) ss.style.display = 'block';
-      const ad = document.getElementById('accessDenied');
-      if (ad) ad.classList.remove('show');
-    } catch(e) {}
+  // Guard: only super_admin can open the admin panel
+  if (!currentUser || currentUser.role !== 'super_admin') {
+    console.warn('Admin panel: access denied');
+    return;
   }
+
+  const overlay = document.getElementById('adminOverlay');
+  if (!overlay) return;
+
+  // Hide the access denied screen (in case it was shown before)
+  const ad = document.getElementById('accessDenied');
+  if (ad) ad.classList.remove('show');
+
+  // Personalise the admin topbar directly from currentUser
+  const initials = (currentUser.firstName[0] + currentUser.lastName[0]).toUpperCase();
+  const ai = document.getElementById('adminAvatarInitials');
+  const au = document.getElementById('adminUserName');
+  const rt = document.getElementById('roleTag');
+  if (ai) ai.textContent = initials;
+  if (au) au.textContent = currentUser.firstName + ' ' + currentUser.lastName;
+  if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin'; }
+
+  // Show super admin section in sidebar
+  const ss = document.getElementById('superAdminSection');
+  if (ss) ss.style.display = 'block';
+
+  // Show overlay
+  overlay.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+
+  // Render tables
   if (typeof renderUserTable === 'function') renderUserTable();
-  // Refresh approval badge
+  if (typeof buildBarChart === 'function') {
+    buildBarChart('calcChart', [
+      {l:'Aug',v:98},{l:'Sep',v:124},{l:'Oct',v:141},{l:'Nov',v:109},
+      {l:'Dec',v:88},{l:'Jan',v:152},{l:'Feb',v:178},{l:'Mar',v:203}
+    ]);
+  }
+
+  // Update approval badge
   const pendingCount = USERS.filter(u => u.approved === false).length;
   const badge = document.getElementById('approvalBadge');
   if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
-  document.body.style.overflow = 'hidden';
 }
 
 
@@ -6161,71 +6178,6 @@ function showToast(msg) {
 // ── NAVIGATION HELPER ──────────────────────────────────
 function goToMain() {
   closeAdminOverlay();
-}
-
-// ── ACCESS CONTROL ─────────────────────────────────────
-(function() {
-  const raw = sessionStorage.getItem('tp_session');
-  if (!raw) {
-    document.getElementById('accessDenied').classList.add('show');
-    return;
-  }
-  let session;
-  try { session = JSON.parse(raw); } catch(e) {
-    document.getElementById('accessDenied').classList.add('show');
-    return;
-  }
-  const allowed = ['super_admin']; // Only super_admin can access the full admin panel
-  if (!allowed.includes(session.role)) {
-    document.getElementById('accessDenied').classList.add('show');
-    return;
-  }
-  // Personalise topbar
-  const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
-      document.getElementById('adminAvatarInitials').textContent = initials;
-  document.getElementById('adminUserName').textContent = session.firstName + ' ' + session.lastName;
-  const roleTag = document.getElementById('roleTag');
-  roleTag.textContent = session.role === 'super_admin' ? '👑 SUPER ADMIN' : '⭐ ADMIN';
-  roleTag.className = 'role-tag ' + session.role;
-  if (session.role === 'super_admin') {
-    document.getElementById('superAdminSection').style.display = 'block';
-  }
-})();
-
-
-function openAdminOverlay() {
-  if (!currentUser || currentUser.role !== 'super_admin') return;
-  // Sync session for admin panel access control
-  sessionStorage.setItem('tp_session', JSON.stringify({
-    id: currentUser.id, firstName: currentUser.firstName,
-    lastName: currentUser.lastName, email: currentUser.email,
-    role: currentUser.role
-  }));
-  const overlay = document.getElementById('adminOverlay');
-  overlay.style.display = 'block';
-  // Trigger admin panel init (access control + personalise topbar)
-  const raw = sessionStorage.getItem('tp_session');
-  if (raw) {
-    try {
-      const session = JSON.parse(raw);
-      const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
-      const ai = document.getElementById('adminAvatarInitials');
-      const au = document.getElementById('adminUserName');
-      const rt = document.getElementById('roleTag');
-      if (ai) ai.textContent = initials;
-      if (au) au.textContent = session.firstName + ' ' + session.lastName;
-      if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin'; }
-      const ss = document.getElementById('superAdminSection');
-      if (ss) ss.style.display = 'block';
-      
-      if (ad) ad.classList.remove('show');
-    } catch(e) {}
-  }
-  if (typeof renderUserTable === 'function') renderUserTable();
-  const pendingCount = USERS.filter(u => u.approved === false).length;
-  const badge = document.getElementById('approvalBadge');
-  if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
-  document.body.style.overflow = 'hidden';
 }
 </script>
 </body>
