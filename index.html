@@ -1880,9 +1880,9 @@ html, body {
 .field-input option { background: #0f1520; }
 
 /* Toggle between view/edit */
-#profilePage body.editing .field-value  { display: none; }
-#profilePage body.editing .field-input  { display: block; }
-#profilePage body.editing .cover-edit-btn.editable { display: flex; }
+body.editing .field-value  { display: none; }
+body.editing .field-input  { display: block; }
+body.editing .cover-edit-btn.editable { display: flex; }
 
 /* ─ REPORTS SECTION ─────────────────── */
 .report-item {
@@ -1942,7 +1942,7 @@ html, body {
   display: none;
 }
 .report-delete-btn:hover { border-color: rgba(240,91,91,0.3); color: var(--red); }
-#profilePage body.editing .report-delete-btn { display: block; }
+body.editing .report-delete-btn { display: block; }
 
 .reports-empty {
   text-align: center;
@@ -2056,6 +2056,818 @@ html, body {
 .admin-view-banner.show { display: flex; }
 .admin-view-banner strong { color: var(--gold-light); }
 
+
+
+
+/* ══ ADMIN PANEL CSS ══ */
+
+:root {
+  --bg:          #080c14;
+  --surface:     #0f1520;
+  --surface2:    #141c2a;
+  --border:      #1e2d42;
+  --border2:     #253548;
+  --gold:        #c9a84c;
+  --gold-light:  #e8c97a;
+  --gold-dim:    rgba(201,168,76,0.12);
+  --gold-glow:   rgba(201,168,76,0.25);
+  --emerald:     #2dd4a0;
+  --red:         #f05b5b;
+  --blue:        #4fa3e8;
+  --amber:       #f59e0b;
+  --text:        #c8d6e5;
+  --text-dim:    #5a6e85;
+  --text-bright: #eaf2ff;
+  --display:     'Syne', sans-serif;
+  --body:        'DM Sans', sans-serif;
+  --mono:        'Share Tech Mono', monospace;
+}
+
+#adminOverlay * { box-sizing: border-box; margin: 0; padding: 0; }
+
+#adminOverlay body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  overflow-x: hidden;
+}
+
+/* ── SIDEBAR ─────────────────────────── */
+#adminOverlay .sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  overflow-y: auto;
+}
+
+#adminOverlay .sidebar-brand {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#adminOverlay .brand-mark {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800; font-size: 15px;
+  color: #080c14; flex-shrink: 0;
+}
+
+#adminOverlay .brand-text .b-name {
+  font-family: var(--display);
+  font-weight: 800; font-size: 0.95rem;
+  background: linear-gradient(135deg, var(--gold-light), var(--gold));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  letter-spacing: 0.5px; line-height: 1;
+}
+
+#adminOverlay .brand-text .b-sub {
+  font-family: var(--mono);
+  font-size: 0.58rem; color: var(--text-dim);
+  letter-spacing: 0.8px; margin-top: 2px;
+  text-transform: uppercase;
+}
+
+#adminOverlay .sidebar-section {
+  padding: 18px 12px 6px;
+}
+
+#adminOverlay .sidebar-section-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-dim);
+  padding: 0 8px;
+  margin-bottom: 6px;
+}
+
+#adminOverlay .nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-dim);
+  font-size: 0.83rem;
+  font-weight: 400;
+  border: 1px solid transparent;
+  margin-bottom: 2px;
+  user-select: none;
+}
+
+#adminOverlay .nav-item:hover {
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+#adminOverlay .nav-item.active {
+  background: var(--gold-dim);
+  color: var(--gold);
+  border-color: rgba(201,168,76,0.25);
+  font-weight: 500;
+}
+
+#adminOverlay .nav-icon {
+  font-size: 1rem; flex-shrink: 0; width: 18px; text-align: center;
+}
+
+#adminOverlay .nav-badge {
+  margin-left: auto;
+  background: var(--gold-dim);
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+#adminOverlay .sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+  line-height: 1.8;
+}
+
+#adminOverlay .sidebar-footer span { color: var(--gold); }
+
+/* ── MAIN CONTENT ─────────────────────── */
+#adminOverlay .main {
+  margin-left: 240px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── TOPBAR ──────────────────────────── */
+#adminOverlay .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 28px;
+  height: 60px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 50;
+}
+
+#adminOverlay .topbar-left {
+  font-family: var(--display);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-bright);
+}
+
+#adminOverlay .topbar-left span {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-left: 10px;
+  letter-spacing: 0.5px;
+}
+
+#adminOverlay .topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#adminOverlay .topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  color: var(--emerald);
+  background: rgba(45,212,160,0.08);
+  border: 1px solid rgba(45,212,160,0.2);
+  padding: 4px 10px;
+  border-radius: 4px;
+}
+
+#adminOverlay .status-dot-live {
+  width: 6px; height: 6px;
+  background: var(--emerald);
+  border-radius: 50%;
+  box-shadow: 0 0 6px var(--emerald);
+  animation: livePulse 2s infinite;
+}
+
+@keyframes livePulse {
+  0%,100% { opacity: 1; } 50% { opacity: 0.4; }
+}
+
+#adminOverlay .admin-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--display);
+  font-weight: 800; font-size: 0.72rem;
+  color: #080c14; cursor: pointer;
+  transition: transform 0.2s;
+}
+#adminOverlay .admin-avatar:hover { transform: scale(1.08); }
+
+/* ── PAGE AREA ───────────────────────── */
+#adminOverlay .page {
+  flex: 1;
+  padding: 28px;
+  display: none;
+  animation: pageIn 0.25s ease both;
+}
+#adminOverlay .page.active { display: block; }
+
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── TYPOGRAPHY ──────────────────────── */
+#adminOverlay .page-heading {
+  font-family: var(--display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--text-bright);
+  margin-bottom: 4px;
+}
+
+#adminOverlay .page-sub {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 28px;
+}
+
+/* ── CARDS ───────────────────────────── */
+#adminOverlay .card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-bottom: 20px;
+}
+
+#adminOverlay .card-title {
+  font-family: var(--display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--gold);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#adminOverlay .card-title::before {
+  content: '';
+  width: 3px; height: 13px;
+  background: var(--gold);
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── STAT GRID ───────────────────────── */
+#adminOverlay .stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+#adminOverlay .stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+#adminOverlay .stat-card:hover { border-color: var(--border2); }
+
+#adminOverlay .stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  border-radius: 12px 12px 0 0;
+}
+
+#adminOverlay .stat-card.gold::after { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
+#adminOverlay .stat-card.green::after { background: linear-gradient(90deg, var(--emerald), #43e8c0); }
+#adminOverlay .stat-card.blue::after { background: linear-gradient(90deg, var(--blue), #79c4f8); }
+#adminOverlay .stat-card.red::after { background: linear-gradient(90deg, var(--red), #f87171); }
+#adminOverlay .stat-card.amber::after { background: linear-gradient(90deg, var(--amber), #fbbf24); }
+
+#adminOverlay .stat-icon { font-size: 1.3rem; margin-bottom: 10px; }
+
+#adminOverlay .stat-num {
+  font-family: var(--display);
+  font-weight: 800;
+  font-size: 2rem;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+#adminOverlay .stat-label {
+  font-size: 0.72rem;
+  color: var(--text-dim);
+  margin-top: 5px;
+}
+
+#adminOverlay .stat-delta {
+  position: absolute;
+  top: 16px; right: 16px;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+#adminOverlay .stat-delta.up { background: rgba(45,212,160,0.1); color: var(--emerald); }
+#adminOverlay .stat-delta.down { background: rgba(240,91,91,0.1);  color: var(--red); }
+
+/* ── GRIDS ───────────────────────────── */
+#adminOverlay .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+#adminOverlay .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+/* ── CHARTS (CSS-drawn) ──────────────── */
+#adminOverlay .bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; padding-top: 8px; }
+
+#adminOverlay .bar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  height: 100%;
+  justify-content: flex-end;
+}
+
+#adminOverlay .bar-fill {
+  width: 100%;
+  background: linear-gradient(to top, var(--gold), rgba(232,201,122,0.6));
+  border-radius: 3px 3px 0 0;
+  min-height: 4px;
+  position: relative;
+  transition: opacity 0.2s;
+}
+
+#adminOverlay .bar-fill:hover { opacity: 0.8; }
+#adminOverlay .bar-fill.emerald { background: linear-gradient(to top, var(--emerald), rgba(45,212,160,0.5)); }
+#adminOverlay .bar-fill.blue { background: linear-gradient(to top, var(--blue), rgba(79,163,232,0.5)); }
+
+#adminOverlay .bar-label {
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+
+#adminOverlay .bar-val {
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+/* Donut chart */
+#adminOverlay .donut-wrap {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+#adminOverlay .donut-svg { flex-shrink: 0; }
+
+#adminOverlay .donut-legend { flex: 1; }
+
+#adminOverlay .legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.78rem;
+}
+
+#adminOverlay .legend-dot {
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+#adminOverlay .legend-label { color: var(--text-dim); flex: 1; }
+#adminOverlay .legend-val { font-family: var(--mono); font-size: 0.72rem; color: var(--text-bright); }
+
+/* ── TABLES ──────────────────────────── */
+#adminOverlay .data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+#adminOverlay .data-table th {
+  text-align: left;
+  padding: 9px 14px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+}
+
+#adminOverlay .data-table td {
+  padding: 11px 14px;
+  border-bottom: 1px solid rgba(30,45,66,0.5);
+  color: var(--text);
+}
+
+#adminOverlay .data-table tr:last-child td { border-bottom: none; }
+#adminOverlay .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+
+/* ── BADGES ──────────────────────────── */
+#adminOverlay .badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 9px; border-radius: 20px;
+  font-family: var(--mono); font-size: 0.62rem; font-weight: 600;
+}
+
+#adminOverlay .badge.gold { background: rgba(201,168,76,0.12); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+#adminOverlay .badge.green { background: rgba(45,212,160,0.1);  color: var(--emerald); border: 1px solid rgba(45,212,160,0.2); }
+#adminOverlay .badge.red { background: rgba(240,91,91,0.1);   color: var(--red); border: 1px solid rgba(240,91,91,0.2); }
+#adminOverlay .badge.blue { background: rgba(79,163,232,0.1);  color: var(--blue); border: 1px solid rgba(79,163,232,0.2); }
+#adminOverlay .badge.amber { background: rgba(245,158,11,0.1);  color: var(--amber); border: 1px solid rgba(245,158,11,0.2); }
+
+/* ── FORMS ───────────────────────────── */
+#adminOverlay .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+#adminOverlay .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+#adminOverlay .form-grid.full { grid-template-columns: 1fr; }
+
+#adminOverlay .form-field label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 6px;
+}
+
+.form-field input,
+.form-field select,
+#adminOverlay .form-field textarea {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: var(--body);
+  font-size: 0.85rem;
+  padding: 9px 13px;
+  outline: none;
+  transition: all 0.18s;
+  resize: none;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+#adminOverlay .form-field textarea:focus {
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.03);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+#adminOverlay .form-field select option { background: #0f1520; }
+
+/* Toggle */
+#adminOverlay .toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(30,45,66,0.5);
+}
+
+#adminOverlay .toggle-row:last-child { border-bottom: none; }
+
+#adminOverlay .toggle-info .toggle-name { font-size: 0.83rem; color: var(--text-bright); font-weight: 500; }
+#adminOverlay .toggle-info .toggle-desc { font-size: 0.72rem; color: var(--text-dim); margin-top: 2px; }
+
+#adminOverlay .toggle {
+  position: relative;
+  width: 40px; height: 22px;
+  cursor: pointer; flex-shrink: 0;
+}
+
+#adminOverlay .toggle input { opacity: 0; width: 0; height: 0; }
+
+#adminOverlay .toggle-track {
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0.08);
+  border-radius: 22px;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+
+#adminOverlay .toggle input:checked + .toggle-track {
+  background: var(--gold);
+  border-color: var(--gold);
+}
+
+#adminOverlay .toggle-track::after {
+  content: '';
+  position: absolute;
+  width: 16px; height: 16px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px; left: 2px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+#adminOverlay .toggle input:checked + .toggle-track::after {
+  transform: translateX(18px);
+}
+
+/* Buttons */
+#adminOverlay .btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-family: var(--body);
+  font-size: 0.83rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+#adminOverlay .btn-gold {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: #080c14;
+  font-weight: 700;
+}
+#adminOverlay .btn-gold:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(201,168,76,0.3); }
+
+#adminOverlay .btn-ghost {
+  background: transparent;
+  border-color: var(--border2);
+  color: var(--text-dim);
+}
+#adminOverlay .btn-ghost:hover { background: rgba(255,255,255,0.04); color: var(--text); border-color: var(--border2); }
+
+#adminOverlay .btn-danger {
+  background: rgba(240,91,91,0.1);
+  border-color: rgba(240,91,91,0.25);
+  color: var(--red);
+}
+#adminOverlay .btn-danger:hover { background: rgba(240,91,91,0.18); }
+
+#adminOverlay .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 16px; }
+
+/* Progress bar */
+#adminOverlay .progress-bar {
+  height: 5px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+#adminOverlay .progress-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--gold), var(--gold-light));
+}
+
+/* Map placeholder */
+#adminOverlay .map-placeholder {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--text-dim);
+  font-size: 0.78rem;
+  font-family: var(--mono);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Search */
+#adminOverlay .search-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+#adminOverlay .search-input {
+  flex: 1;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-family: var(--body);
+  font-size: 0.83rem;
+  padding: 9px 14px;
+  outline: none;
+  transition: all 0.18s;
+}
+
+#adminOverlay .search-input:focus {
+  border-color: rgba(201,168,76,0.4);
+  box-shadow: 0 0 0 3px rgba(201,168,76,0.08);
+}
+
+/* Report row */
+#adminOverlay .report-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 13px 16px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s;
+}
+
+#adminOverlay .report-row:hover { border-color: var(--border2); }
+
+#adminOverlay .report-icon {
+  width: 36px; height: 36px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 7px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; flex-shrink: 0;
+}
+
+#adminOverlay .report-info { flex: 1; min-width: 0; }
+#adminOverlay .report-name { font-size: 0.83rem; font-weight: 500; color: var(--text-bright); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#adminOverlay .report-meta { font-family: var(--mono); font-size: 0.63rem; color: var(--text-dim); margin-top: 3px; }
+
+#adminOverlay .btn-dl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: var(--gold-dim);
+  border: 1px solid rgba(201,168,76,0.25);
+  border-radius: 6px;
+  color: var(--gold);
+  font-family: var(--mono);
+  font-size: 0.65rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+#adminOverlay .btn-dl:hover { background: rgba(201,168,76,0.2); }
+
+/* Colour accent strip for inline charts */
+#adminOverlay .mini-chart {
+  display: flex;
+  gap: 3px;
+  align-items: flex-end;
+  height: 32px;
+}
+
+#adminOverlay .mini-bar {
+  flex: 1;
+  border-radius: 2px;
+  background: var(--gold-dim);
+  min-height: 4px;
+  transition: background 0.2s;
+}
+
+#adminOverlay .mini-bar:hover { background: rgba(201,168,76,0.3); }
+
+/* Toast */
+#adminOverlay .toast {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  background: var(--surface);
+  border: 1px solid rgba(45,212,160,0.3);
+  border-left: 3px solid var(--emerald);
+  border-radius: 8px;
+  color: var(--text-bright);
+  font-size: 0.8rem;
+  padding: 12px 18px;
+  z-index: 9999;
+  transform: translateY(60px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+#adminOverlay .toast.show { transform: translateY(0); opacity: 1; }
+
+/* Scrollbar */
+#adminOverlay ::-webkit-scrollbar { width: 6px; }
+#adminOverlay ::-webkit-scrollbar-track { background: transparent; }
+#adminOverlay ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .stat-grid { grid-template-columns: 1fr 1fr; }
+  .two-col   { grid-template-columns: 1fr; }
+  .three-col { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 768px) {
+  .sidebar { width: 200px; }
+  .main    { margin-left: 200px; }
+}
+
+  /* Access denied overlay */
+#adminOverlay .access-denied {
+    position: fixed; inset: 0;
+    background: #080c14;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+#adminOverlay .access-denied.show { display: flex; }
+#adminOverlay .denied-icon { font-size: 3rem; }
+#adminOverlay .denied-title { font-family: var(--display); font-weight: 800; font-size: 1.6rem; color: var(--red); }
+#adminOverlay .denied-msg { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.5px; text-align: center; line-height: 1.8; }
+#adminOverlay .denied-btn { padding: 10px 24px; background: linear-gradient(135deg, var(--gold), var(--gold-light)); border: none; border-radius: 8px; color: #080c14; font-family: var(--display); font-weight: 700; font-size: 0.88rem; cursor: pointer; margin-top: 8px; transition: all 0.2s; }
+#adminOverlay .denied-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(201,168,76,0.3); }
+#adminOverlay .role-tag { font-family: var(--mono); font-size: 0.6rem; padding: 3px 9px; border-radius: 4px; letter-spacing: 0.5px; }
+#adminOverlay .role-tag.super_admin { background: linear-gradient(135deg, rgba(232,201,122,0.2), rgba(201,168,76,0.1)); color: var(--gold-light); border: 1px solid rgba(232,201,122,0.35); }
+#adminOverlay .role-tag.admin { background: rgba(201,168,76,0.1); color: var(--gold); border: 1px solid rgba(201,168,76,0.25); }
+
+
+/* ══ SUPER ADMIN EXTRA FEATURES ══ */
+.sa-section { margin-bottom: 28px; }
+.sa-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+.sa-table th { background:rgba(201,168,76,0.08); border:1px solid var(--border); padding:9px 14px; text-align:left; font-size:0.65rem; text-transform:uppercase; letter-spacing:0.8px; color:var(--gold); }
+.sa-table td { border:1px solid var(--border); padding:10px 14px; color:var(--text); vertical-align:middle; }
+.sa-table tr:hover td { background:rgba(255,255,255,0.02); }
+.sa-badge { display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:12px;font-size:0.65rem;font-weight:600; }
+.sa-badge.super  { background:rgba(232,201,122,0.15);color:#e8c97a;border:1px solid rgba(232,201,122,0.3); }
+.sa-badge.admin  { background:rgba(201,168,76,0.12);color:var(--gold);border:1px solid rgba(201,168,76,0.25); }
+.sa-badge.gold   { background:rgba(245,158,11,0.12);color:#f59e0b;border:1px solid rgba(245,158,11,0.3); }
+.sa-badge.user   { background:rgba(79,163,232,0.1);color:var(--blue);border:1px solid rgba(79,163,232,0.2); }
+.sa-badge.pending{ background:rgba(240,91,91,0.1);color:var(--red);border:1px solid rgba(240,91,91,0.2); }
+.sa-badge.active { background:rgba(45,212,160,0.1);color:var(--emerald);border:1px solid rgba(45,212,160,0.2); }
+.sa-btn { display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:6px;font-size:0.72rem;cursor:pointer;border:1px solid;transition:all 0.15s;background:transparent; }
+.sa-btn.gold-btn { color:var(--gold);border-color:rgba(201,168,76,0.35); }
+.sa-btn.gold-btn:hover { background:var(--gold-dim); }
+.sa-btn.green-btn { color:var(--emerald);border-color:rgba(45,212,160,0.3); }
+.sa-btn.green-btn:hover { background:rgba(45,212,160,0.08); }
+.sa-btn.red-btn { color:var(--red);border-color:rgba(240,91,91,0.3); }
+.sa-btn.red-btn:hover { background:rgba(240,91,91,0.08); }
+.sa-btn.blue-btn { color:var(--blue);border-color:rgba(79,163,232,0.3); }
+.sa-btn.blue-btn:hover { background:rgba(79,163,232,0.08); }
+.dl-bar { height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;margin-top:4px;min-width:60px; }
+.dl-fill { height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--gold-light));transition:width 0.3s; }
+.dl-fill.red { background:linear-gradient(90deg,var(--red),#f87171); }
+.email-compose { background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:20px; }
+.email-input { width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text-bright);font-family:var(--body);font-size:0.85rem;padding:9px 13px;outline:none;margin-bottom:12px;transition:border-color 0.18s; }
+.email-input:focus { border-color:rgba(201,168,76,0.4); }
+.email-textarea { width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text-bright);font-family:var(--body);font-size:0.85rem;padding:9px 13px;outline:none;resize:vertical;min-height:120px;transition:border-color 0.18s; }
+.email-textarea:focus { border-color:rgba(201,168,76,0.4); }
 
 </style>
 </head>
@@ -2398,11 +3210,11 @@ html, body {
 
     <div class="topbar-nav">
       <button class="nav-btn active" onclick="showPage('profilePage', this)">Profile</button>
-      <button class="nav-btn" onclick="showPage('adminPage', this)" id="adminNavBtn" style="display:none;">⬡ Admin Panel</button>
+      <a href="#" onclick="openAdminOverlay();return false;" id="adminNavBtn" class="nav-btn" style="display:none;text-decoration:none;">⬡ Admin Panel</a>
     </div>
 
     <div class="topbar-right">
-      <a href="#" onclick="if(currentUser){showPage('profilePage',document.querySelector('.nav-btn'));showView('dashView');}return false;" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Main Site</a>
+      <a href="floating-roof-tank-calculator.html" target="_blank" onclick="return true;" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Main Site</a>
       <div id="topbarName" style="font-size:0.8rem;color:var(--text-dim);"></div>
       <button class="avatar-btn" id="topbarAvatar" onclick="showPage('profilePage', document.querySelector('.nav-btn'))">?</button>
 
@@ -2421,6 +3233,18 @@ html, body {
   <div class="admin-view-banner" id="adminViewBanner">
     <span>👑</span>
     <span>Super Admin mode — you are editing <strong id="adminViewName"></strong>'s profile</span>
+  </div>
+
+  <!-- Calculator banner for members -->
+  <div id="calculatorBanner" style="display:none;align-items:center;gap:16px;padding:14px 20px;background:linear-gradient(135deg,rgba(45,212,160,0.08),rgba(45,212,160,0.04));border:1px solid rgba(45,212,160,0.25);border-radius:10px;margin-bottom:24px;">
+    <div style="font-size:1.4rem;">⚗</div>
+    <div style="flex:1;">
+      <div style="font-family:var(--display);font-weight:700;color:var(--text-bright);font-size:0.9rem;">Emissions Calculator</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">Run floating roof tank VOC emission calculations using API MPMS Chapter 19.2.</div>
+    </div>
+    <a href="floating-roof-tank-calculator.html" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:linear-gradient(135deg,#2dd4a0,#43e8c0);border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.82rem;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+      Open Calculator ↗
+    </a>
   </div>
 
   <!-- ── PROFILE HEADER ── -->
@@ -2720,7 +3544,7 @@ html, body {
         </div>
         <div style="margin-left:auto;font-size:0.7rem;color:var(--gold);">↗</div>
       </a>
-      <a href="tank-protocol-admin.html" target="_blank" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
+      <a href="#" onclick="openAdminOverlay();return false;" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
         <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">⬡</div>
         <div>
           <div style="font-family:var(--display);font-weight:700;font-size:0.88rem;color:var(--text-bright);">Full Admin Dashboard</div>
@@ -2791,6 +3615,685 @@ html, body {
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════ ADMIN PANEL OVERLAY ═══════════════════════ -->
+<div id="adminOverlay" style="display:none;position:fixed;inset:0;z-index:800;background:#080c14;overflow:auto;">
+  <!-- Close admin overlay button -->
+  <button onclick="closeAdminOverlay()" style="position:fixed;top:16px;right:72px;z-index:900;display:flex;align-items:center;gap:6px;padding:6px 14px;background:rgba(201,168,76,0.12);border:1px solid rgba(201,168,76,0.3);border-radius:7px;color:var(--gold);font-family:var(--body);font-size:0.78rem;cursor:pointer;transition:all 0.18s;" onmouseover="this.style.background='rgba(201,168,76,0.2)'" onmouseout="this.style.background='rgba(201,168,76,0.12)'">✕ Close</button>
+  <!-- ACCESS DENIED OVERLAY -->
+<div class="access-denied" id="accessDenied">
+  <div class="denied-icon">🔒</div>
+  <div class="denied-title">Access Restricted</div>
+  <div class="denied-msg">This panel requires Admin or Super Admin privileges.<br>Please sign in with an authorised account.</div>
+  <button class="denied-btn" onclick="goToMain()">← Return to Site</button>
+</div>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-mark">T</div>
+    <div class="brand-text">
+      <div class="b-name">Tank Protocol</div>
+      <div class="b-sub">Admin Console</div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Overview</div>
+    <div class="nav-item active" onclick="nav(this,'dashboard')">
+      <span class="nav-icon">⬡</span> Dashboard
+    </div>
+    <div id="superAdminSection" style="display:none;">
+      <div class="sidebar-section">
+        <div class="sidebar-section-label">Super Admin</div>
+        <div class="nav-item" onclick="saNav(this,'sa-members')" id="saNavMembers" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
+          <span class="nav-icon">👥</span> Members
+        </div>
+        <div class="nav-item" onclick="saNav(this,'sa-email')" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
+          <span class="nav-icon">✉</span> Send Email
+        </div>
+        <div class="nav-item" onclick="saNav(this,'sa-calcs')" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
+          <span class="nav-icon">📊</span> Calculations
+        </div>
+        <div class="nav-item" onclick="saNav(this,'sa-approvals')" id="saNavApprovals" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
+          <span class="nav-icon">✅</span> Approvals <span id="approvalBadge" class="nav-badge" style="display:none;">0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Analytics</div>
+    <div class="nav-item" onclick="nav(this,'statistics')">
+      <span class="nav-icon">📊</span> Site Statistics
+    </div>
+    <div class="nav-item" onclick="nav(this,'demographics')">
+      <span class="nav-icon">👥</span> User Demographics
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Content</div>
+    <div class="nav-item" onclick="nav(this,'reports')">
+      <span class="nav-icon">📁</span> Reports Library
+      <span class="nav-badge">24</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Configuration</div>
+    <div class="nav-item" onclick="nav(this,'settings')">
+      <span class="nav-icon">⚙️</span> Site Settings
+    </div>
+    <div class="nav-item" onclick="nav(this,'users')">
+      <span class="nav-icon">🔐</span> User Management
+    </div>
+    <div class="nav-item" onclick="nav(this,'notifications')">
+      <span class="nav-icon">🔔</span> Notifications
+    </div>
+  </div>
+
+  <div class="sidebar-footer">
+    <span>TANK PROTOCOL</span> v1.0<br>
+    API 19.2 · EPA AP-42<br>
+    &copy; 2026 All Rights Reserved
+  </div>
+</nav>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-left" id="topbarTitle">
+      Dashboard
+      <span id="topbarSub">Overview &amp; Key Metrics</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-status">
+        <div class="status-dot-live"></div>
+        SYSTEMS ONLINE
+      </div>
+      <span class="role-tag admin" id="roleTag">⭐ ADMIN</span>
+      <span id="adminUserName" style="font-size:0.78rem;color:var(--text-dim);"></span>
+      <div class="admin-avatar" id="adminAvatarInitials" title="Signed in user">AS</div>
+      <a href="#" onclick="goToMain();return false;" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ─────────────────────── -->
+  <div class="page active" id="page-dashboard">
+    <div class="page-heading">Command Center</div>
+    <div class="page-sub">Real-time overview of Tank Protocol platform activity</div>
+
+    <div class="stat-grid">
+      <div class="stat-card gold">
+        <div class="stat-icon">📊</div>
+        <div class="stat-delta up">+12%</div>
+        <div class="stat-num">1,842</div>
+        <div class="stat-label">Calculations Run</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">👤</div>
+        <div class="stat-delta up">+5%</div>
+        <div class="stat-num">347</div>
+        <div class="stat-label">Registered Users</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">📁</div>
+        <div class="stat-delta up">+28%</div>
+        <div class="stat-num">24</div>
+        <div class="stat-label">Reports Generated</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon">⏱️</div>
+        <div class="stat-delta down">-3%</div>
+        <div class="stat-num">1.8s</div>
+        <div class="stat-label">Avg Session Time</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Monthly Calculations</div>
+        <div class="bar-chart" id="calcChart"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Calculation Type Split</div>
+        <div class="donut-wrap">
+          <svg class="donut-svg" width="110" height="110" viewBox="0 0 110 110">
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#1e2d42" stroke-width="16"/>
+            <!-- EFRT 68% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#c9a84c" stroke-width="16"
+              stroke-dasharray="170.9 251.3" stroke-dashoffset="62.8" transform="rotate(-90 55 55)"/>
+            <!-- IFRT 22% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#2dd4a0" stroke-width="16"
+              stroke-dasharray="55.3 251.3" stroke-dashoffset="-108.1" transform="rotate(-90 55 55)"/>
+            <!-- Other 10% -->
+            <circle cx="55" cy="55" r="40" fill="none" stroke="#4fa3e8" stroke-width="16"
+              stroke-dasharray="25.1 251.3" stroke-dashoffset="-163.4" transform="rotate(-90 55 55)"/>
+            <text x="55" y="51" text-anchor="middle" fill="#eaf2ff" font-family="Syne" font-weight="800" font-size="14">68%</text>
+            <text x="55" y="64" text-anchor="middle" fill="#5a6e85" font-family="Share Tech Mono" font-size="8">EFRT</text>
+          </svg>
+          <div class="donut-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><div class="legend-label">EFRT Tanks</div><div class="legend-val">68%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div><div class="legend-label">IFRT Tanks</div><div class="legend-val">22%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><div class="legend-label">Custom Input</div><div class="legend-val">10%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Recent Activity</div>
+        <table class="data-table">
+          <thead><tr><th>User</th><th>Action</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody>
+            <tr><td>J. Martinez</td><td>Calc — Crude TK-07</td><td>2 min ago</td><td><span class="badge green">● Done</span></td></tr>
+            <tr><td>R. Patel</td><td>Report Downloaded</td><td>8 min ago</td><td><span class="badge gold">↓ PDF</span></td></tr>
+            <tr><td>S. Kim</td><td>Calc — Gasoline TK-12</td><td>14 min ago</td><td><span class="badge green">● Done</span></td></tr>
+            <tr><td>admin</td><td>Settings Updated</td><td>1 hr ago</td><td><span class="badge blue">✓ Saved</span></td></tr>
+            <tr><td>T. Okonkwo</td><td>New Registration</td><td>2 hr ago</td><td><span class="badge amber">⊕ New</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-title">System Health</div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:4px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>API 19.2 Engine</span><span style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">NOMINAL</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:98%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Database</span><span style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">CONNECTED</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Auth Module</span><span style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">ACTIVE</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:100%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Server Load</span><span style="color:var(--amber);font-family:var(--mono);font-size:0.7rem;">32%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:32%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:5px;">
+              <span>Storage Used</span><span style="color:var(--text-dim);font-family:var(--mono);font-size:0.7rem;">61%</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:61%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATISTICS ─────────────────────── -->
+  <div class="page" id="page-statistics">
+    <div class="page-heading">Site Statistics</div>
+    <div class="page-sub">Platform usage analytics and performance metrics</div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card gold"><div class="stat-icon">📈</div><div class="stat-delta up">+18%</div><div class="stat-num">12.4K</div><div class="stat-label">Page Views / Month</div></div>
+      <div class="stat-card green"><div class="stat-icon">⏱️</div><div class="stat-delta up">+6%</div><div class="stat-num">3.2m</div><div class="stat-label">Avg Session Duration</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🔄</div><div class="stat-delta down">-2%</div><div class="stat-num">34%</div><div class="stat-label">Bounce Rate</div></div>
+      <div class="stat-card amber"><div class="stat-icon">🌐</div><div class="stat-delta up">+9%</div><div class="stat-num">28</div><div class="stat-label">Countries Reached</div></div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Daily Calculations — Last 14 Days</div>
+        <div class="bar-chart" id="dailyChart" style="height:140px;"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Traffic by Source</div>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-top:4px;">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Direct</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--gold);">42%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:42%"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Google Search</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--emerald);">28%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:28%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>LinkedIn</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--blue);">16%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:16%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Industry Forums</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--amber);">9%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:9%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Other</span><span style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">5%</span></div>
+            <div class="progress-bar" style="height:7px;"><div class="progress-fill" style="width:5%;background:rgba(255,255,255,0.2)"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Top Calculation Types</div>
+        <table class="data-table">
+          <thead><tr><th>Type</th><th>Count</th><th>Share</th><th>Trend</th></tr></thead>
+          <tbody>
+            <tr><td>Gasoline (EFRT)</td><td style="font-family:var(--mono);">614</td><td><span class="badge gold">33%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +8%</td></tr>
+            <tr><td>Crude Oil Light (EFRT)</td><td style="font-family:var(--mono);">428</td><td><span class="badge gold">23%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +12%</td></tr>
+            <tr><td>Crude Oil Heavy (IFRT)</td><td style="font-family:var(--mono);">312</td><td><span class="badge blue">17%</span></td><td style="color:var(--red);font-family:var(--mono);font-size:0.7rem;">↓ -3%</td></tr>
+            <tr><td>Jet A / Kerosene</td><td style="font-family:var(--mono);">241</td><td><span class="badge blue">13%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +5%</td></tr>
+            <tr><td>Custom Liquid</td><td style="font-family:var(--mono);">247</td><td><span class="badge amber">14%</span></td><td style="color:var(--emerald);font-family:var(--mono);font-size:0.7rem;">↑ +21%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly Report Downloads</div>
+        <div class="bar-chart" id="dlChart" style="height:140px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── DEMOGRAPHICS ────────────────────── -->
+  <div class="page" id="page-demographics">
+    <div class="page-heading">User Demographics</div>
+    <div class="page-sub">Who uses Tank Protocol — roles, industries, and geographic distribution</div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+      <div class="stat-card gold"><div class="stat-icon">👥</div><div class="stat-num">347</div><div class="stat-label">Total Users</div></div>
+      <div class="stat-card green"><div class="stat-icon">✅</div><div class="stat-delta up">+14</div><div class="stat-num">284</div><div class="stat-label">Active (30 days)</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🆕</div><div class="stat-delta up">+22</div><div class="stat-num">63</div><div class="stat-label">New This Month</div></div>
+      <div class="stat-card amber"><div class="stat-icon">🌍</div><div class="stat-num">28</div><div class="stat-label">Countries</div></div>
+    </div>
+
+    <div class="three-col">
+      <div class="card">
+        <div class="card-title">By Industry</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Oil &amp; Gas</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">38%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:38%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Petrochemicals</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">24%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:24%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Environmental Consulting</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--emerald);">18%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:18%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Refining</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--blue);">13%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:13%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Regulatory / Govt</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--amber);">7%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:7%;background:linear-gradient(90deg,var(--amber),#fbbf24)"></div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">By Job Role</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Environmental Engineer</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">31%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:31%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Process Engineer</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--gold);">22%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:22%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Compliance Manager</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--emerald);">18%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:18%;background:linear-gradient(90deg,var(--emerald),#43e8c0)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>HSE Specialist</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--blue);">15%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:15%;background:linear-gradient(90deg,var(--blue),#79c4f8)"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px;"><span>Other</span><span style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">14%</span></div><div class="progress-bar" style="height:6px;"><div class="progress-fill" style="width:14%;background:rgba(255,255,255,0.15)"></div></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">By Experience Level</div>
+        <div class="donut-wrap" style="flex-direction:column;align-items:flex-start;gap:14px;">
+          <div style="display:flex;flex-direction:column;gap:9px;width:100%;">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--gold)"></div><div class="legend-label">Senior (10+ yrs)</div><div class="legend-val">44%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--emerald)"></div><div class="legend-label">Mid (5-10 yrs)</div><div class="legend-val">33%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><div class="legend-label">Junior (1-5 yrs)</div><div class="legend-val">17%</div></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--text-dim)"></div><div class="legend-label">Student</div><div class="legend-val">6%</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Top Countries</div>
+        <table class="data-table">
+          <thead><tr><th>Country</th><th>Users</th><th>Share</th><th>Calcs</th></tr></thead>
+          <tbody>
+            <tr><td>🇺🇸 United States</td><td style="font-family:var(--mono);">124</td><td><span class="badge gold">36%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">681</td></tr>
+            <tr><td>🇸🇦 Saudi Arabia</td><td style="font-family:var(--mono);">48</td><td><span class="badge gold">14%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">295</td></tr>
+            <tr><td>🇮🇳 India</td><td style="font-family:var(--mono);">41</td><td><span class="badge blue">12%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">214</td></tr>
+            <tr><td>🇬🇧 United Kingdom</td><td style="font-family:var(--mono);">36</td><td><span class="badge blue">10%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">188</td></tr>
+            <tr><td>🇦🇪 UAE</td><td style="font-family:var(--mono);">29</td><td><span class="badge amber">8%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">156</td></tr>
+            <tr><td>🇦🇺 Australia</td><td style="font-family:var(--mono);">22</td><td><span class="badge amber">6%</span></td><td style="font-family:var(--mono);color:var(--text-dim);">119</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="card-title">New User Growth — Monthly</div>
+        <div class="bar-chart" id="growthChart" style="height:160px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REPORTS LIBRARY ─────────────────── -->
+  <div class="page" id="page-reports">
+    <div class="page-heading">Reports Library</div>
+    <div class="page-sub">All generated emission reports available for download and management</div>
+
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="stat-card gold"><div class="stat-icon">📁</div><div class="stat-num">24</div><div class="stat-label">Total Reports</div></div>
+      <div class="stat-card green"><div class="stat-icon">↓</div><div class="stat-num">18</div><div class="stat-label">Downloaded</div></div>
+      <div class="stat-card blue"><div class="stat-icon">🏭</div><div class="stat-num">11</div><div class="stat-label">Companies</div></div>
+      <div class="stat-card amber"><div class="stat-icon">📅</div><div class="stat-num">7</div><div class="stat-label">This Month</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">All Reports</div>
+      <div class="search-bar">
+        <input class="search-input" type="text" id="reportSearch" placeholder="Search by company, tank ID, or location…" oninput="filterReports()">
+        <select style="background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:9px 13px;font-family:var(--body);font-size:0.83rem;outline:none;" id="reportFilter" onchange="filterReports()">
+          <option value="">All Types</option>
+          <option value="EFRT">EFRT</option>
+          <option value="IFRT">IFRT</option>
+        </select>
+        <button class="btn btn-ghost" onclick="showToast('Export initiated — CSV preparing...')">⬇ Export CSV</button>
+      </div>
+      <div id="reportsContainer"></div>
+    </div>
+  </div>
+
+  <!-- ── SITE SETTINGS ───────────────────── -->
+  <div class="page" id="page-settings">
+    <div class="page-heading">Site Settings</div>
+    <div class="page-sub">Configure platform behaviour, branding, and calculation defaults</div>
+
+    <div class="two-col">
+      <div>
+        <div class="card">
+          <div class="card-title">General Settings</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Platform Name</label><input type="text" value="Tank Protocol"></div>
+            <div class="form-field"><label>Version Tag</label><input type="text" value="v1.0"></div>
+            <div class="form-field"><label>Support Email</label><input type="email" value="support@tankprotocol.com"></div>
+            <div class="form-field"><label>Default Timezone</label>
+              <select><option>UTC</option><option selected>UTC+5:30 (IST)</option><option>UTC-5 (EST)</option><option>UTC-6 (CST)</option></select>
+            </div>
+          </div>
+          <div class="form-grid full">
+            <div class="form-field"><label>Platform Tagline</label><input type="text" value="Emissions Intelligence Platform"></div>
+          </div>
+          <div class="btn-row"><button class="btn btn-gold" onclick="showToast('General settings saved ✓')">Save Changes</button></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Calculation Defaults</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Default Roof Type</label>
+              <select><option selected>EFRT</option><option>IFRT</option></select>
+            </div>
+            <div class="form-field"><label>Default Seal</label>
+              <select><option selected>Mechanical Shoe</option><option>Liquid Foam</option><option>Vapor Foam</option><option>Resilient Filled</option></select>
+            </div>
+            <div class="form-field"><label>Default Wind Speed (mph)</label><input type="number" value="7.0" step="0.1"></div>
+            <div class="form-field"><label>Pressure Units</label>
+              <select><option selected>psia</option><option>kPa</option><option>bar</option></select>
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn btn-gold" onclick="showToast('Calculation defaults saved ✓')">Save Defaults</button></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-title">Feature Toggles</div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">User Registration</div><div class="toggle-desc">Allow new users to sign up</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Report Downloads</div><div class="toggle-desc">Enable HTML report export</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Reference Data Tab</div><div class="toggle-desc">Show VP reference tables</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Admin Analytics</div><div class="toggle-desc">Track usage statistics</div></div>
+            <label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Maintenance Mode</div><div class="toggle-desc">Show maintenance page to users</div></div>
+            <label class="toggle"><input type="checkbox" onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+          <div class="toggle-row">
+            <div class="toggle-info"><div class="toggle-name">Debug Logging</div><div class="toggle-desc">Enable verbose error logging</div></div>
+            <label class="toggle"><input type="checkbox" onchange="showToast('Setting updated')"><div class="toggle-track"></div></label>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">Report Settings</div>
+          <div class="form-grid">
+            <div class="form-field"><label>Report Header Logo</label>
+              <select><option selected>T (Gold Mark)</option><option>Full Wordmark</option><option>None</option></select>
+            </div>
+            <div class="form-field"><label>Report Format</label>
+              <select><option selected>HTML (Print-ready)</option><option>PDF (planned)</option></select>
+            </div>
+          </div>
+          <div class="form-grid full">
+            <div class="form-field"><label>Report Footer Text</label>
+              <input type="text" value="Tank Protocol — Emissions Intelligence Platform">
+            </div>
+          </div>
+          <div class="btn-row"><button class="btn btn-gold" onclick="showToast('Report settings saved ✓')">Save</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── USER MANAGEMENT ─────────────────── -->
+  <div class="page" id="page-users">
+    <div class="page-heading">User Management</div>
+    <div class="page-sub">Manage accounts, roles and access levels</div>
+
+    <div class="card">
+      <div class="card-title">All Users</div>
+      <div class="search-bar">
+        <input class="search-input" type="text" placeholder="Search users…">
+        <button class="btn btn-gold" onclick="showToast('+ New user form coming soon')">+ Add User</button>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Industry</th><th>Status</th><th>Last Active</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">AS</div><span style="font-weight:500;color:var(--text-bright);">Alexandra Stone</span></div></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">admin@tankprotocol.com</td>
+            <td><span class="badge gold">⭐ Admin</span></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">Management</td>
+            <td><span class="badge green">● Active</span></td>
+            <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">Now</td>
+            <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('Edit user')">Edit</button></div></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),#79c4f8);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">JL</div><span style="font-weight:500;color:var(--text-bright);">Jordan Lee</span></div></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">user@tankprotocol.com</td>
+            <td><span class="badge blue">● Member</span></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">Engineering</td>
+            <td><span class="badge green">● Active</span></td>
+            <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">2h ago</td>
+            <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('Edit user')">Edit</button><button class="btn btn-danger" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('User suspended')">Suspend</button></div></td>
+          </tr>
+          <tr>
+            <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--emerald),#43e8c0);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:0.65rem;color:#080c14;">CK</div><span style="font-weight:500;color:var(--text-bright);">Charlie Kim</span></div></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">charlie@tankprotocol.com</td>
+            <td><span class="badge blue">● Member</span></td>
+            <td style="color:var(--text-dim);font-size:0.78rem;">Design</td>
+            <td><span class="badge amber">⊡ Pending</span></td>
+            <td style="font-family:var(--mono);font-size:0.7rem;color:var(--text-dim);">3d ago</td>
+            <td><div style="display:flex;gap:6px;"><button class="btn btn-ghost" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('User approved ✓')">Approve</button><button class="btn btn-danger" style="padding:4px 10px;font-size:0.72rem;" onclick="showToast('User removed')">Remove</button></div></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── NOTIFICATIONS ───────────────────── -->
+  <div class="page" id="page-notifications">
+    <div class="page-heading">Notifications</div>
+    <div class="page-sub">System alerts, user activity, and scheduled reports</div>
+
+    <div class="two-col">
+      <div class="card">
+        <div class="card-title">Recent Alerts</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(45,212,160,0.05);border:1px solid rgba(45,212,160,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">✅</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">All systems operational</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">API 19.2 Engine · Auth · Database — all online</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Today, 09:14 AM</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(245,158,11,0.05);border:1px solid rgba(245,158,11,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">⚠️</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">Server load spike detected</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">Load reached 78% for 4 minutes — auto-scaled</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Yesterday, 02:31 PM</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(201,168,76,0.05);border:1px solid rgba(201,168,76,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">🆕</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">22 new user registrations</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">Monthly signup target exceeded by 47%</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Mar 18, 2026</div></div>
+          </div>
+          <div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:rgba(79,163,232,0.05);border:1px solid rgba(79,163,232,0.15);border-radius:8px;">
+            <span style="font-size:1.1rem;">📁</span>
+            <div><div style="font-size:0.82rem;font-weight:500;color:var(--text-bright);">7 new reports this month</div><div style="font-size:0.72rem;color:var(--text-dim);margin-top:3px;">Report generation up 28% from last month</div><div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);margin-top:5px;">Mar 15, 2026</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Notification Settings</div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">New User Alerts</div><div class="toggle-desc">Notify when new users register</div></div><label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Report Generation</div><div class="toggle-desc">Alert when reports are downloaded</div></div><label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">System Health Alerts</div><div class="toggle-desc">CPU / memory threshold warnings</div></div><label class="toggle"><input type="checkbox" checked onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div class="toggle-row"><div class="toggle-info"><div class="toggle-name">Weekly Digest Email</div><div class="toggle-desc">Summary email every Monday</div></div><label class="toggle"><input type="checkbox" onchange="showToast('Setting updated')"><div class="toggle-track"></div></label></div>
+        <div style="margin-top:18px;">
+          <div class="form-field"><label>Alert Email Address</label><input type="email" value="admin@tankprotocol.com"></div>
+        </div>
+        <div class="btn-row"><button class="btn btn-gold" onclick="showToast('Notification settings saved ✓')">Save Settings</button></div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══ SUPER ADMIN: MEMBERS ══ -->
+  <div class="page" id="sa-members" style="display:none;">
+    <div class="page-heading">Members</div>
+    <div class="page-sub">All registered users — manage roles, downloads, and membership</div>
+    <div class="sa-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
+        <input type="text" id="memberSearch" class="email-input" style="max-width:320px;margin:0;" placeholder="Search by name, email, company…" oninput="renderMembersTable()">
+        <div style="display:flex;gap:8px;">
+          <select id="memberRoleFilter" class="email-input" style="width:auto;margin:0;" onchange="renderMembersTable()">
+            <option value="">All Roles</option>
+            <option value="super_admin">Super Admin</option>
+            <option value="admin">Admin</option>
+            <option value="gold">Gold</option>
+            <option value="user">Member</option>
+          </select>
+          <select id="memberStatusFilter" class="email-input" style="width:auto;margin:0;" onchange="renderMembersTable()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="pending">Pending</option>
+          </select>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="sa-table">
+          <thead><tr>
+            <th>Member</th><th>Email</th><th>Company</th><th>Location</th>
+            <th>Role</th><th>Downloads</th><th>Status</th><th>Joined</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="membersTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUPER ADMIN: SEND EMAIL ══ -->
+  <div class="page" id="sa-email" style="display:none;">
+    <div class="page-heading">Send Email</div>
+    <div class="page-sub">Compose and send emails to members — individually or broadcast to all</div>
+    <div class="sa-section">
+      <div class="email-compose">
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">To</label>
+          <select id="emailTo" class="email-input" style="margin:0;" onchange="updateEmailTo()">
+            <option value="all">📢 All Members (Broadcast)</option>
+            <option value="active">✅ Active Members Only</option>
+            <option value="gold">⭐ Gold Members Only</option>
+            <option value="pending">⏳ Pending Approvals</option>
+            <option value="individual">👤 Individual Member…</option>
+          </select>
+          <div id="emailIndividual" style="display:none;margin-top:8px;">
+            <select id="emailRecipient" class="email-input" style="margin:0;">
+              <option value="">Select member…</option>
+            </select>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <label style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Subject</label>
+          <input type="text" id="emailSubject" class="email-input" style="margin:0;" placeholder="Email subject…">
+        </div>
+        <div style="margin-bottom:16px;">
+          <label style="font-size:0.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px;">Message</label>
+          <textarea id="emailBody" class="email-textarea" placeholder="Write your message here…&#10;&#10;You can use {firstName}, {lastName}, {email} as placeholders."></textarea>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="sa-btn gold-btn" style="padding:10px 22px;font-size:0.83rem;" onclick="sendBroadcastEmail()">✉ Send Email</button>
+          <button class="sa-btn blue-btn" onclick="loadEmailTemplate('welcome')">Welcome Template</button>
+          <button class="sa-btn blue-btn" onclick="loadEmailTemplate('gold')">Gold Upgrade Template</button>
+          <button class="sa-btn blue-btn" onclick="loadEmailTemplate('approved')">Approval Template</button>
+        </div>
+        <div id="emailSentNotice" style="display:none;margin-top:14px;padding:10px 14px;background:rgba(45,212,160,0.08);border:1px solid rgba(45,212,160,0.2);border-radius:7px;font-size:0.8rem;color:var(--emerald);"></div>
+      </div>
+      <div style="margin-top:20px;">
+        <div style="font-family:var(--display);font-size:0.78rem;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;">Email Log</div>
+        <div id="emailLog" style="max-height:240px;overflow-y:auto;">
+          <div style="color:var(--text-dim);font-size:0.78rem;font-style:italic;">No emails sent yet this session.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUPER ADMIN: CALCULATIONS ══ -->
+  <div class="page" id="sa-calcs" style="display:none;">
+    <div class="page-heading">Calculations Log</div>
+    <div class="page-sub">All reports generated across all members</div>
+    <div class="sa-section">
+      <div id="calcsStatsRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;"></div>
+      <div style="overflow-x:auto;">
+        <table class="sa-table">
+          <thead><tr>
+            <th>Member</th><th>Company</th><th>Tank ID</th><th>Location</th>
+            <th>Liquid</th><th>Type</th><th>Date</th><th>Download</th>
+          </tr></thead>
+          <tbody id="calcsTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SUPER ADMIN: APPROVALS ══ -->
+  <div class="page" id="sa-approvals" style="display:none;">
+    <div class="page-heading">Member Approvals</div>
+    <div class="page-sub">Review pending sign-ups and send welcome emails</div>
+    <div class="sa-section">
+      <div id="approvalsContainer">
+        <div style="color:var(--text-dim);font-size:0.82rem;font-style:italic;padding:20px 0;">No pending approvals.</div>
+      </div>
+    </div>
+  </div>
+</div><!-- end .main -->
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+</div>
+
 
 <!-- Confirm Modal -->
 <div class="modal-overlay" id="confirmModal">
@@ -3120,36 +4623,442 @@ setTimeout(() => addBootLine(), 3100);
 setTimeout(() => addTickerLines(), 3100);
 setTimeout(() => runLoader(), 2900);
 
+
 </script><script>
+// ══════════════════════════════════════════════════════════
+// SUPER ADMIN FUNCTIONS
+// ══════════════════════════════════════════════════════════
+
+// Email log storage
+const emailLogs = [];
+
+// ── Navigation ─────────────────────────────────────────────
+function saNav(el, pageId) {
+  // Hide all SA pages
+  ['sa-members','sa-email','sa-calcs','sa-approvals'].forEach(id => {
+    const p = document.getElementById(id);
+    if (p) p.style.display = 'none';
+  });
+  // Show selected
+  const target = document.getElementById(pageId);
+  if (target) target.style.display = 'block';
+  // Update nav highlight
+  document.querySelectorAll('#superAdminSection .nav-item').forEach(n => {
+    n.style.background = 'rgba(232,201,122,0.04)';
+    n.style.color = 'var(--gold-light)';
+  });
+  if (el) { el.style.background = 'rgba(232,201,122,0.12)'; el.style.color = '#e8c97a'; }
+  // Render content
+  if (pageId === 'sa-members')   renderMembersTable();
+  if (pageId === 'sa-calcs')     renderCalcsTable();
+  if (pageId === 'sa-approvals') renderApprovals();
+  if (pageId === 'sa-email')     populateEmailRecipients();
+}
+
+// ── Download limit helper ───────────────────────────────────
+function getDownloadLimit(user) {
+  if (user.role === 'super_admin' || user.role === 'admin') return Infinity;
+  if (user.role === 'gold') return 10;
+  return 2; // regular user
+}
+
+function canDownload(user) {
+  return (user.downloadsUsed || 0) < getDownloadLimit(user);
+}
+
+function getRoleBadgeHTML(role) {
+  const labels = { super_admin: '👑 Super Admin', admin: '⭐ Admin', gold: '✦ Gold', user: '● Member' };
+  return `<span class="sa-badge ${role}">${labels[role] || role}</span>`;
+}
+
+// ── Members Table ───────────────────────────────────────────
+function renderMembersTable() {
+  const tbody = document.getElementById('membersTableBody');
+  if (!tbody) return;
+  const q      = (document.getElementById('memberSearch')?.value || '').toLowerCase();
+  const roleF  = document.getElementById('memberRoleFilter')?.value || '';
+  const statF  = document.getElementById('memberStatusFilter')?.value || '';
+
+  const filtered = USERS.filter(u => {
+    if (roleF && u.role !== roleF) return false;
+    if (statF && u.status !== statF) return false;
+    if (q) {
+      const hay = [u.firstName, u.lastName, u.email, u.company, u.location, u.designation].join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  tbody.innerHTML = filtered.map(u => {
+    const limit = getDownloadLimit(u);
+    const used  = u.downloadsUsed || 0;
+    const pct   = limit === Infinity ? 0 : Math.min(100, (used / limit) * 100);
+    const dlBar = limit === Infinity
+      ? '<span style="color:var(--emerald);font-size:0.72rem;">Unlimited</span>'
+      : `<div style="font-size:0.72rem;">${used}/${limit}</div><div class="dl-bar"><div class="dl-fill${pct >= 90?' red':''}" style="width:${pct}%"></div></div>`;
+
+    const isSelf = currentUser && u.id === currentUser.id;
+    const actions = isSelf ? '<span style="font-size:0.7rem;color:var(--text-dim);">You</span>' : `
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">
+        ${u.role !== 'super_admin' ? `<button class="sa-btn gold-btn" onclick="toggleGoldMember(${u.id})">${u.role === 'gold' ? '⬇ Remove Gold' : '✦ Make Gold'}</button>` : ''}
+        ${u.role !== 'super_admin' && u.role !== 'admin' ? `<button class="sa-btn blue-btn" onclick="resetDownloads(${u.id})">↺ Reset DL</button>` : ''}
+        ${!u.approved ? `<button class="sa-btn green-btn" onclick="approveAndWelcome(${u.id})">✓ Approve</button>` : ''}
+        ${u.role !== 'super_admin' ? `<button class="sa-btn red-btn" onclick="removeMember(${u.id})">✕</button>` : ''}
+      </div>`;
+
+    return `<tr>
+      <td>
+        <div style="font-weight:500;color:var(--text-bright);">${u.firstName} ${u.lastName}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${u.designation || u.title || ''}</div>
+      </td>
+      <td style="font-family:var(--mono);font-size:0.75rem;">${u.email}</td>
+      <td style="font-size:0.78rem;">${u.company || '—'}</td>
+      <td style="font-size:0.78rem;color:var(--text-dim);">${u.location || '—'}</td>
+      <td>${getRoleBadgeHTML(u.role)}</td>
+      <td>${dlBar}</td>
+      <td><span class="sa-badge ${u.approved !== false ? 'active' : 'pending'}">${u.approved !== false ? '● Active' : '⏳ Pending'}</span></td>
+      <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${u.joined || '—'}</td>
+      <td>${actions}</td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--text-dim);padding:20px;">No members found</td></tr>`;
+
+  // Update approval badge count
+  const pendingCount = USERS.filter(u => u.approved === false).length;
+  const badge = document.getElementById('approvalBadge');
+  if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
+}
+
+// ── Member Actions ──────────────────────────────────────────
+function toggleGoldMember(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u || u.role === 'super_admin') return;
+  u.role = u.role === 'gold' ? 'user' : 'gold';
+  u.downloadLimit = getDownloadLimit(u);
+  renderMembersTable();
+  if (u.role === 'gold') {
+    showAdminToast(`✦ ${u.firstName} ${u.lastName} upgraded to Gold Member`);
+    logEmail('Gold Upgrade', u.email, `Dear ${u.firstName}, you have been upgraded to a Gold Member with 10 downloads. Congratulations!`);
+  } else {
+    showAdminToast(`${u.firstName} ${u.lastName} reverted to Member`);
+  }
+}
+
+function resetDownloads(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  u.downloadsUsed = 0;
+  renderMembersTable();
+  showAdminToast(`Downloads reset for ${u.firstName} ${u.lastName}`);
+}
+
+function removeMember(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u || u.role === 'super_admin') return;
+  if (!confirm(`Remove ${u.firstName} ${u.lastName}? This cannot be undone.`)) return;
+  USERS.splice(USERS.findIndex(x => x.id === id), 1);
+  renderMembersTable();
+  showAdminToast(`${u.firstName} ${u.lastName} removed`);
+}
+
+// ── Approvals ───────────────────────────────────────────────
+function renderApprovals() {
+  const container = document.getElementById('approvalsContainer');
+  if (!container) return;
+  const pending = USERS.filter(u => u.approved === false);
+
+  if (!pending.length) {
+    container.innerHTML = '<div style="color:var(--text-dim);font-size:0.82rem;font-style:italic;padding:20px 0;">No pending approvals. All members are approved.</div>';
+    return;
+  }
+
+  container.innerHTML = pending.map(u => `
+    <div style="display:flex;align-items:flex-start;gap:16px;padding:16px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;">
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gold-light));display:flex;align-items:center;justify-content:center;font-family:var(--display);font-weight:800;font-size:1rem;color:#080c14;flex-shrink:0;">${u.firstName[0]}${u.lastName[0]}</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;color:var(--text-bright);font-size:0.9rem;">${u.firstName} ${u.lastName}</div>
+        <div style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);margin-top:2px;">${u.email}</div>
+        <div style="font-size:0.78rem;color:var(--text-dim);margin-top:4px;">${u.company || ''} ${u.designation ? '· '+u.designation : ''} ${u.location ? '· '+u.location : ''}</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);margin-top:2px;">Signed up: ${u.joined || '—'} · Industry: ${u.industry || '—'}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:7px;flex-shrink:0;">
+        <button class="sa-btn green-btn" style="padding:7px 16px;" onclick="approveAndWelcome(${u.id})">✓ Approve & Send Welcome</button>
+        <button class="sa-btn red-btn" style="padding:7px 16px;" onclick="rejectMember(${u.id})">✕ Reject</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function approveAndWelcome(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  u.approved = true;
+  u.status   = 'active';
+  const welcome = `Dear ${u.firstName},\n\nWelcome to Tank Protocol! Your account has been approved.\n\nYou can now log in and access the Floating Roof Tank Emissions Calculator.\n\nAs a Member you have 2 report downloads included. Upgrade to Gold for 10 downloads.\n\nBest regards,\nTank Protocol Team`;
+  logEmail('Welcome Email', u.email, welcome);
+  showAdminToast(`✓ ${u.firstName} ${u.lastName} approved — Welcome email sent`);
+  renderApprovals();
+  renderMembersTable();
+  const badge = document.getElementById('approvalBadge');
+  const pendingCount = USERS.filter(u => u.approved === false).length;
+  if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
+}
+
+function rejectMember(id) {
+  const u = USERS.find(x => x.id === id);
+  if (!u) return;
+  if (!confirm(`Reject and remove ${u.firstName} ${u.lastName}'s application?`)) return;
+  USERS.splice(USERS.findIndex(x => x.id === id), 1);
+  showAdminToast(`Application rejected and removed`);
+  renderApprovals();
+  renderMembersTable();
+}
+
+// ── Calculations Table ──────────────────────────────────────
+function renderCalcsTable() {
+  const tbody = document.getElementById('calcsTableBody');
+  const statsRow = document.getElementById('calcsStatsRow');
+  if (!tbody) return;
+
+  // Aggregate all reports from all users
+  const allReports = [];
+  USERS.forEach(u => {
+    if (u.myReports && u.myReports.length) {
+      u.myReports.forEach(r => {
+        allReports.push({ ...r, userName: u.firstName + ' ' + u.lastName, userEmail: u.email });
+      });
+    }
+  });
+
+  // Stats
+  if (statsRow) {
+    const totalDL = USERS.reduce((s, u) => s + (u.downloadsUsed || 0), 0);
+    statsRow.innerHTML = [
+      { icon: '📁', num: allReports.length, label: 'Total Reports' },
+      { icon: '↓',  num: totalDL,           label: 'Total Downloads' },
+      { icon: '🏭', num: new Set(allReports.map(r => r.company).filter(Boolean)).size, label: 'Companies' },
+      { icon: '👥', num: USERS.filter(u => u.myReports && u.myReports.length).length, label: 'Active Users' },
+    ].map(s => `
+      <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:1.2rem;margin-bottom:6px;">${s.icon}</div>
+        <div style="font-family:var(--display);font-weight:800;font-size:1.5rem;color:var(--text-bright);">${s.num}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);margin-top:3px;">${s.label}</div>
+      </div>`).join('');
+  }
+
+  if (!allReports.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:20px;">No reports generated yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = allReports.map((r, i) => `
+    <tr>
+      <td>
+        <div style="font-weight:500;color:var(--text-bright);font-size:0.82rem;">${r.userName}</div>
+        <div style="font-size:0.68rem;color:var(--text-dim);font-family:var(--mono);">${r.userEmail}</div>
+      </td>
+      <td style="font-size:0.8rem;">${r.company || '—'}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${r.tank || '—'}</td>
+      <td style="font-size:0.78rem;color:var(--text-dim);">${r.location || '—'}</td>
+      <td style="font-size:0.78rem;">${r.liquid || '—'}</td>
+      <td><span class="sa-badge ${r.type === 'EFRT' ? 'gold' : 'user'}" style="padding:2px 7px;">${r.type || '—'}</span></td>
+      <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${r.date || '—'}</td>
+      <td>
+        <button class="sa-btn gold-btn" onclick="showAdminToast('Downloading '+${JSON.stringify(r.name)})">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v6M2 5l3 3 3-3M1 9h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download
+        </button>
+      </td>
+    </tr>`).join('');
+}
+
+// ── Email Functions ─────────────────────────────────────────
+function populateEmailRecipients() {
+  const sel = document.getElementById('emailRecipient');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Select member…</option>' +
+    USERS.filter(u => u.role !== 'super_admin')
+      .map(u => `<option value="${u.id}">${u.firstName} ${u.lastName} (${u.email})</option>`)
+      .join('');
+}
+
+function updateEmailTo() {
+  const val = document.getElementById('emailTo')?.value;
+  const ind = document.getElementById('emailIndividual');
+  if (ind) ind.style.display = val === 'individual' ? 'block' : 'none';
+}
+
+function loadEmailTemplate(type) {
+  const subjectEl = document.getElementById('emailSubject');
+  const bodyEl    = document.getElementById('emailBody');
+  if (!subjectEl || !bodyEl) return;
+  const templates = {
+    welcome: {
+      subject: 'Welcome to Tank Protocol!',
+      body: `Dear {firstName},\n\nWelcome to Tank Protocol — your emissions intelligence platform.\n\nYour account is now active. Log in to access the Floating Roof Tank Emissions Calculator based on API MPMS Chapter 19.2.\n\nAs a Member you have 2 report downloads. Upgrade to Gold for 10 downloads.\n\nBest regards,\nTank Protocol Team`
+    },
+    gold: {
+      subject: 'You have been upgraded to Gold Member!',
+      body: `Dear {firstName},\n\nCongratulations! Your account has been upgraded to Gold Member status.\n\nYou now have access to 10 report downloads per period.\n\nThank you for being a valued member of Tank Protocol.\n\nBest regards,\nTank Protocol Team`
+    },
+    approved: {
+      subject: 'Your Tank Protocol Account is Approved',
+      body: `Dear {firstName},\n\nGreat news — your Tank Protocol account has been approved!\n\nYou can now sign in at our platform and start using the Floating Roof Tank Emissions Calculator.\n\nWelcome aboard.\n\nBest regards,\nTank Protocol Team`
+    }
+  };
+  if (templates[type]) {
+    subjectEl.value = templates[type].subject;
+    bodyEl.value    = templates[type].body;
+  }
+}
+
+function sendBroadcastEmail() {
+  const to      = document.getElementById('emailTo')?.value;
+  const subject = document.getElementById('emailSubject')?.value.trim();
+  const body    = document.getElementById('emailBody')?.value.trim();
+  const notice  = document.getElementById('emailSentNotice');
+
+  if (!subject) { showAdminToast('Please enter a subject'); return; }
+  if (!body)    { showAdminToast('Please enter a message'); return; }
+
+  let recipients = [];
+  if (to === 'all')        recipients = USERS.filter(u => u.role !== 'super_admin');
+  else if (to === 'active')  recipients = USERS.filter(u => u.status === 'active' && u.role !== 'super_admin');
+  else if (to === 'gold')    recipients = USERS.filter(u => u.role === 'gold');
+  else if (to === 'pending') recipients = USERS.filter(u => u.approved === false);
+  else if (to === 'individual') {
+    const rid = parseInt(document.getElementById('emailRecipient')?.value);
+    const r   = USERS.find(u => u.id === rid);
+    if (r) recipients = [r];
+  }
+
+  if (!recipients.length) { showAdminToast('No recipients found for this selection'); return; }
+
+  recipients.forEach(u => {
+    const personalised = body
+      .replace(/{firstName}/g, u.firstName)
+      .replace(/{lastName}/g, u.lastName)
+      .replace(/{email}/g, u.email);
+    logEmail(subject, u.email, personalised);
+  });
+
+  if (notice) {
+    notice.style.display = 'block';
+    notice.textContent = `✓ Email sent to ${recipients.length} recipient${recipients.length > 1 ? 's' : ''}: ${recipients.map(u => u.email).join(', ')}`;
+    setTimeout(() => { if (notice) notice.style.display = 'none'; }, 5000);
+  }
+  showAdminToast(`✉ Email sent to ${recipients.length} member${recipients.length > 1 ? 's' : ''}`);
+}
+
+function logEmail(subject, toEmail, body) {
+  emailLogs.push({ subject, toEmail, body, time: new Date().toLocaleTimeString() });
+  const logEl = document.getElementById('emailLog');
+  if (!logEl) return;
+  logEl.innerHTML = emailLogs.slice().reverse().map(l => `
+    <div style="padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid var(--border);border-radius:7px;margin-bottom:7px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-weight:500;font-size:0.8rem;color:var(--text-bright);">${l.subject}</div>
+        <div style="font-family:var(--mono);font-size:0.65rem;color:var(--text-dim);">${l.time}</div>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.68rem;color:var(--text-dim);">To: ${l.toEmail}</div>
+    </div>`).join('');
+}
+
+// ── Toast for admin overlay ─────────────────────────────────
+function showAdminToast(msg) {
+  // Reuse the main toast
+  const el = document.getElementById('toast');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── Open overlay with SA section ───────────────────────────
+// Extend openAdminOverlay to refresh approval badge
+const _origOpenAdmin = typeof openAdminOverlay === 'function' ? openAdminOverlay : null;
+function openAdminOverlay() {
+  if (_origOpenAdmin) _origOpenAdmin();
+  const overlay = document.getElementById('adminOverlay');
+  if (overlay) overlay.style.display = 'block';
+  const raw = sessionStorage.getItem('tp_session');
+  if (raw) {
+    try {
+      const session = JSON.parse(raw);
+      const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
+      const ai = document.getElementById('adminAvatarInitials');
+      const au = document.getElementById('adminUserName');
+      const rt = document.getElementById('roleTag');
+      if (ai) ai.textContent = initials;
+      if (au) au.textContent = session.firstName + ' ' + session.lastName;
+      if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin'; }
+      const ss = document.getElementById('superAdminSection');
+      if (ss) ss.style.display = 'block';
+      const ad = document.getElementById('accessDenied');
+      if (ad) ad.classList.remove('show');
+    } catch(e) {}
+  }
+  if (typeof renderUserTable === 'function') renderUserTable();
+  // Refresh approval badge
+  const pendingCount = USERS.filter(u => u.approved === false).length;
+  const badge = document.getElementById('approvalBadge');
+  if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
+  document.body.style.overflow = 'hidden';
+}
+
+
+
 // ─── DATA ────────────────────────────────────────────────────
 const USERS = [
   {
     id: 0, email: 'esraigroup@gmail.com', password: 'super123',
     firstName: 'ESRAI', lastName: 'Group', role: 'super_admin',
     dept: 'Executive', title: 'Super Administrator', phone: '',
-    bio: 'Root-level platform access with all privileges.', status: 'active', joined: '2026'
+    company: 'ESRAI Group', designation: 'Super Administrator',
+    location: 'Mumbai, India', industry: 'Oil & Gas',
+    bio: 'Root-level platform access with all privileges.',
+    status: 'active', approved: true, joined: '2026',
+    downloadLimit: Infinity, downloadsUsed: 0, myReports: [],
+    calcs: 142, experience: '20+ years', specialisations: 'Environmental Compliance, VOC Emissions'
   },
   {
     id: 1, email: 'admin@tankprotocol.com', password: 'admin123',
     firstName: 'Alexandra', lastName: 'Stone', role: 'admin',
     dept: 'Management', title: 'System Administrator', phone: '+1 (555) 010-2030',
-    company: 'Tank Protocol', designation: 'System Administrator', location: 'Houston, TX', industry: 'Oil & Gas',
-    bio: 'Platform admin with full system access.', status: 'active', joined: '2023'
+    company: 'Tank Protocol', designation: 'System Administrator',
+    location: 'Houston, TX', industry: 'Oil & Gas',
+    bio: 'Platform admin with full system access.',
+    status: 'active', approved: true, joined: '2023',
+    downloadLimit: Infinity, downloadsUsed: 0, myReports: [],
+    calcs: 58, experience: '10-15 years', specialisations: 'Platform Administration'
   },
   {
     id: 2, email: 'user@tankprotocol.com', password: 'user123',
     firstName: 'Jordan', lastName: 'Lee', role: 'user',
     dept: 'Engineering', title: 'Senior Engineer', phone: '+1 (555) 040-5060',
-    company: 'Tank Protocol', designation: 'Senior Engineer', location: 'Austin, TX', industry: 'Petrochemicals',
-    bio: 'Works on backend systems and data pipelines.', status: 'active', joined: '2024'
+    company: 'Tank Protocol', designation: 'Senior Engineer',
+    location: 'Austin, TX', industry: 'Petrochemicals',
+    bio: 'Works on backend systems and data pipelines.',
+    status: 'active', approved: true, joined: '2024',
+    downloadLimit: 2, downloadsUsed: 0, myReports: [
+      { name: 'Jordan_TK-33_JetA_Report', company: 'Tank Protocol', tank: 'TK-33', location: 'Austin, TX', liquid: 'Jet A', date: 'Mar 16, 2026', type: 'EFRT', size: '143 KB' }
+    ],
+    calcs: 34, experience: '5-10 years', specialisations: 'Process Engineering'
   },
   {
     id: 3, email: 'charlie@tankprotocol.com', password: 'charlie123',
     firstName: 'Charlie', lastName: 'Kim', role: 'user',
     dept: 'Design', title: 'UX Designer', phone: '',
-    bio: '', status: 'pending', joined: '2025'
+    company: 'Tank Protocol', designation: 'UX Designer',
+    location: 'Seoul, KR', industry: 'Environmental Consulting',
+    bio: '', status: 'pending', approved: false, joined: '2025',
+    downloadLimit: 2, downloadsUsed: 0, myReports: [],
+    calcs: 0, experience: '2-5 years', specialisations: ''
   }
 ];
+
+// Download limits per role
+const DOWNLOAD_LIMITS = { super_admin: Infinity, admin: Infinity, gold: 10, user: 2 };
+
 
 const ADMIN_PERMS = [
   { icon: '👤', name: 'User Management', desc: 'Create, edit, and delete user accounts' },
@@ -3191,8 +5100,15 @@ function doLogin() {
     role: user.role
   }));
 
-  loadDashboard();
-  showView('dashView');
+  // Route by role after login
+  if (user.role === 'user') {
+    // Regular members go straight to the calculator
+    window.location.href = 'floating-roof-tank-calculator.html';
+  } else {
+    // Admin / Super Admin stay in the app dashboard
+    loadDashboard();
+    showView('dashView');
+  }
 }
 
 function doLogout() {
@@ -3293,6 +5209,7 @@ function loadDashboard() {
   if (_s('statYear'))    _s('statYear').textContent    = u.joined  || '—';
 
   if (_s('adminViewBanner'))  _s('adminViewBanner').style.display  = 'none';
+  if (_s('calculatorBanner')) _s('calculatorBanner').style.display = u.role === 'user' ? 'flex' : 'none';
 
   // Edit form fields (with null guards)
   if (_s('editFirstName'))   _s('editFirstName').value   = u.firstName   || '';
@@ -3579,10 +5496,17 @@ document.getElementById('loginPassword').addEventListener('keydown', e => {
     const session = JSON.parse(raw);
     const user = USERS.find(u => u.id === session.id && u.email === session.email);
     if (!user) { sessionStorage.removeItem('tp_session'); return; }
-    // Valid session found - restore dashboard
+    // Valid session found - restore by role
     currentUser = user;
-    loadDashboard();
-    showView('dashView');
+    if (user.role === 'user') {
+      // Members go to calculator (but don't redirect on refresh - stay on page)
+      // Just show the dashboard view so they can access profile if needed
+      loadDashboard();
+      showView('dashView');
+    } else {
+      loadDashboard();
+      showView('dashView');
+    }
   } catch(e) {
     sessionStorage.removeItem('tp_session');
   }
@@ -4123,6 +6047,186 @@ function showToast(msg) {
 // ── START ─────────────────────────────────────────────────────
 // initProfile called from loadDashboard
 
+
+// ══ ADMIN PANEL JS ══
+// Namespace admin panel functions to avoid conflicts
+
+
+// ── NAVIGATION ─────────────────────────────────────────
+const PAGES = { dashboard:'Dashboard', statistics:'Site Statistics', demographics:'User Demographics', reports:'Reports Library', settings:'Site Settings', users:'User Management', notifications:'Notifications' };
+const SUBS  = { dashboard:'Overview & Key Metrics', statistics:'Usage analytics and performance', demographics:'Audience breakdown and geography', reports:'Generated emission reports', settings:'Platform configuration', users:'Accounts, roles and access', notifications:'Alerts and system events' };
+
+function nav(el, pageId) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.getElementById('topbarTitle').childNodes[0].textContent = PAGES[pageId];
+  document.getElementById('topbarSub').textContent = SUBS[pageId];
+}
+
+// ── BAR CHARTS ─────────────────────────────────────────
+function buildBarChart(id, data, color) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const max = Math.max(...data.map(d => d.v));
+  el.innerHTML = data.map(d => `
+    <div class="bar-item">
+      <div class="bar-val">${d.v}</div>
+      <div class="bar-fill ${color||''}" style="height:${Math.max(8,(d.v/max)*100)}%"></div>
+      <div class="bar-label">${d.l}</div>
+    </div>`).join('');
+}
+
+buildBarChart('calcChart', [
+  {l:'Aug',v:98},{l:'Sep',v:124},{l:'Oct',v:141},{l:'Nov',v:109},{l:'Dec',v:88},
+  {l:'Jan',v:152},{l:'Feb',v:178},{l:'Mar',v:203}
+]);
+
+buildBarChart('dailyChart', [
+  {l:'8',v:12},{l:'9',v:18},{l:'10',v:8},{l:'11',v:22},{l:'12',v:31},{l:'13',v:15},
+  {l:'14',v:28},{l:'15',v:19},{l:'16',v:34},{l:'17',v:27},{l:'18',v:41},{l:'19',v:33},
+  {l:'20',v:38},{l:'21',v:44}
+], 'emerald');
+
+buildBarChart('dlChart', [
+  {l:'Aug',v:1},{l:'Sep',v:3},{l:'Oct',v:2},{l:'Nov',v:4},{l:'Dec',v:3},
+  {l:'Jan',v:5},{l:'Feb',v:6},{l:'Mar',v:7}
+], 'blue');
+
+buildBarChart('growthChart', [
+  {l:'Aug',v:18},{l:'Sep',v:24},{l:'Oct',v:31},{l:'Nov',v:22},{l:'Dec',v:19},
+  {l:'Jan',v:38},{l:'Feb',v:45},{l:'Mar',v:63}
+]);
+
+// ── REPORTS DATA ───────────────────────────────────────
+const REPORTS = [
+  { name:'Acme_Refining_TK-101_EmissionReport', company:'Acme Refining Co.', tank:'TK-101', location:'Houston, TX', type:'EFRT', liquid:'Gasoline RVP 10', date:'Mar 21, 2026', size:'148 KB' },
+  { name:'Saudi_Aramco_TK-07_EmissionReport',   company:'Saudi Aramco', tank:'TK-07', location:'Dhahran, SA', type:'EFRT', liquid:'Crude Oil Light', date:'Mar 20, 2026', size:'152 KB' },
+  { name:'BPCL_TankFarm_T3_EmissionReport',      company:'BPCL Ltd', tank:'T-3', location:'Mumbai, IN', type:'IFRT', liquid:'Diesel No. 2', date:'Mar 19, 2026', size:'141 KB' },
+  { name:'Shell_Rotterdam_ST-22_EmissionReport', company:'Shell Rotterdam', tank:'ST-22', location:'Rotterdam, NL', type:'EFRT', liquid:'Crude Oil Medium', date:'Mar 18, 2026', size:'156 KB' },
+  { name:'BP_Gelsenkirchen_TK14_Report',         company:'BP Refinery', tank:'TK-14', location:'Gelsenkirchen, DE', type:'EFRT', liquid:'Jet A', date:'Mar 17, 2026', size:'143 KB' },
+  { name:'ExxonMobil_Beaumont_TK9_Report',       company:'ExxonMobil', tank:'TK-9', location:'Beaumont, TX', type:'EFRT', liquid:'Gasoline RVP 7', date:'Mar 15, 2026', size:'149 KB' },
+  { name:'Chevron_Richmond_TK3_Report',          company:'Chevron', tank:'TK-3', location:'Richmond, CA', type:'IFRT', liquid:'Crude Oil Heavy', date:'Mar 14, 2026', size:'138 KB' },
+  { name:'Reliance_Jamnagar_V12_Report',         company:'Reliance Industries', tank:'V-12', location:'Jamnagar, IN', type:'EFRT', liquid:'Custom', date:'Mar 12, 2026', size:'161 KB' },
+  { name:'Adnoc_Ruwais_TK40_Report',             company:'ADNOC Refining', tank:'TK-40', location:'Ruwais, AE', type:'EFRT', liquid:'Crude Oil Light', date:'Mar 10, 2026', size:'147 KB' },
+  { name:'Woodside_Karratha_FT2_Report',         company:'Woodside Energy', tank:'FT-2', location:'Karratha, AU', type:'EFRT', liquid:'Ethanol', date:'Mar 8, 2026', size:'139 KB' },
+];
+
+function renderReports(data) {
+  const container = document.getElementById('reportsContainer');
+  if (!data.length) {
+    container.innerHTML = `<div style="text-align:center;padding:32px;color:var(--text-dim);font-family:var(--mono);font-size:0.78rem;">NO REPORTS MATCH YOUR SEARCH</div>`;
+    return;
+  }
+  container.innerHTML = data.map(r => `
+    <div class="report-row">
+      <div class="report-icon">📄</div>
+      <div class="report-info">
+        <div class="report-name">${r.company} — ${r.tank}</div>
+        <div class="report-meta">${r.location} &nbsp;·&nbsp; ${r.liquid} &nbsp;·&nbsp; <span class="badge ${r.type==='EFRT'?'gold':'blue'}" style="padding:1px 6px;font-size:0.58rem;">${r.type}</span> &nbsp;·&nbsp; ${r.date} &nbsp;·&nbsp; ${r.size}</div>
+      </div>
+      <button class="btn-dl" onclick="mockDownload('${r.name}')">
+        <svg width="11" height="11" viewBox="0 0 11 11" fill="none"><path d="M5.5 1v7M2.5 5.5l3 3 3-3M1 10h9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download
+      </button>
+      <button class="btn btn-ghost" style="padding:5px 10px;font-size:0.7rem;" onclick="showToast('Report deleted')">🗑</button>
+    </div>`).join('');
+}
+
+renderReports(REPORTS);
+
+function filterReports() {
+  const q    = document.getElementById('reportSearch').value.toLowerCase();
+  const type = document.getElementById('reportFilter').value;
+  const filtered = REPORTS.filter(r =>
+    (!type || r.type === type) &&
+    (!q || [r.company, r.tank, r.location, r.liquid].some(s => s.toLowerCase().includes(q)))
+  );
+  renderReports(filtered);
+}
+
+function mockDownload(name) {
+  showToast('Downloading ' + name + '.html');
+}
+
+// ── TOAST ──────────────────────────────────────────────
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2800);
+}
+
+// ── NAVIGATION HELPER ──────────────────────────────────
+function goToMain() {
+  closeAdminOverlay();
+}
+
+// ── ACCESS CONTROL ─────────────────────────────────────
+(function() {
+  const raw = sessionStorage.getItem('tp_session');
+  if (!raw) {
+    document.getElementById('accessDenied').classList.add('show');
+    return;
+  }
+  let session;
+  try { session = JSON.parse(raw); } catch(e) {
+    document.getElementById('accessDenied').classList.add('show');
+    return;
+  }
+  const allowed = ['super_admin']; // Only super_admin can access the full admin panel
+  if (!allowed.includes(session.role)) {
+    document.getElementById('accessDenied').classList.add('show');
+    return;
+  }
+  // Personalise topbar
+  const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
+      document.getElementById('adminAvatarInitials').textContent = initials;
+  document.getElementById('adminUserName').textContent = session.firstName + ' ' + session.lastName;
+  const roleTag = document.getElementById('roleTag');
+  roleTag.textContent = session.role === 'super_admin' ? '👑 SUPER ADMIN' : '⭐ ADMIN';
+  roleTag.className = 'role-tag ' + session.role;
+  if (session.role === 'super_admin') {
+    document.getElementById('superAdminSection').style.display = 'block';
+  }
+})();
+
+
+function openAdminOverlay() {
+  if (!currentUser || currentUser.role !== 'super_admin') return;
+  // Sync session for admin panel access control
+  sessionStorage.setItem('tp_session', JSON.stringify({
+    id: currentUser.id, firstName: currentUser.firstName,
+    lastName: currentUser.lastName, email: currentUser.email,
+    role: currentUser.role
+  }));
+  const overlay = document.getElementById('adminOverlay');
+  overlay.style.display = 'block';
+  // Trigger admin panel init (access control + personalise topbar)
+  const raw = sessionStorage.getItem('tp_session');
+  if (raw) {
+    try {
+      const session = JSON.parse(raw);
+      const initials = (session.firstName[0] + session.lastName[0]).toUpperCase();
+      const ai = document.getElementById('adminAvatarInitials');
+      const au = document.getElementById('adminUserName');
+      const rt = document.getElementById('roleTag');
+      if (ai) ai.textContent = initials;
+      if (au) au.textContent = session.firstName + ' ' + session.lastName;
+      if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin'; }
+      const ss = document.getElementById('superAdminSection');
+      if (ss) ss.style.display = 'block';
+      
+      if (ad) ad.classList.remove('show');
+    } catch(e) {}
+  }
+  if (typeof renderUserTable === 'function') renderUserTable();
+  const pendingCount = USERS.filter(u => u.approved === false).length;
+  const badge = document.getElementById('approvalBadge');
+  if (badge) { badge.textContent = pendingCount; badge.style.display = pendingCount > 0 ? '' : 'none'; }
+  document.body.style.overflow = 'hidden';
+}
 </script>
 </body>
 </html>
