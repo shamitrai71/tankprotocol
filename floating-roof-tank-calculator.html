@@ -3,1360 +3,1998 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>API 19.2 — Floating Roof Tank Emissions Calculator</title>
-<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<title>Storage Tank Emission Calculator — Tank Protocol</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #0a0e14;
-    --surface: #111620;
-    --surface2: #161d2a;
-    --border: #1e2d42;
-    --accent: #c9a84c;
-    --accent2: #b8860b;
-    --warn: #ffd166;
-    --green: #06d6a0;
-    --text: #cdd9e5;
-    --text-dim: #6b7f96;
-    --text-bright: #eaf2ff;
-    --mono: 'Share Tech Mono', monospace;
-    --sans: 'Barlow', sans-serif;
-    --cond: 'Barlow Condensed', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* Grid background */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 24px 60px;
-    position: relative;
-    z-index: 1;
-  }
-
-  /* TANK PROTOCOL BRAND */
-  .tp-brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid rgba(201,168,76,0.15);
-  }
-  .tp-logo-mark {
-    width: 28px; height: 28px;
-    background: linear-gradient(135deg, #c9a84c, #e8c97a);
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--cond);
-    font-weight: 800; font-size: 13px;
-    color: #080c14; flex-shrink: 0;
-  }
-  .tp-logo-name {
-    font-family: var(--cond);
-    font-weight: 800; font-size: 1rem;
-    letter-spacing: 1px; text-transform: uppercase;
-    background: linear-gradient(135deg, #e8c97a, #c9a84c);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
-  .site-footer {
-    margin-top: 60px; padding: 28px 0;
-    border-top: 1px solid var(--border);
-    display: flex; align-items: center;
-    justify-content: space-between; gap: 16px; flex-wrap: wrap;
-  }
-  .footer-brand { display: flex; align-items: center; gap: 10px; }
-  .footer-logo-mark {
-    width: 36px; height: 36px;
-    background: linear-gradient(135deg, #c9a84c, #e8c97a);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-family: var(--cond); font-weight: 800; font-size: 16px;
-    color: #080c14; flex-shrink: 0;
-  }
-  .footer-name {
-    font-family: var(--cond); font-weight: 800; font-size: 1.2rem;
-    letter-spacing: 1.5px; text-transform: uppercase;
-    background: linear-gradient(135deg, #e8c97a, #c9a84c);
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-    line-height: 1;
-  }
-  .footer-tagline {
-    font-family: var(--mono); font-size: 0.62rem;
-    color: var(--text-dim); letter-spacing: 0.8px; margin-top: 3px;
-  }
-  .footer-meta {
-    text-align: right; font-family: var(--mono);
-    font-size: 0.65rem; color: var(--text-dim);
-    letter-spacing: 0.3px; line-height: 1.8;
-  }
-  /* HEADER */
-  header {
-    padding: 32px 0 28px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 36px;
-    display: flex;
-    align-items: flex-end;
-    gap: 20px;
-  }
-
-  .header-icon {
-    width: 52px;
-    height: 52px;
-    flex-shrink: 0;
-  }
-
-  .header-text h1 {
-    font-family: var(--cond);
-    font-size: 2.2rem;
-    font-weight: 800;
-    color: var(--text-bright);
-    letter-spacing: 0.5px;
-    line-height: 1;
-  }
-
-  .header-text h1 span {
-    color: var(--accent);
-  }
-
-  .header-text p {
-    font-size: 0.82rem;
-    color: var(--text-dim);
-    margin-top: 5px;
-    letter-spacing: 0.3px;
-  }
-
-  .badge {
-    margin-left: auto;
-    background: rgba(201,168,76,0.08);
-    border: 1px solid rgba(201,168,76,0.3);
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 0.7rem;
-    padding: 4px 10px;
-    letter-spacing: 1px;
-    flex-shrink: 0;
-  }
-
-  /* TABS */
-  .tabs {
-    display: flex;
-    gap: 2px;
-    margin-bottom: 28px;
-  }
-
-  .tab {
-    padding: 9px 20px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    font-family: var(--cond);
-    font-size: 0.85rem;
-    font-weight: 600;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.18s;
-  }
-
-  .tab:hover { color: var(--text); border-color: rgba(201,168,76,0.35); }
-
-  .tab.active {
-    background: rgba(201,168,76,0.1);
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
-  /* LAYOUT */
-  .layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-    align-items: start;
-  }
-
-  @media (max-width: 768px) {
-    .layout { grid-template-columns: 1fr; }
-    header { flex-wrap: wrap; }
-  }
-
-  .panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 24px;
-  }
-
-  .panel-header {
-    font-family: var(--cond);
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    color: var(--accent);
-    border-bottom: 1px solid var(--border);
-    padding-bottom: 12px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .panel-header::before {
-    content: '';
-    display: inline-block;
-    width: 3px;
-    height: 14px;
-    background: linear-gradient(135deg, #c9a84c, #e8c97a);
-  }
-
-  /* FORM */
-  .field-group {
-    margin-bottom: 16px;
-  }
-
-  .field-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
-
-  label {
-    display: block;
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    letter-spacing: 0.3px;
-    margin-bottom: 5px;
-    font-weight: 500;
-  }
-
-  label span.unit {
-    color: var(--accent);
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    margin-left: 4px;
-  }
-
-  input, select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    color: var(--text-bright);
-    font-family: var(--mono);
-    font-size: 0.88rem;
-    padding: 8px 12px;
-    outline: none;
-    transition: border-color 0.15s;
-    -moz-appearance: textfield;
-  }
-
-  input::-webkit-outer-spin-button,
-  input::-webkit-inner-spin-button { -webkit-appearance: none; }
-
-  input:focus, select:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(201,168,76,0.12);
-  }
-
-  select {
-    appearance: none;
-    cursor: pointer;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='%23c9a84c'%3E%3Cpath d='M0 0l6 8 6-8z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    padding-right: 32px;
-  }
-
-  select option { background: #111620; }
-
-  .hint {
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    margin-top: 3px;
-    font-style: italic;
-  }
-
-  /* SECTION DIVIDER */
-  .section-label {
-    font-family: var(--cond);
-    font-size: 0.7rem;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    padding: 4px 10px;
-    margin: 18px 0 14px;
-    display: inline-block;
-  }
-
-  /* CALCULATE BUTTON */
-  .calc-btn {
-    width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, #c9a84c, #e8c97a);
-    color: var(--bg);
-    border: none;
-    font-family: var(--cond);
-    font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: 1.5px;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin-top: 20px;
-    transition: all 0.15s;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .calc-btn:hover {
-    background: #33d4ff;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 20px rgba(201,168,76,0.3);
-  }
-
-  .calc-btn:active { transform: translateY(0); }
-
-  /* RESULTS PANEL */
-  .results-panel {
-    grid-column: 1 / -1;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 28px;
-    display: none;
-  }
-
-  .results-panel.visible { display: block; }
-
-  .results-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-top: 20px;
-  }
-
-  .result-card {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    padding: 18px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .result-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 2px;
-  }
-
-  .result-card.primary::before { background: linear-gradient(135deg, #c9a84c, #e8c97a); }
-  .result-card.secondary::before { background: var(--accent2); }
-  .result-card.tertiary::before { background: var(--warn); }
-  .result-card.total::before { background: var(--green); }
-
-  .result-label {
-    font-size: 0.7rem;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 8px;
-  }
-
-  .result-value {
-    font-family: var(--mono);
-    font-size: 1.6rem;
-    color: var(--text-bright);
-    line-height: 1;
-  }
-
-  .result-value.total { color: var(--green); font-size: 2rem; }
-  .result-unit {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-top: 4px;
-    font-family: var(--mono);
-  }
-
-  /* EQUATION BREAKDOWN */
-  .breakdown {
-    margin-top: 24px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    padding: 20px;
-  }
-
-  .breakdown h3 {
-    font-family: var(--cond);
-    font-size: 0.72rem;
-    letter-spacing: 1.2px;
-    text-transform: uppercase;
-    color: var(--warn);
-    margin-bottom: 14px;
-  }
-
-  .eq-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(30,45,66,0.6);
-    font-size: 0.82rem;
-    gap: 12px;
-  }
-
-  .eq-row:last-child { border-bottom: none; }
-
-  .eq-label { color: var(--text-dim); flex: 1; }
-  .eq-formula { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); }
-  .eq-val { font-family: var(--mono); color: var(--text-bright); white-space: nowrap; }
-
-  /* VAPOR PRESSURE TABLE */
-  .vp-note {
-    background: rgba(255,107,53,0.07);
-    border: 1px solid rgba(255,107,53,0.2);
-    border-left: 3px solid var(--accent2);
-    padding: 10px 14px;
-    font-size: 0.76rem;
-    color: var(--text-dim);
-    margin-top: 12px;
-    line-height: 1.6;
-  }
-
-  .vp-note strong { color: var(--accent2); }
-
-  /* SCROLL hint */
-  .scroll-hint {
-    text-align: center;
-    font-size: 0.7rem;
-    color: var(--text-dim);
-    letter-spacing: 0.5px;
-    margin-top: 12px;
-  }
-
-  /* ERROR */
-  .error-msg {
-    background: rgba(255,50,50,0.08);
-    border: 1px solid rgba(255,50,50,0.3);
-    color: #ff7070;
-    padding: 10px 14px;
-    font-size: 0.8rem;
-    margin-top: 12px;
-    display: none;
-    font-family: var(--mono);
-  }
-
-  .error-msg.visible { display: block; }
-
-  /* REFERENCE SECTION */
-  .ref-panel {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    padding: 24px;
-    display: none;
-  }
-
-  .ref-panel.visible { display: block; }
-
-  .ref-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8rem;
-    margin-top: 14px;
-  }
-
-  .ref-table th {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    padding: 8px 12px;
-    text-align: left;
-    font-family: var(--cond);
-    font-size: 0.72rem;
-    letter-spacing: 0.8px;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-
-  .ref-table td {
-    border: 1px solid var(--border);
-    padding: 7px 12px;
-    font-family: var(--mono);
-    font-size: 0.78rem;
-    color: var(--text);
-  }
-
-  .ref-table tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
-
-  /* SVG Tank Diagram */
-  .tank-diagram {
-    display: flex;
-    justify-content: center;
-    margin: 16px 0;
-    opacity: 0.85;
-  }
-
-  /* DOWNLOAD BUTTON */
-  .download-bar {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 20px;
-    padding-top: 18px;
-    border-top: 1px solid var(--border);
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .download-note {
-    font-family: var(--mono);
-    font-size: 0.68rem;
-    color: var(--text-dim);
-    letter-spacing: 0.3px;
-  }
-
-  .download-note span {
-    color: var(--accent);
-  }
-
-  .btn-download {
-    display: inline-flex;
-    align-items: center;
-    gap: 9px;
-    padding: 11px 22px;
-    background: linear-gradient(135deg, #c9a84c, #e8c97a);
-    border: none;
-    color: #080c14;
-    font-family: var(--cond);
-    font-weight: 700;
-    font-size: 0.88rem;
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.18s;
-    text-decoration: none;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .btn-download::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
-    opacity: 0;
-    transition: opacity 0.18s;
-  }
-
-  .btn-download:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 22px rgba(201,168,76,0.35);
-  }
-
-  .btn-download:hover::before { opacity: 1; }
-  .btn-download:active { transform: translateY(0); }
-
-  .btn-download svg {
-    flex-shrink: 0;
-  }
-
-  /* Flicker animation */
-  @keyframes flicker {
-    0%, 100% { opacity: 1; }
-    92% { opacity: 1; }
-    93% { opacity: 0.8; }
-    94% { opacity: 1; }
-  }
-
-  .result-value { animation: flicker 5s infinite; }
+:root {
+  --bg: #0a0e14; --surface: #111620; --surface2: #161d2a; --border: #1e2d42;
+  --accent: #c9a84c; --accent2: #b8860b; --warn: #ffd166; --green: #06d6a0;
+  --red: #f05b5b; --blue: #4fa3e8;
+  --text: #cdd9e5; --text-dim: #6b7f96; --text-bright: #eaf2ff;
+  --mono: 'Share Tech Mono', monospace; --sans: 'Barlow', sans-serif; --cond: 'Barlow Condensed', sans-serif;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); line-height:1.5; -webkit-font-smoothing:antialiased; }
+a { color: var(--accent); }
+
+/* Header */
+.topbar { display:flex; align-items:center; justify-content:space-between; padding:14px 24px; background:var(--surface); border-bottom:1px solid var(--border); position:sticky; top:0; z-index:50; }
+.brand { display:flex; align-items:center; gap:11px; }
+.brand-mark { width:34px; height:34px; border-radius:8px; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-family:var(--cond); font-weight:700; font-size:1.2rem; color:#080c14; }
+.brand-name { font-family:var(--cond); font-weight:700; font-size:1.15rem; letter-spacing:1px; color:var(--text-bright); }
+.brand-sub { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); letter-spacing:1px; }
+.back-link { display:inline-flex; align-items:center; gap:6px; padding:6px 14px; border:1px solid var(--border); border-radius:7px; color:var(--text-dim); font-size:0.78rem; text-decoration:none; transition:all .18s; }
+.back-link:hover { border-color:rgba(201,168,76,0.4); color:var(--accent); }
+
+.wrap { max-width:1180px; margin:0 auto; padding:28px 24px 80px; }
+.page-title { font-family:var(--cond); font-weight:700; font-size:2rem; color:var(--text-bright); letter-spacing:0.5px; }
+.page-sub { color:var(--text-dim); font-size:0.9rem; margin-top:2px; margin-bottom:8px; }
+.std-badge { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:0.62rem; color:var(--accent); background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.25); border-radius:20px; padding:3px 12px; margin-bottom:24px; }
+
+.layout { display:grid; grid-template-columns: 1fr 400px; gap:24px; align-items:start; }
+@media (max-width: 920px) { .layout { grid-template-columns:1fr; } }
+
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:20px; }
+.card-title { font-family:var(--cond); font-weight:600; font-size:1.05rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
+.card-hint { font-size:0.76rem; color:var(--text-dim); margin-bottom:16px; }
+
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+@media (max-width:600px) { .grid2, .grid3 { grid-template-columns:1fr; } }
+
+.field { display:flex; flex-direction:column; gap:5px; margin-bottom:2px; }
+.field label { font-size:0.74rem; color:var(--text-dim); font-weight:500; }
+.field label .req { color:var(--red); }
+.field .unit { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
+.field input, .field select { background:var(--surface2); border:1px solid var(--border); border-radius:7px; color:var(--text-bright); font-family:var(--sans); font-size:0.88rem; padding:9px 11px; outline:none; transition:border-color .18s; width:100%; }
+.field input:focus, .field select:focus { border-color:rgba(201,168,76,0.5); }
+.field input::placeholder { color:#3a4a5e; }
+
+.fitting-row { display:grid; grid-template-columns: 1fr 70px 32px; gap:8px; align-items:end; margin-bottom:9px; }
+.fitting-row select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:0.8rem; padding:7px 9px; outline:none; }
+.fitting-row input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-bright); font-family:var(--mono); font-size:0.82rem; padding:7px 9px; outline:none; text-align:center; }
+.fitting-row .rm { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--red); cursor:pointer; height:34px; transition:all .15s; }
+.fitting-row .rm:hover { background:rgba(240,91,91,0.1); }
+.add-fitting { display:inline-flex; align-items:center; gap:6px; background:transparent; border:1px dashed var(--border); border-radius:7px; color:var(--accent); font-family:var(--sans); font-size:0.8rem; padding:8px 16px; cursor:pointer; transition:all .15s; margin-top:6px; }
+.add-fitting:hover { border-color:var(--accent); background:rgba(201,168,76,0.05); }
+
+.btn-calc { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:9px; color:#080c14; font-family:var(--cond); font-weight:700; font-size:1.05rem; letter-spacing:1px; padding:15px; cursor:pointer; text-transform:uppercase; transition:all .2s; }
+.btn-calc:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(201,168,76,0.3); }
+
+.err { background:rgba(240,91,91,0.08); border:1px solid rgba(240,91,91,0.3); border-radius:8px; color:var(--red); font-size:0.82rem; padding:11px 14px; margin-bottom:16px; display:none; }
+.err.show { display:block; }
+
+/* Results panel */
+.results { position:sticky; top:88px; }
+.result-empty { text-align:center; color:var(--text-dim); padding:50px 20px; font-size:0.85rem; }
+.result-empty .big { font-size:2.4rem; opacity:0.25; margin-bottom:10px; }
+.total-loss { background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(184,134,11,0.05)); border:1px solid rgba(201,168,76,0.3); border-radius:10px; padding:18px; text-align:center; margin-bottom:16px; }
+.total-loss .lbl { font-family:var(--mono); font-size:0.62rem; color:var(--accent); letter-spacing:1px; text-transform:uppercase; }
+.total-loss .val { font-family:var(--cond); font-weight:700; font-size:2.6rem; color:var(--text-bright); line-height:1; margin:6px 0 2px; }
+.total-loss .unit { font-family:var(--mono); font-size:0.7rem; color:var(--text-dim); }
+.total-loss .alt { font-size:0.72rem; color:var(--text-dim); margin-top:6px; }
+
+.breakdown { font-size:0.82rem; }
+.breakdown-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid var(--border); }
+.breakdown-row:last-child { border-bottom:none; }
+.breakdown-row .k { color:var(--text-dim); }
+.breakdown-row .v { font-family:var(--mono); color:var(--text-bright); }
+.breakdown-row.sub { padding-left:14px; font-size:0.76rem; }
+.breakdown-row.sub .k { color:#54677d; }
+.breakdown-row.total { border-top:2px solid var(--accent); border-bottom:none; padding-top:11px; margin-top:3px; }
+.breakdown-row.total .k { color:var(--accent); font-weight:600; }
+.breakdown-row.total .v { color:var(--accent); font-weight:600; }
+
+.detail-toggle { font-size:0.76rem; color:var(--accent); cursor:pointer; margin-top:14px; user-select:none; }
+.detail-block { margin-top:12px; font-size:0.74rem; display:none; }
+.detail-block.show { display:block; }
+.detail-block .dr { display:flex; justify-content:space-between; padding:5px 0; border-bottom:1px solid var(--border); }
+.detail-block .dr .k { color:var(--text-dim); }
+.detail-block .dr .v { font-family:var(--mono); color:var(--text); }
+
+.btn-dl { width:100%; margin-top:16px; background:transparent; border:1px solid var(--accent); border-radius:8px; color:var(--accent); font-family:var(--sans); font-weight:500; font-size:0.85rem; padding:11px; cursor:pointer; transition:all .18s; }
+.btn-dl:hover { background:rgba(201,168,76,0.08); }
+
+.note { font-size:0.72rem; color:var(--text-dim); margin-top:14px; padding:10px 12px; background:var(--surface2); border-radius:7px; border-left:2px solid var(--border); }
+.cond-fields { display:none; }
+.cond-fields.show { display:block; }
+.footer { text-align:center; color:var(--text-dim); font-size:0.72rem; margin-top:40px; padding-top:20px; border-top:1px solid var(--border); }
 </style>
 </head>
 <body>
-<div class="container">
-
-  <header style="flex-direction:column;align-items:stretch;gap:0;">
-    <div class="tp-brand">
-      <div class="tp-logo-mark">T</div>
-      <div class="tp-logo-name">Tank Protocol</div>
-      <div style="margin-left:auto;font-family:var(--mono);font-size:0.62rem;color:var(--text-dim);letter-spacing:0.5px;">EMISSIONS INTELLIGENCE PLATFORM</div>
-    </div>
-    <div style="display:flex;align-items:flex-end;gap:20px;padding-top:10px;">
-      <svg class="header-icon" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="26" cy="14" rx="22" ry="6" stroke="#c9a84c" stroke-width="1.5"/>
-        <rect x="4" y="14" width="44" height="24" stroke="#c9a84c" stroke-width="1.5"/>
-        <ellipse cx="26" cy="38" rx="22" ry="6" stroke="#c9a84c" stroke-width="1.5"/>
-        <ellipse cx="26" cy="22" rx="18" ry="4" stroke="#c9a84c" stroke-opacity="0.5" stroke-width="1" stroke-dasharray="3 2"/>
-        <line x1="4" y1="22" x2="48" y2="22" stroke="#c9a84c" stroke-opacity="0.3" stroke-width="1"/>
-        <circle cx="26" cy="22" r="3" fill="#c9a84c" opacity="0.6"/>
-      </svg>
-      <div class="header-text">
-        <h1>FLOATING ROOF TANK <span>EMISSIONS</span></h1>
-        <p>API MPMS Chapter 19.2 &middot; Standing Storage Loss &amp; Working Loss Calculator</p>
-      </div>
-      <div class="badge">API 19.2 / EPA AP-42</div>
-    </div>
-  </header>
-
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('calculator')">Calculator</button>
-    <button class="tab" onclick="showTab('reference')">Reference Data</button>
-  </div>
-
-  <!-- CALCULATOR TAB -->
-  <div id="tab-calculator">
-    <div class="layout">
-
-      <!-- LEFT PANEL: Tank Parameters -->
-      <div class="panel">
-        <div class="panel-header">Tank Geometry &amp; Operating Conditions</div>
-
-        <div class="section-label">Project Information</div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Company Name</label>
-            <input type="text" id="companyName" placeholder="e.g. Acme Refining Co.">
-          </div>
-          <div>
-            <label>Tank ID / Tag</label>
-            <input type="text" id="tankId" placeholder="e.g. TK-101">
-          </div>
-        </div>
-
-        <div class="field-group">
-          <label>Tank Location / Site</label>
-          <input type="text" id="tankLocation" placeholder="e.g. Houston, TX — Refinery Site 3">
-        </div>
-
-        <div class="section-label">Tank Dimensions</div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Shell Diameter<span class="unit">ft</span></label>
-            <input type="number" id="diameter" value="120" min="1" step="0.1">
-          </div>
-          <div>
-            <label>Shell Height<span class="unit">ft</span></label>
-            <input type="number" id="shellHeight" value="40" min="1" step="0.1">
-          </div>
-        </div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Max Liquid Height<span class="unit">ft</span></label>
-            <input type="number" id="maxLiqHeight" value="38" min="0" step="0.1">
-          </div>
-          <div>
-            <label>Min Liquid Height<span class="unit">ft</span></label>
-            <input type="number" id="minLiqHeight" value="6" min="0" step="0.1">
-          </div>
-        </div>
-
-        <div class="section-label">Roof &amp; Seal Type</div>
-
-        <div class="field-group">
-          <label>Roof Type</label>
-          <select id="roofType" onchange="updateSealOptions()">
-            <option value="EFRT">External Floating Roof (EFRT)</option>
-            <option value="IFRT">Internal Floating Roof (IFRT)</option>
-          </select>
-        </div>
-
-        <div class="field-group">
-          <label>Primary Seal Type</label>
-          <select id="sealType" onchange="updateSecondarySeal()">
-            <option value="mechanical_shoe">Mechanical Shoe Seal</option>
-            <option value="liquid_mounted">Liquid-Mounted Foam Seal</option>
-            <option value="vapor_mounted">Vapor-Mounted Foam Seal</option>
-            <option value="resilient_filled">Resilient Filled Seal</option>
-          </select>
-        </div>
-
-        <div class="field-group" id="secondarySealGroup">
-          <label>Secondary Seal</label>
-          <select id="secondarySeal">
-            <option value="none">None</option>
-            <option value="shoe_mounted">Shoe-Mounted Secondary</option>
-            <option value="rim_mounted">Rim-Mounted Secondary</option>
-          </select>
-        </div>
-
-        <div class="section-label">Liquid &amp; Vapor Properties</div>
-
-        <div class="field-group">
-          <label>Stored Liquid</label>
-          <select id="liquidType" onchange="populateLiquidProps()">
-            <option value="custom">Custom / Enter Manually</option>
-            <option value="gasoline">Gasoline (RVP 10)</option>
-            <option value="crude_light">Crude Oil — Light (RVP 5)</option>
-            <option value="crude_heavy">Crude Oil — Heavy (RVP 2)</option>
-            <option value="jet_a">Jet A / Kerosene</option>
-            <option value="diesel">Diesel No. 2</option>
-            <option value="ethanol">Ethanol</option>
-          </select>
-        </div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Vapor Pressure P*<span class="unit">psia</span></label>
-            <input type="number" id="vaporPressure" value="5.0" min="0" step="0.01">
-            <div class="hint">True vapor pressure at mean liq. surface temp</div>
-          </div>
-          <div>
-            <label>Liquid MW<span class="unit">lb/lb-mol</span></label>
-            <input type="number" id="molWeight" value="87" min="1" step="0.1">
-          </div>
-        </div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Liquid Density<span class="unit">lb/gal</span></label>
-            <input type="number" id="liquidDensity" value="5.83" min="0.1" step="0.01">
-          </div>
-          <div>
-            <label>Avg Liquid Temp<span class="unit">°F</span></label>
-            <input type="number" id="liquidTemp" value="65" step="0.1">
-          </div>
-        </div>
-
-        <div class="section-label">Throughput</div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Annual Throughput<span class="unit">bbl/yr</span></label>
-            <input type="number" id="throughput" value="1500000" min="0" step="1000">
-          </div>
-          <div>
-            <label>Turnovers/Year</label>
-            <input type="number" id="turnovers" id="turnovers" value="" placeholder="auto" step="0.1">
-            <div class="hint">Auto-calculated if blank</div>
-          </div>
-        </div>
-
-        <div class="section-label">Fitting Counts</div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Roof Legs (landed)</label>
-            <input type="number" id="roofLegs" value="8" min="0" step="1">
-          </div>
-          <div>
-            <label>Gauge Hatches / Wells</label>
-            <input type="number" id="gaugeHatches" value="2" min="0" step="1">
-          </div>
-        </div>
-
-        <div class="field-group field-row">
-          <div>
-            <label>Roof Drains (flexible)</label>
-            <input type="number" id="roofDrains" value="3" min="0" step="1">
-          </div>
-          <div>
-            <label>Unslotted Guide Poles</label>
-            <input type="number" id="guidePoles" value="1" min="0" step="1">
-          </div>
-        </div>
-
-        <div id="errorMsg" class="error-msg"></div>
-        <button class="calc-btn" onclick="calculate()">▶ CALCULATE EMISSIONS</button>
-      </div>
-
-      <!-- RIGHT PANEL: Info + Diagram -->
-      <div class="panel">
-        <div class="panel-header">Methodology Overview</div>
-
-        <div class="tank-diagram">
-          <svg width="260" height="200" viewBox="0 0 260 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Tank shell -->
-            <rect x="30" y="30" width="200" height="140" rx="2" stroke="#1e2d42" stroke-width="1.5" fill="#0d1520"/>
-            <!-- Liquid fill -->
-            <rect x="31" y="90" width="198" height="79" fill="rgba(0,100,180,0.12)"/>
-            <!-- Floating roof -->
-            <rect x="30" y="82" width="200" height="12" fill="#1a2535" stroke="#c9a84c" stroke-width="1.5"/>
-            <line x1="30" y1="88" x2="230" y2="88" stroke="#c9a84c" stroke-width="0.5" stroke-dasharray="4 3"/>
-            <!-- Seal gap annotation -->
-            <line x1="230" y1="83" x2="248" y2="70" stroke="#b8860b" stroke-width="0.8"/>
-            <text x="250" y="68" fill="#b8860b" font-size="9" font-family="Share Tech Mono">SEAL</text>
-            <!-- Rim seal -->
-            <rect x="28" y="81" width="4" height="14" fill="#b8860b" opacity="0.6"/>
-            <rect x="228" y="81" width="4" height="14" fill="#b8860b" opacity="0.6"/>
-            <!-- Vapor space -->
-            <text x="130" y="62" fill="#6b7f96" font-size="9" text-anchor="middle" font-family="Share Tech Mono">VAPOR SPACE</text>
-            <!-- Liquid -->
-            <text x="130" y="140" fill="#6b7f96" font-size="9" text-anchor="middle" font-family="Share Tech Mono">LIQUID</text>
-            <!-- Dimension lines -->
-            <line x1="18" y1="30" x2="18" y2="170" stroke="#1e2d42" stroke-width="0.8"/>
-            <line x1="14" y1="30" x2="22" y2="30" stroke="#1e2d42" stroke-width="0.8"/>
-            <line x1="14" y1="170" x2="22" y2="170" stroke="#1e2d42" stroke-width="0.8"/>
-            <text x="10" y="105" fill="#6b7f96" font-size="8" text-anchor="middle" font-family="Share Tech Mono" transform="rotate(-90,10,105)">SHELL HEIGHT</text>
-            <!-- Fittings -->
-            <rect x="120" y="78" width="6" height="6" fill="#c9a84c" opacity="0.5"/>
-            <text x="123" y="74" fill="#6b7f96" font-size="7" text-anchor="middle" font-family="Share Tech Mono">LEG</text>
-            <!-- Roof drains -->
-            <circle cx="85" cy="88" r="3" fill="none" stroke="#ffd166" stroke-width="1"/>
-            <text x="85" y="75" fill="#6b7f96" font-size="7" text-anchor="middle" font-family="Share Tech Mono">DRAIN</text>
-            <!-- Standing loss arrow -->
-            <path d="M130 82 L130 50 L145 50" stroke="#06d6a0" stroke-width="1" fill="none" marker-end="url(#arr)"/>
-            <text x="147" y="52" fill="#06d6a0" font-size="8" font-family="Share Tech Mono">LS</text>
-            <!-- Def -->
-            <defs>
-              <marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
-                <path d="M0,0 L6,3 L0,6 Z" fill="#06d6a0"/>
-              </marker>
-            </defs>
-            <!-- Turnovers arrow -->
-            <path d="M75 170 L75 192 L180 192 L180 170" stroke="#c9a84c" stroke-width="1" fill="none" stroke-dasharray="3 2"/>
-            <text x="128" y="198" fill="#c9a84c" font-size="8" text-anchor="middle" font-family="Share Tech Mono">WORKING LOSS (LW)</text>
-            <!-- AP42 ref -->
-            <text x="130" y="18" fill="#1e2d42" font-size="8" text-anchor="middle" font-family="Share Tech Mono">API MPMS 19.2 · EXTERNAL FLOATING ROOF</text>
-          </svg>
-        </div>
-
-        <div style="font-size:0.78rem; line-height:1.7; color: var(--text-dim);">
-          <p style="margin-bottom:10px;">This calculator implements <strong style="color:var(--text)">API MPMS Chapter 19.2</strong> (2012) methodology for estimating volatile organic compound (VOC) emissions from floating roof tanks.</p>
-
-          <p style="margin-bottom:10px;">Total emissions are the sum of:</p>
-
-          <ul style="list-style:none; padding:0; margin-bottom:10px;">
-            <li style="padding: 4px 0 4px 10px; border-left: 2px solid var(--green); margin-bottom:6px;">
-              <strong style="color:var(--green)">L<sub>S</sub> — Standing Storage Loss</strong><br>
-              <span style="font-size:0.73rem;">From seal gaps, roof fittings, roof drains, guide poles. Proportional to vapor pressure and roof area.</span>
-            </li>
-            <li style="padding: 4px 0 4px 10px; border-left: 2px solid var(--accent); margin-bottom:6px;">
-              <strong style="color:var(--accent)">L<sub>W</sub> — Working Loss</strong><br>
-              <span style="font-size:0.73rem;">From liquid level changes during filling/emptying cycles. Proportional to throughput and vapor-space saturation.</span>
-            </li>
-            <li style="padding: 4px 0 4px 10px; border-left: 2px solid var(--accent2);">
-              <strong style="color:var(--accent2)">L<sub>R</sub> — Rim Seal Loss Component</strong><br>
-              <span style="font-size:0.73rem;">Dominant term in L<sub>S</sub>. Varies significantly with seal design.</span>
-            </li>
-          </ul>
-
-          <div class="vp-note">
-            <strong>Note:</strong> Vapor pressure (P*) should be the true vapor pressure at the mean liquid surface temperature. Use the <strong>Reference Data</strong> tab for common liquid VP values.
-          </div>
-        </div>
-      </div>
-
-      <!-- RESULTS PANEL — full width -->
-      <div class="results-panel" id="resultsPanel">
-        <div class="panel-header">Emission Results</div>
-        <div id="resultsInfoRow" style="display:none;align-items:center;gap:8px;margin-bottom:4px;padding:6px 10px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);font-family:var(--mono);font-size:0.72rem;color:var(--accent);">
-          <span style="opacity:0.5;">▸</span>
-          <span id="resultsInfoBar"></span>
-        </div>
-
-        <div class="results-grid" id="resultsGrid"></div>
-
-        <div class="breakdown" id="breakdownPanel">
-          <h3>▸ Calculation Breakdown</h3>
-          <div id="breakdownRows"></div>
-        </div>
-      </div>
-
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">T</div>
+    <div>
+      <div class="brand-name">TANK PROTOCOL</div>
+      <div class="brand-sub">EMISSIONS INTELLIGENCE</div>
     </div>
   </div>
+  <a href="index.html" class="back-link">← Back to Portal</a>
+</div>
 
-  <!-- REFERENCE TAB -->
-  <div id="tab-reference" style="display:none;">
-    <div class="ref-panel visible">
-      <div class="panel-header">Vapor Pressure Reference — Common Liquids</div>
-      <table class="ref-table">
-        <thead>
-          <tr><th>Liquid</th><th>Temp (°F)</th><th>TVP (psia)</th><th>MW (lb/lb-mol)</th><th>Density (lb/gal)</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>Gasoline RVP 10</td><td>60</td><td>10.0</td><td>87</td><td>5.83</td></tr>
-          <tr><td>Gasoline RVP 7</td><td>60</td><td>7.0</td><td>87</td><td>5.97</td></tr>
-          <tr><td>Gasoline RVP 5</td><td>60</td><td>5.0</td><td>90</td><td>6.10</td></tr>
-          <tr><td>Crude Oil — Light (50° API)</td><td>60</td><td>5.0</td><td>130</td><td>6.50</td></tr>
-          <tr><td>Crude Oil — Medium (35° API)</td><td>60</td><td>3.0</td><td>200</td><td>7.18</td></tr>
-          <tr><td>Crude Oil — Heavy (20° API)</td><td>60</td><td>1.0</td><td>280</td><td>7.83</td></tr>
-          <tr><td>Jet A / Kerosene</td><td>60</td><td>0.05</td><td>155</td><td>6.70</td></tr>
-          <tr><td>Diesel No. 2</td><td>60</td><td>0.02</td><td>190</td><td>7.08</td></tr>
-          <tr><td>Ethanol</td><td>60</td><td>1.0</td><td>46</td><td>6.59</td></tr>
-          <tr><td>Xylene</td><td>77</td><td>0.98</td><td>106</td><td>7.24</td></tr>
-          <tr><td>Toluene</td><td>77</td><td>1.53</td><td>92</td><td>7.26</td></tr>
-          <tr><td>Benzene</td><td>77</td><td>1.81</td><td>78</td><td>7.36</td></tr>
-        </tbody>
-      </table>
+<div class="wrap">
+  <div class="page-title">Storage Tank Emission Calculator</div>
+  <div class="page-sub">Routine loss estimation for floating roof and fixed roof organic liquid storage tanks</div>
+  <div class="std-badge">⬡ AP-42 CHAPTER 7 (9/2025) · API MPMS 19.2</div>
 
-      <div style="margin-top:28px;">
-        <div class="panel-header">Seal Loss Factors (K<sub>Ra</sub>, K<sub>Rb</sub>, n) — API 19.2 Table 1</div>
-        <table class="ref-table">
-          <thead>
-            <tr><th>Primary Seal Type</th><th>K<sub>Ra</sub></th><th>K<sub>Rb</sub></th><th>n</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Mechanical Shoe Seal</td><td>1.2</td><td>0.4</td><td>2.1</td></tr>
-            <tr><td>Liquid-Mounted Foam Seal</td><td>0.7</td><td>0.3</td><td>1.6</td></tr>
-            <tr><td>Vapor-Mounted Foam Seal</td><td>1.2</td><td>0.6</td><td>1.6</td></tr>
-            <tr><td>Resilient Filled Seal</td><td>0.3</td><td>0.1</td><td>2.0</td></tr>
-          </tbody>
-        </table>
+  <div class="card" style="padding:16px 22px;">
+    <div class="grid2" style="align-items:end;">
+      <div class="field">
+        <label>Tank Class</label>
+        <select id="tankClass" onchange="onTankClassChange()">
+          <option value="floating">Floating Roof (external / internal)</option>
+          <option value="fixed">Fixed Roof (vertical / horizontal)</option>
+          <option value="landing">Non-Routine — Floating Roof Landing</option>
+          <option value="cleaning">Non-Routine — Tank Cleaning</option>
+        </select>
       </div>
-
-      <div style="margin-top:28px;">
-        <div class="panel-header">Secondary Seal Loss Factor (K<sub>S</sub>) — API 19.2</div>
-        <table class="ref-table">
-          <thead>
-            <tr><th>Secondary Seal Type</th><th>K<sub>S</sub> (fraction of primary)</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>None</td><td>1.0 (no reduction)</td></tr>
-            <tr><td>Shoe-Mounted Secondary</td><td>0.15 (85% reduction)</td></tr>
-            <tr><td>Rim-Mounted Secondary</td><td>0.25 (75% reduction)</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div style="margin-top:28px;">
-        <div class="panel-header">Fitting Loss Factors — API 19.2 Table 3 (lb-mol/yr per fitting)</div>
-        <table class="ref-table">
-          <thead>
-            <tr><th>Fitting Type</th><th>Symbol</th><th>KF (lb-mol/yr)</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Roof Leg (landed position)</td><td>N<sub>leg</sub></td><td>0.11</td></tr>
-            <tr><td>Roof Leg (floating position)</td><td>N<sub>leg</sub></td><td>0.06</td></tr>
-            <tr><td>Gauge Hatch / Sample Well</td><td>N<sub>gh</sub></td><td>1.90</td></tr>
-            <tr><td>Flexible Roof Drain</td><td>N<sub>rd</sub></td><td>0.25</td></tr>
-            <tr><td>Unslotted Guide Pole / Gauge Well</td><td>N<sub>gp</sub></td><td>6.25</td></tr>
-            <tr><td>Slotted Guide Pole</td><td>N<sub>gp</sub></td><td>9.50</td></tr>
-            <tr><td>Vacuum Breaker Vent</td><td>N<sub>vb</sub></td><td>0.70</td></tr>
-            <tr><td>Deck Seam (per linear foot)</td><td>—</td><td>0 (welded) / 0.13 (bolted)</td></tr>
-          </tbody>
-        </table>
+      <div class="field" id="fixedShapeField" style="display:none;">
+        <label>Fixed Roof Configuration</label>
+        <select id="fixedShape" onchange="onFixedShapeChange()">
+          <option value="vertical_cone">Vertical — cone roof</option>
+          <option value="vertical_dome">Vertical — dome roof</option>
+          <option value="vertical_flat">Vertical — flat roof</option>
+          <option value="horizontal">Horizontal cylinder</option>
+        </select>
       </div>
     </div>
   </div>
 
+  <div class="err" id="errorMsg"></div>
+
+  <div class="layout">
+    <div>
+      <!-- IDENTIFICATION -->
+      <div class="card">
+        <div class="card-title">Tank Identification</div>
+        <div class="grid3">
+          <div class="field"><label>Company</label><input id="companyName" placeholder="Company name"></div>
+          <div class="field"><label>Tank ID</label><input id="tankId" placeholder="e.g. TK-101"></div>
+          <div class="field"><label>Location</label><input id="tankLocation" placeholder="City, State"></div>
+        </div>
+      </div>
+
+      <div id="floatingCards">
+      <!-- TANK TYPE & GEOMETRY -->
+      <div class="card">
+        <div class="card-title">Tank Type &amp; Geometry</div>
+        <div class="grid3">
+          <div class="field">
+            <label>Roof Type <span class="req">*</span></label>
+            <select id="roofType" onchange="onRoofTypeChange()">
+              <option value="EFRT_pontoon">External — Pontoon</option>
+              <option value="EFRT_double">External — Double-deck</option>
+              <option value="IFRT">Internal Floating Roof</option>
+              <option value="DEFRT">Domed External Floating Roof</option>
+            </select>
+          </div>
+          <div class="field"><label>Diameter <span class="unit">ft</span> <span class="req">*</span></label><input id="diameter" type="number" step="0.01" placeholder="0"></div>
+          <div class="field"><label>Shell Height <span class="unit">ft</span> <span class="req">*</span></label><input id="shellHeight" type="number" step="0.01" placeholder="0"></div>
+        </div>
+      </div>
+
+      <!-- CONSTRUCTION & SEALS -->
+      <div class="card">
+        <div class="card-title">Construction &amp; Rim Seal</div>
+        <div class="card-hint">Rim-seal loss factors from AP-42 Table 7.1-8.</div>
+        <div class="grid2">
+          <div class="field">
+            <label>Tank Construction <span class="req">*</span></label>
+            <select id="construction" onchange="updateSealOptions()">
+              <option value="welded">Welded</option>
+              <option value="riveted">Riveted</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Primary Seal <span class="req">*</span></label>
+            <select id="primarySeal" onchange="updateSealOptions()">
+              <option value="mechanical_shoe">Mechanical shoe</option>
+              <option value="liquid_mounted">Liquid-mounted</option>
+              <option value="vapor_mounted">Vapor-mounted</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Secondary Seal <span class="req">*</span></label>
+            <select id="secondarySeal"></select>
+          </div>
+          <div class="field">
+            <label>Seal Fit</label>
+            <select id="sealFit">
+              <option value="average">Average-fitting</option>
+              <option value="tight">Tight-fitting (welded only)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- LIQUID -->
+      <div class="card">
+        <div class="card-title">Stored Liquid</div>
+        <div class="grid2">
+          <div class="field">
+            <label>Chemical (AP-42 Table 7.1-3)</label>
+            <select id="chemical" onchange="populateLiquidProps()"></select>
+          </div>
+          <div class="field">
+            <label>Vapor Pressure Method</label>
+            <select id="tvpMethod" onchange="onTvpMethodChange()">
+              <option value="compute">Compute from temperature (Antoine)</option>
+              <option value="manual">Enter TVP directly</option>
+            </select>
+          </div>
+          <div class="field"><label>Vapor Molecular Weight <span class="unit">lb/lb-mol</span> <span class="req">*</span></label><input id="molWeight" type="number" step="0.01" placeholder="0"></div>
+          <div class="field"><label>Liquid Density <span class="unit">lb/gal</span> <span class="req">*</span></label><input id="liquidDensity" type="number" step="0.01" placeholder="0"></div>
+          <div class="field" id="manualTvpField" style="display:none;"><label>Vapor Pressure (TVP) <span class="unit">psia</span> <span class="req">*</span></label><input id="vaporPressure" type="number" step="0.001" placeholder="0"></div>
+        </div>
+        <div class="note" id="tvpNote">TVP is computed from the liquid surface temperature (below) using the chemical's Antoine constants. Product factor K<sub>C</sub> = 0.4 for crude oils, 1.0 otherwise (AP-42 Eq. 2-4).</div>
+      </div>
+
+      <!-- LOCATION & ENVIRONMENT (Phase 2) -->
+      <div class="card" id="envCard">
+        <div class="card-title">Location &amp; Environment</div>
+        <div class="card-hint">Liquid surface temperature is derived from site meteorology, solar insolation, and paint color — AP-42 Eq. 2-5 to 2-12, Tables 7.1-6 &amp; 7.1-7.</div>
+        <div class="grid2">
+          <div class="field">
+            <label>Meteorological Location</label>
+            <select id="metLocation" onchange="onMetChange()"></select>
+          </div>
+          <div class="field">
+            <label>Liquid Bulk Temp Method</label>
+            <select id="tbMethod" onchange="onTbMethodChange()">
+              <option value="ap42">AP-42 calculation (from met data)</option>
+              <option value="user">User input</option>
+            </select>
+          </div>
+          <div class="field" id="tbUserField" style="display:none;"><label>Liquid Bulk Temp <span class="unit">°F</span></label><input id="bulkTempF" type="number" step="0.1" placeholder="60"></div>
+          <div class="field">
+            <label>Roof Paint Color</label>
+            <select id="roofColor"></select>
+          </div>
+          <div class="field">
+            <label>Roof Paint Condition</label>
+            <select id="roofCond"><option value="good">Good</option><option value="average" selected>Average</option><option value="aged">Aged</option></select>
+          </div>
+          <div class="field">
+            <label>Shell Paint Color</label>
+            <select id="shellColor"></select>
+          </div>
+          <div class="field">
+            <label>Shell Paint Condition</label>
+            <select id="shellCond"><option value="good">Good</option><option value="average" selected>Average</option><option value="aged">Aged</option></select>
+          </div>
+        </div>
+        <div class="note" id="envSummary">Select a location to compute liquid surface temperature.</div>
+      </div>
+
+      <!-- OPERATION -->
+      <div class="card">
+        <div class="card-title">Operation</div>
+        <div class="grid2">
+          <div class="field"><label>Annual Net Throughput <span class="unit">bbl/yr</span> <span class="req">*</span></label><input id="throughput" type="number" step="1" placeholder="0"></div>
+          <div class="field"><label>Avg. Wind Speed <span class="unit">mph</span></label><input id="windSpeed" type="number" step="0.1" placeholder="auto from location"></div>
+        </div>
+        <div class="note" id="windNote">Wind speed auto-fills from the selected location (Table 7.1-7) and can be overridden. Used only for external floating roof tanks; internal &amp; domed external tanks use v = 0.</div>
+      </div>
+
+      <!-- SHELL CONDITION (clingage) -->
+      <div class="card">
+        <div class="card-title">Shell Condition &amp; Columns</div>
+        <div class="card-hint">Withdrawal (working) loss inputs — AP-42 Eq. 2-19, Table 7.1-10.</div>
+        <div class="grid3">
+          <div class="field">
+            <label>Product Type (clingage)</label>
+            <select id="clingProduct">
+              <option value="single">Single-component / refined</option>
+              <option value="gasoline">Gasoline</option>
+              <option value="crude">Crude oil</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Shell Condition</label>
+            <select id="shellCondition">
+              <option value="light_rust">Light rust</option>
+              <option value="dense_rust">Dense rust</option>
+              <option value="gunite">Gunite lining</option>
+            </select>
+          </div>
+          <div class="field" id="columnField">
+            <label>Fixed Roof Columns (IFR)</label>
+            <input id="numColumns" type="number" step="1" placeholder="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- DECK SEAM (IFR only) -->
+      <div class="card cond-fields" id="deckSeamCard">
+        <div class="card-title">Deck Seam (Internal FR only)</div>
+        <div class="card-hint">Deck seam loss applies to bolted decks only — AP-42 Eq. 2-18, Table 7.1-16.</div>
+        <div class="field">
+          <label>Deck Construction</label>
+          <select id="deckSeam"></select>
+        </div>
+      </div>
+
+      <!-- DECK FITTINGS -->
+      <div class="card">
+        <div class="card-title">Deck Fittings</div>
+        <div class="card-hint">Add each fitting and its count. Loss factors from AP-42 Table 7.1-12. Fittings marked IFR-only cannot be used on external tanks (no wind term).</div>
+        <div id="fittingList"></div>
+        <button class="add-fitting" onclick="addFittingRow()">+ Add Fitting</button>
+      </div>
+
+      </div>
+
+      <!-- ===== FIXED ROOF CARDS ===== -->
+      <div id="fixedCards" style="display:none;">
+        <!-- GEOMETRY (fixed) -->
+        <div class="card">
+          <div class="card-title">Tank Geometry</div>
+          <div class="grid3">
+            <div class="field" id="fxDiamField"><label>Diameter <span class="unit">ft</span> <span class="req">*</span></label><input id="fxDiameter" type="number" step="0.01" placeholder="0"></div>
+            <div class="field" id="fxLengthField" style="display:none;"><label>Shell Length <span class="unit">ft</span> <span class="req">*</span></label><input id="fxLength" type="number" step="0.01" placeholder="0"></div>
+            <div class="field"><label>Shell Height <span class="unit">ft</span> <span class="req">*</span></label><input id="fxShellHeight" type="number" step="0.01" placeholder="0"></div>
+            <div class="field"><label>Max Liquid Height <span class="unit">ft</span></label><input id="fxMaxLiq" type="number" step="0.01" placeholder="auto"></div>
+            <div class="field"><label>Min Liquid Height <span class="unit">ft</span></label><input id="fxMinLiq" type="number" step="0.01" placeholder="auto"></div>
+            <div class="field"><label>Avg Liquid Height <span class="unit">ft</span></label><input id="fxAvgLiq" type="number" step="0.01" placeholder="auto = half"></div>
+          </div>
+          <div class="grid3" id="fxRoofGeomRow">
+            <div class="field" id="fxConeSlopeField"><label>Cone Roof Slope <span class="unit">ft/ft</span></label><input id="fxConeSlope" type="number" step="0.001" placeholder="0.0625"></div>
+            <div class="field" id="fxDomeRadField" style="display:none;"><label>Dome Roof Radius <span class="unit">ft</span></label><input id="fxDomeRadius" type="number" step="0.01" placeholder="= diameter"></div>
+          </div>
+          <div class="note" id="fxHorizNote" style="display:none;">Horizontal tanks use an effective diameter D<sub>E</sub> = √(LD·4/π) and effective height H<sub>E</sub> = (π/4)D (AP-42 Eq. 1-14/1-15).</div>
+        </div>
+
+        <!-- BREATHER VENT -->
+        <div class="card">
+          <div class="card-title">Breather Vent &amp; Pressure</div>
+          <div class="card-hint">Default settings ±0.03 psig if unknown (AP-42 Note 3 to Eq. 1-5).</div>
+          <div class="grid3">
+            <div class="field"><label>Vent Pressure Setting <span class="unit">psig</span></label><input id="fxVentPress" type="number" step="0.001" placeholder="0.03"></div>
+            <div class="field"><label>Vent Vacuum Setting <span class="unit">psig</span></label><input id="fxVentVac" type="number" step="0.001" placeholder="-0.03"></div>
+            <div class="field"><label>Operating Pressure P<sub>I</sub> <span class="unit">psig</span></label><input id="fxOpPress" type="number" step="0.001" placeholder="0"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== LANDING LOSS CARDS ===== -->
+      <div id="landingCards" style="display:none;">
+        <div class="card">
+          <div class="card-title">Roof Landing Event</div>
+          <div class="card-hint">Emissions from a floating roof landing — standing idle loss + filling loss (AP-42 §7.1.3.3, Eq. 3-7 to 3-18).</div>
+          <div class="grid3">
+            <div class="field"><label>Diameter <span class="unit">ft</span> <span class="req">*</span></label><input id="lnDiameter" type="number" step="0.01" placeholder="0"></div>
+            <div class="field"><label>Shell Height <span class="unit">ft</span> <span class="req">*</span></label><input id="lnShellHeight" type="number" step="0.01" placeholder="0"></div>
+            <div class="field"><label>Days Standing Idle <span class="req">*</span></label><input id="lnDaysIdle" type="number" step="1" placeholder="0"></div>
+          </div>
+          <div class="grid3">
+            <div class="field">
+              <label>Roof Tank Type</label>
+              <select id="lnRoofType">
+                <option value="IFRT">Internal / Domed External FR</option>
+                <option value="EFRT">External Floating Roof</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Heel Condition <span class="req">*</span></label>
+              <select id="lnHeel" onchange="onHeelChange()">
+                <option value="full">Full liquid heel</option>
+                <option value="partial">Partial liquid heel</option>
+                <option value="drain_dry">Drain-dry (clingage only)</option>
+              </select>
+            </div>
+            <div class="field" id="lnHeelHeightField"><label>Effective Heel Height <span class="unit">ft</span></label><input id="lnHeelHeight" type="number" step="0.01" placeholder="0.5"></div>
+          </div>
+          <div class="grid3" id="lnDrainDryRow" style="display:none;">
+            <div class="field">
+              <label>Bottom Condition (clingage)</label>
+              <select id="lnClingCond">
+                <option value="gunite">Gunite / sludge-lined</option>
+                <option value="dense_rust">Dense rust</option>
+                <option value="light_rust">Light rust</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Clingage Product</label>
+              <select id="lnClingProduct">
+                <option value="gasoline">Gasoline</option>
+                <option value="single">Single-component</option>
+                <option value="crude">Crude oil</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CLEANING LOSS CARDS ===== -->
+      <div id="cleaningCards" style="display:none;">
+        <div class="card">
+          <div class="card-title">Tank Cleaning — Forced Ventilation</div>
+          <div class="card-hint">Vapor space purge + continued forced ventilation (AP-42 §7.1.3.4, Eq. 4-2 to 4-10).</div>
+          <div class="grid3">
+            <div class="field"><label>Diameter <span class="unit">ft</span> <span class="req">*</span></label><input id="clDiameter" type="number" step="0.01" placeholder="0"></div>
+            <div class="field"><label>Shell Height <span class="unit">ft</span> <span class="req">*</span></label><input id="clShellHeight" type="number" step="0.01" placeholder="0"></div>
+            <div class="field">
+              <label>Tank Type</label>
+              <select id="clTankType">
+                <option value="fixed">Fixed roof</option>
+                <option value="IFRT">Internal / Domed External FR</option>
+                <option value="EFRT">External Floating Roof</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Liquid/Sludge Height at Shell <span class="unit">ft</span></label><input id="clLiquidHeight" type="number" step="0.01" placeholder="0"></div>
+            <div class="field">
+              <label>Heel Condition</label>
+              <select id="clHeel">
+                <option value="full">Full liquid heel</option>
+                <option value="partial">Partial heel / sludge only</option>
+                <option value="drain_dry">Drain dry</option>
+              </select>
+            </div>
+            <div class="field"><label>Days Idle Before Vent</label><input id="clDaysIdle" type="number" step="1" placeholder="1"></div>
+          </div>
+          <div class="card-title" style="font-size:0.9rem;margin-top:14px;">Continued Forced Ventilation</div>
+          <div class="grid3">
+            <div class="field"><label>Ventilation Rate Q<sub>v</sub> <span class="unit">ft³/min</span></label><input id="clVentRate" type="number" step="1" placeholder="0"></div>
+            <div class="field"><label>Days of Ventilation n<sub>CV</sub></label><input id="clVentDays" type="number" step="1" placeholder="0"></div>
+            <div class="field"><label>Vent Time per Day <span class="unit">hr/day</span></label><input id="clVentHours" type="number" step="0.1" placeholder="0"></div>
+          </div>
+          <div class="grid3">
+            <div class="field"><label>Avg %LEL Reading <span class="unit">%</span></label><input id="clLEL" type="number" step="0.1" placeholder="0"></div>
+            <div class="field">
+              <label>Calibration Gas</label>
+              <select id="clCalGas">
+                <option value="hexane">Hexane (LEL 1.1%, MW 86.18)</option>
+                <option value="propane">Propane (LEL 2.1%, MW 44.1)</option>
+                <option value="methane">Methane (LEL 5.0%, MW 16.04)</option>
+                <option value="pentane">Pentane (LEL 1.5%, MW 72.15)</option>
+              </select>
+            </div>
+            <div class="field"><label>Response Factor RF</label><input id="clRF" type="number" step="0.1" placeholder="1.0"></div>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-calc" onclick="calculate()">⬡ Calculate Emissions</button>
+    </div>
+
+    <!-- RESULTS -->
+    <div class="results">
+      <div class="card" id="resultCard">
+        <div class="card-title">Results</div>
+        <div id="resultBody">
+          <div class="result-empty">
+            <div class="big">⬡</div>
+            Enter tank parameters and calculate to see standing, working, and total loss estimates.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Tank Protocol · Floating Roof Tank Calculator · Emission estimates per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Chapter 19.2.<br>
+    Estimates are for screening and inventory purposes. Verify against regulatory requirements.
+  </div>
 </div>
 
 <script>
-// ─── TAB SWITCHING ───────────────────────────────────────────────────────────
-function showTab(tab) {
-  document.getElementById('tab-calculator').style.display = tab === 'calculator' ? '' : 'none';
-  document.getElementById('tab-reference').style.display = tab === 'reference' ? '' : 'none';
-  document.querySelectorAll('.tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0) === (tab === 'calculator'));
-  });
-}
+// ══════════════════════════════════════════════════════════════════════════
+// AP-42 Chapter 7 (9/2025) — Floating Roof Tank emission factor data
+// All values transcribed directly from EPA AP-42 Chapter 7 tables.
+// ══════════════════════════════════════════════════════════════════════════
 
-// ─── LIQUID PRESETS ──────────────────────────────────────────────────────────
-const LIQUID_PRESETS = {
-  custom:       { vp: null,  mw: null,  dens: null },
-  gasoline:     { vp: 10.0, mw: 87,   dens: 5.83 },
-  crude_light:  { vp: 5.0,  mw: 130,  dens: 6.50 },
-  crude_heavy:  { vp: 1.0,  mw: 280,  dens: 7.83 },
-  jet_a:        { vp: 0.05, mw: 155,  dens: 6.70 },
-  diesel:       { vp: 0.02, mw: 190,  dens: 7.08 },
-  ethanol:      { vp: 1.0,  mw: 46,   dens: 6.59 },
+// ── Table 7.1-8: Rim-Seal Loss Factors (KRa, KRb, n) ──────────────────────
+// Keyed by construction → seal type → secondary seal → fit
+const RIM_SEAL_FACTORS = {
+  welded: {
+    mechanical_shoe: {
+      primary:   { average: { KRa: 5.8, KRb: 0.3, n: 2.1 }, tight: { KRa: 1.5, KRb: 0.4, n: 1.9 } },
+      shoe:      { average: { KRa: 1.6, KRb: 0.3, n: 1.6 }, tight: { KRa: 1.0, KRb: 0.4, n: 1.5 } },
+      rim:       { average: { KRa: 0.6, KRb: 0.4, n: 1.0 }, tight: { KRa: 0.4, KRb: 0.4, n: 1.0 } },
+    },
+    liquid_mounted: {
+      primary:   { average: { KRa: 1.6, KRb: 0.3, n: 1.5 }, tight: { KRa: 1.0, KRb: 0.08, n: 1.8 } },
+      weather:   { average: { KRa: 0.7, KRb: 0.3, n: 1.2 }, tight: { KRa: 0.4, KRb: 0.2, n: 1.3 } },
+      rim:       { average: { KRa: 0.3, KRb: 0.6, n: 0.3 }, tight: { KRa: 0.2, KRb: 0.4, n: 0.4 } },
+    },
+    vapor_mounted: {
+      primary:   { average: { KRa: 6.7, KRb: 0.2, n: 3.0 }, tight: { KRa: 5.6, KRb: 0.2, n: 2.4 } },
+      weather:   { average: { KRa: 3.3, KRb: 0.1, n: 3.0 }, tight: { KRa: 2.8, KRb: 0.1, n: 2.3 } },
+      rim:       { average: { KRa: 2.2, KRb: 0.003, n: 4.3 }, tight: { KRa: 2.2, KRb: 0.02, n: 2.6 } },
+    },
+  },
+  riveted: {
+    mechanical_shoe: {
+      primary:   { average: { KRa: 10.8, KRb: 0.4, n: 2.0 } },
+      shoe:      { average: { KRa: 9.2,  KRb: 0.2, n: 1.9 } },
+      rim:       { average: { KRa: 1.1,  KRb: 0.3, n: 1.5 } },
+    },
+  },
 };
 
+// ── Table 7.1-10: Average Clingage Factors CS (bbl/1000 ft²) ───────────────
+const CLINGAGE_FACTORS = {
+  gasoline:   { light_rust: 0.0015, dense_rust: 0.0075, gunite: 0.15 },
+  single:     { light_rust: 0.0015, dense_rust: 0.0075, gunite: 0.15 },
+  crude:      { light_rust: 0.0060, dense_rust: 0.030,  gunite: 0.60 },
+};
+
+// ── Table 7.1-6: Paint Solar Absorptance ───────────────────────────────────
+const SOLAR_ABSORPTANCE = {
+  white:            { good: 0.17, average: 0.25, aged: 0.34 },
+  alum_specular:    { good: 0.39, average: 0.44, aged: 0.49 },
+  alum_diffuse:     { good: 0.60, average: 0.64, aged: 0.68 },
+  beige_cream:      { good: 0.35, average: 0.42, aged: 0.49 },
+  black:            { good: 0.97, average: 0.97, aged: 0.97 },
+  brown:            { good: 0.58, average: 0.62, aged: 0.67 },
+  gray_light:       { good: 0.54, average: 0.58, aged: 0.63 },
+  gray_medium:      { good: 0.68, average: 0.71, aged: 0.74 },
+  green_dark:       { good: 0.89, average: 0.90, aged: 0.91 },
+  red_primer:       { good: 0.89, average: 0.90, aged: 0.91 },
+  rust_red:         { good: 0.38, average: 0.44, aged: 0.50 },
+  tan:              { good: 0.43, average: 0.49, aged: 0.55 },
+  alum_millfinish:  { good: 0.10, average: 0.12, aged: 0.15 },
+};
+
+// ── Table 7.1-12: Deck-Fitting Loss Factors (KFa, KFb, m) ──────────────────
+// p = applies only to IFR/Domed (KFa only, no wind term — must NOT be used on EFRT)
+const DECK_FITTING_FACTORS = {
+  access_hatch_bolted_gask:        { label: "Access hatch — bolted cover, gasketed",                 KFa: 1.6,  KFb: 0,    m: 0,    efrt: true },
+  access_hatch_unbolted_ungask:    { label: "Access hatch — unbolted cover, ungasketed",             KFa: 36,   KFb: 5.9,  m: 1.2,  efrt: true },
+  access_hatch_unbolted_gask:      { label: "Access hatch — unbolted cover, gasketed",               KFa: 31,   KFb: 5.2,  m: 1.3,  efrt: true },
+  column_round_ungask:             { label: "Column well — round pipe, ungasketed sliding cover",    KFa: 31,   KFb: null, m: null, efrt: false },
+  column_round_gask:               { label: "Column well — round pipe, gasketed sliding cover",      KFa: 25,   KFb: null, m: null, efrt: false },
+  column_round_sleeve:             { label: "Column well — round pipe, flexible fabric sleeve",      KFa: 10,   KFb: null, m: null, efrt: false },
+  column_builtup_ungask:          { label: "Column well — built-up, ungasketed sliding cover",      KFa: 51,   KFb: null, m: null, efrt: false },
+  column_builtup_gask:            { label: "Column well — built-up, gasketed sliding cover",        KFa: 33,   KFb: null, m: null, efrt: false },
+  unslotted_ungask:                { label: "Unslotted guidepole — ungasketed sliding cover",        KFa: 31,   KFb: 150,  m: 1.4,  efrt: true },
+  unslotted_ungask_sleeve:         { label: "Unslotted guidepole — ungasketed cover w/pole sleeve",  KFa: 25,   KFb: 2.2,  m: 2.1,  efrt: true },
+  unslotted_gask:                  { label: "Unslotted guidepole — gasketed sliding cover",          KFa: 25,   KFb: 13,   m: 2.2,  efrt: true },
+  unslotted_gask_wiper:            { label: "Unslotted guidepole — gasketed cover w/pole wiper",     KFa: 14,   KFb: 3.7,  m: 0.78, efrt: true },
+  unslotted_gask_sleeve:           { label: "Unslotted guidepole — gasketed cover w/pole sleeve",    KFa: 8.6,  KFb: 12,   m: 0.81, efrt: true },
+  slotted_ungask:                  { label: "Slotted guidepole — ungasketed/gasketed sliding cover", KFa: 43,   KFb: 270,  m: 1.4,  efrt: true },
+  slotted_float:                   { label: "Slotted guidepole — sliding cover w/float",             KFa: 1,    KFb: 36,   m: 2.0,  efrt: true },
+  slotted_gask_wiper:              { label: "Slotted guidepole — gasketed cover w/pole wiper",       KFa: 41,   KFb: 48,   m: 1.4,  efrt: true },
+  slotted_gask_sleeve:             { label: "Slotted guidepole — gasketed cover w/pole sleeve",      KFa: 11,   KFb: 46,   m: 1.4,  efrt: true },
+  slotted_gask_sleeve_wiper:       { label: "Slotted guidepole — gasketed cover w/sleeve & wiper",   KFa: 8.3,  KFb: 4.4,  m: 1.6,  efrt: true },
+  slotted_float_wiper:             { label: "Slotted guidepole — cover w/float & pole wiper",        KFa: 21,   KFb: 7.9,  m: 1.8,  efrt: true },
+  slotted_float_sleeve_wiper:      { label: "Slotted guidepole — cover w/float, sleeve & wiper",     KFa: 11,   KFb: 9.9,  m: 0.89, efrt: true },
+  slotted_flex_enclosure:          { label: "Slotted guidepole — flexible enclosure",               KFa: 21,   KFb: 7.9,  m: 1.8,  efrt: true },
+  gauge_float_unbolted_ungask:     { label: "Gauge-float well — unbolted cover, ungasketed",         KFa: 14,   KFb: 5.4,  m: 1.1,  efrt: true },
+  gauge_float_unbolted_gask:       { label: "Gauge-float well — unbolted cover, gasketed",           KFa: 4.3,  KFb: 17,   m: 0.38, efrt: true },
+  gauge_float_bolted_gask:         { label: "Gauge-float well — bolted cover, gasketed",             KFa: 2.8,  KFb: 0,    m: 0,    efrt: true },
+  gauge_hatch_gask:                { label: "Gauge-hatch/sample port — mech. actuation, gasketed",   KFa: 0.47, KFb: 0.02, m: 0.97, efrt: true },
+  gauge_hatch_ungask:              { label: "Gauge-hatch/sample port — mech. actuation, ungasketed", KFa: 2.3,  KFb: 0,    m: 0,    efrt: true },
+  gauge_hatch_slit:                { label: "Gauge-hatch/sample port — slit fabric seal 10% open",   KFa: 12,   KFb: null, m: null, efrt: false },
+  vacuum_breaker_ungask:           { label: "Vacuum breaker — mech. actuation, ungasketed",          KFa: 7.8,  KFb: 0.01, m: 4.0,  efrt: true },
+  vacuum_breaker_gask:             { label: "Vacuum breaker — mech. actuation, gasketed",            KFa: 6.2,  KFb: 1.2,  m: 0.94, efrt: true },
+  deck_drain_open:                 { label: "Deck drain (3in) — open",                               KFa: 1.5,  KFb: 0.21, m: 1.7,  efrt: true },
+  deck_drain_90closed:             { label: "Deck drain (3in) — 90% closed",                         KFa: 1.8,  KFb: 0.14, m: 1.1,  efrt: true },
+  deck_drain_stub:                 { label: "Deck drain — stub drain (1in)",                         KFa: 1.2,  KFb: null, m: null, efrt: false },
+  deck_leg_ifr:                    { label: "Deck leg — IFR-type (<12in sleeve), adjustable",        KFa: 7.9,  KFb: null, m: null, efrt: false },
+  deck_leg_efr_pontoon_ungask:     { label: "Deck leg — EFR pontoon (30in), adjustable ungasketed",  KFa: 2.0,  KFb: 0.37, m: 0.91, efrt: true },
+  deck_leg_efr_pontoon_gask:       { label: "Deck leg — EFR pontoon (30in), adjustable gasketed",    KFa: 1.3,  KFb: 0.08, m: 0.65, efrt: true },
+  deck_leg_efr_pontoon_sock:       { label: "Deck leg — EFR pontoon (30in), adjustable sock",        KFa: 1.2,  KFb: 0.14, m: 0.65, efrt: true },
+  deck_leg_efr_double_ungask:      { label: "Deck leg — EFR double-deck (48in), adj. ungasketed",    KFa: 0.82, KFb: 0.53, m: 0.14, efrt: true },
+  deck_leg_efr_double_gask:        { label: "Deck leg — EFR double-deck (48in), adj. gasketed",      KFa: 0.53, KFb: 0.11, m: 0.13, efrt: true },
+  deck_leg_efr_double_sock:        { label: "Deck leg — EFR double-deck (48in), adj. sock",          KFa: 0.49, KFb: 0.16, m: 0.14, efrt: true },
+  deck_leg_fixed:                  { label: "Deck leg/hanger — fixed (no opening)",                  KFa: 0,    KFb: 0,    m: 0,    efrt: true },
+  rim_vent_ungask:                 { label: "Rim vent — mech. actuation, ungasketed",               KFa: 0.68, KFb: 1.8,  m: 1.0,  efrt: true },
+  rim_vent_gask:                   { label: "Rim vent — mech. actuation, gasketed",                 KFa: 0.71, KFb: 0.10, m: 1.0,  efrt: true },
+  ladder_well_ungask:              { label: "Ladder well — sliding cover, ungasketed",              KFa: 98,   KFb: null, m: null, efrt: false },
+  ladder_well_gask:                { label: "Ladder well — sliding cover, gasketed",                KFa: 56,   KFb: null, m: null, efrt: false },
+};
+
+// ── Table 7.1-16: Deck Seam Length Factors SD (ft/ft²) ─────────────────────
+const DECK_SEAM_FACTORS = {
+  none:            { label: "Welded deck (no seam loss)",                  SD: 0,    KD: 0 },
+  sheet_5:         { label: "Continuous sheet — 5 ft wide",               SD: 0.20, KD: 0.14 },
+  sheet_6:         { label: "Continuous sheet — 6 ft wide",               SD: 0.17, KD: 0.14 },
+  sheet_7:         { label: "Continuous sheet — 7 ft wide",               SD: 0.14, KD: 0.14 },
+  panel_5x75:      { label: "Panel — 5 × 7.5 ft rectangular",             SD: 0.33, KD: 0.14 },
+  panel_5x12:      { label: "Panel — 5 × 12 ft rectangular",              SD: 0.28, KD: 0.14 },
+  default_bolted:  { label: "Typical bolted deck (default)",              SD: 0.20, KD: 0.14 },
+};
+
+// ── Table 7.1-11: Typical columns vs diameter (IFR column-supported) ───────
+const COLUMN_COUNT = [
+  [85,1],[100,6],[120,7],[135,8],[150,9],[170,16],[190,19],[220,22],
+  [235,31],[270,37],[275,43],[290,49],[330,61],[360,71],[400,81],
+];
+
+// ── Effective column diameters (Note 4 to Eq 2-19) ─────────────────────────
+const COLUMN_DIAMETER = { builtup_9x7: 1.1, pipe_8: 0.7, unknown: 1.0 };
+
+// ── Product factor KC ──────────────────────────────────────────────────────
+const PRODUCT_FACTOR = { crude: 0.4, other: 1.0 };
+
+// ── Sample chemical library (Antoine constants for vapor pressure) ─────────
+// Antoine: log10(PVA[mmHg]) = A - B/(TLA[°C] + C); converted to psia in code.
+const CHEMICALS = {
+  custom:            { label: "Custom (enter TVP directly)", MW: null, WL: null, A: null, B: null, C: null, type: 'other' },
+  gasoline_rvp7:     { label: "Gasoline RVP 7",  MW: 68,   WL: 5.6,  A: null, B: null, C: null, type: 'other', tvp60: 3.5 },
+  gasoline_rvp10:    { label: "Gasoline RVP 10", MW: 66,   WL: 5.6,  A: null, B: null, C: null, type: 'other', tvp60: 5.2 },
+  gasoline_rvp13:    { label: "Gasoline RVP 13", MW: 62,   WL: 5.6,  A: null, B: null, C: null, type: 'other', tvp60: 7.6 },
+  crude_rvp5:        { label: "Crude oil RVP 5", MW: 50,   WL: 7.1,  A: null, B: null, C: null, type: 'crude', tvp60: 2.3 },
+  benzene:           { label: "Benzene",         MW: 78.11, WL: 7.31, A: 6.905, B: 1211.0, C: 220.8, type: 'other' },
+  toluene:           { label: "Toluene",         MW: 92.14, WL: 7.26, A: 6.954, B: 1344.8, C: 219.5, type: 'other' },
+  ethylbenzene:      { label: "Ethylbenzene",    MW: 106.17, WL: 7.26, A: 6.957, B: 1424.3, C: 213.2, type: 'other' },
+  m_xylene:          { label: "m-Xylene",        MW: 106.17, WL: 7.23, A: 7.009, B: 1462.3, C: 215.1, type: 'other' },
+  cyclohexane:       { label: "Cyclohexane",     MW: 84.16, WL: 6.52, A: 6.841, B: 1201.5, C: 222.6, type: 'other' },
+  methanol:          { label: "Methanol",        MW: 32.04, WL: 6.63, A: 7.897, B: 1474.1, C: 229.1, type: 'other' },
+  ethanol:           { label: "Ethanol",         MW: 46.07, WL: 6.61, A: 8.321, B: 1718.1, C: 237.5, type: 'other' },
+  acetone:           { label: "Acetone",         MW: 58.08, WL: 6.59, A: 7.117, B: 1210.6, C: 229.7, type: 'other' },
+  isopropanol:       { label: "Isopropanol",     MW: 60.10, WL: 6.55, A: 8.117, B: 1580.9, C: 219.6, type: 'other' },
+};
+
+const MET_DATA = {
+  "Aberdeen, SD": {TAN:32.7,TAX:54.1,V:10.5,I:1219.0,PA:14.01},
+  "Abilene, TX": {TAN:53.6,TAX:75.6,V:11.0,I:1603.0,PA:13.79},
+  "Akron, OH": {TAN:41.5,TAX:58.5,V:8.9,I:1160.0,PA:14.07},
+  "Alamosa, CO": {TAN:24.9,TAX:58.8,V:7.2,I:1638.0,PA:11.2},
+  "Albany, NY": {TAN:39.6,TAX:57.4,V:7.8,I:1180.0,PA:14.55},
+  "Allentown, PA": {TAN:42.5,TAX:61.3,V:7.4,I:1210.0,PA:14.49},
+  "Alpena, MI": {TAN:34.4,TAX:53.3,V:7.4,I:1136.0,PA:14.33},
+  "Amarillo, TX": {TAN:44.7,TAX:70.3,V:12.8,I:1634.0,PA:12.95},
+  "Arcata, CA": {TAN:44.9,TAX:58.8,V:6.3,I:1203.0,PA:14.59},
+  "Asheville, NC": {TAN:45.6,TAX:66.0,V:6.5,I:1374.0,PA:13.6},
+  "Astoria, OR": {TAN:44.9,TAX:57.9,V:7.6,I:1005.0,PA:14.69},
+  "Athens, GA": {TAN:51.9,TAX:72.2,V:6.3,I:1419.0,PA:14.27},
+  "Atlanta, GA": {TAN:53.7,TAX:71.5,V:8.3,I:1400.0,PA:14.17},
+  "Atlantic City, NJ": {TAN:44.8,TAX:63.7,V:8.7,I:1292.0,PA:14.66},
+  "Augusta, GA": {TAN:51.9,TAX:75.7,V:5.4,I:1443.0,PA:14.62},
+  "Austin, TX": {TAN:57.8,TAX:79.1,V:7.8,I:1484.0,PA:14.33},
+  "Bakersfield, CA": {TAN:54.0,TAX:76.8,V:6.0,I:1666.0,PA:14.43},
+  "Baltimore , MD": {TAN:46.4,TAX:65.0,V:7.2,I:1274.0,PA:14.62},
+  "Bangor, ME": {TAN:35.0,TAX:54.3,V:7.6,I:1115.0,PA:14.59},
+  "Baton Rouge, LA": {TAN:58.0,TAX:77.8,V:6.0,I:1428.0,PA:14.66},
+  "Beckley, WV": {TAN:43.2,TAX:60.5,V:6.7,I:1216.0,PA:13.42},
+  "Billings, MT": {TAN:37.5,TAX:58.5,V:10.5,I:1271.0,PA:12.92},
+  "Binghamton, NY": {TAN:38.6,TAX:54.2,V:8.7,I:1142.0,PA:13.87},
+  "Birmingham, AL": {TAN:53.2,TAX:73.1,V:6.3,I:1388.0,PA:14.37},
+  "Bishop, CA": {TAN:38.9,TAX:73.8,V:8.1,I:1732.0,PA:12.68},
+  "Bismarck, ND": {TAN:31.5,TAX:54.2,V:9.4,I:1201.0,PA:13.85},
+  "Boise, ID": {TAN:42.0,TAX:63.4,V:7.6,I:1435.0,PA:13.52},
+  "Boston, MA": {TAN:44.7,TAX:58.6,V:11.4,I:1184.0,PA:14.68},
+  "Bradford, PA": {TAN:35.1,TAX:53.8,V:7.2,I:1119.0,PA:13.62},
+  "Bridgeport, CT": {TAN:45.4,TAX:59.6,V:9.2,I:1220.0,PA:14.69},
+  "Bristol, TN": {TAN:45.3,TAX:66.7,V:4.5,I:1325.0,PA:13.92},
+  "Brownsville, TX": {TAN:66.1,TAX:82.9,V:10.3,I:1501.0,PA:14.68},
+  "Buffalo, NY": {TAN:40.9,TAX:56.0,V:10.1,I:1157.0,PA:14.33},
+  "Burlington, VT": {TAN:37.4,TAX:54.8,V:8.1,I:1135.0,PA:14.52},
+  "Burns, OR": {TAN:30.8,TAX:58.8,V:6.3,I:1386.0,PA:12.63},
+  "Caribou, ME": {TAN:30.9,TAX:48.8,V:7.4,I:1071.0,PA:14.36},
+  "Casper, WY": {TAN:33.1,TAX:58.9,V:11.6,I:1385.0,PA:12.13},
+  "Cedar City, UT": {TAN:36.8,TAX:64.4,V:7.4,I:1623.0,PA:12.01},
+  "Charleston, SC": {TAN:56.7,TAX:75.4,V:7.8,I:1443.0,PA:14.68},
+  "Charleston, WV": {TAN:45.5,TAX:65.4,V:4.0,I:1237.0,PA:14.16},
+  "Charlotte, NC": {TAN:51.1,TAX:70.8,V:6.3,I:1395.0,PA:14.32},
+  "Chattanooga, TN": {TAN:51.1,TAX:71.1,V:4.9,I:1357.0,PA:14.34},
+  "Cheyenne, WY": {TAN:35.0,TAX:57.9,V:12.3,I:1414.0,PA:11.78},
+  "Chicago, IL": {TAN:41.8,TAX:58.4,V:9.8,I:1183.0,PA:14.34},
+  "Cincinnati, KY": {TAN:45.2,TAX:63.1,V:8.1,I:1260.0,PA:14.24},
+  "Cleveland, OH": {TAN:43.0,TAX:58.7,V:9.6,I:1168.0,PA:14.29},
+  "Columbia, MO": {TAN:45.1,TAX:64.2,V:9.4,I:1320.0,PA:14.23},
+  "Columbia, SC": {TAN:53.1,TAX:74.6,V:6.0,I:1425.0,PA:14.58},
+  "Columbus, GA": {TAN:55.5,TAX:75.4,V:6.0,I:1418.0,PA:14.49},
+  "Columbus, OH": {TAN:44.5,TAX:62.0,V:7.6,I:1200.0,PA:14.27},
+  "Concord, NH": {TAN:35.7,TAX:57.3,V:6.0,I:1168.0,PA:14.5},
+  "Concordia, KS": {TAN:43.4,TAX:64.3,V:10.7,I:1394.0,PA:13.94},
+  "DC-Dulles, VA": {TAN:45.2,TAX:65.3,V:6.9,I:1279.0,PA:14.55},
+  "DC-Reagan, VA": {TAN:50.2,TAX:66.1,V:8.9,I:1282.0,PA:14.69},
+  "Daggett, CA": {TAN:54.5,TAX:81.4,V:10.7,I:1806.0,PA:13.71},
+  "Dayton, OH": {TAN:43.5,TAX:60.9,V:9.6,I:1224.0,PA:14.17},
+  "Denver, CO": {TAN:37.9,TAX:63.5,V:9.4,I:1491.0,PA:12.08},
+  "Des Moines, IA": {TAN:41.6,TAX:59.5,V:9.6,I:1257.0,PA:14.2},
+  "Detroit - City, MI": {TAN:43.2,TAX:58.5,V:8.7,I:1159.0,PA:14.36},
+  "Dodge City, KS": {TAN:43.0,TAX:67.6,V:13.0,I:1512.0,PA:13.39},
+  "Dubuque, IA": {TAN:38.7,TAX:55.8,V:9.8,I:1194.0,PA:14.14},
+  "Duluth, MN": {TAN:31.4,TAX:48.2,V:10.1,I:1133.0,PA:13.95},
+  "Eau Claire, WI": {TAN:35.2,TAX:54.5,V:7.4,I:1151.0,PA:14.23},
+  "El Paso, TX": {TAN:53.1,TAX:77.5,V:8.5,I:1818.0,PA:12.76},
+  "Elkins, WV": {TAN:39.0,TAX:61.5,V:4.5,I:1173.0,PA:13.69},
+  "Ely, NV": {TAN:29.5,TAX:60.6,V:9.4,I:1565.0,PA:11.72},
+  "Erie, PA": {TAN:42.9,TAX:56.9,V:9.8,I:1135.0,PA:14.32},
+  "Eugene, OR": {TAN:42.7,TAX:62.8,V:6.9,I:1204.0,PA:14.5},
+  "Evansville, IN": {TAN:47.1,TAX:66.1,V:6.9,I:1306.0,PA:14.49},
+  "Fargo, ND": {TAN:32.6,TAX:51.6,V:11.0,I:1149.0,PA:14.23},
+  "Flint, MI": {TAN:38.8,TAX:56.9,V:8.9,I:1168.0,PA:14.29},
+  "Fort Myers, FL": {TAN:65.9,TAX:83.7,V:6.9,I:1583.0,PA:14.68},
+  "Fort Smith, AR": {TAN:51.5,TAX:72.1,V:6.9,I:1392.0,PA:14.46},
+  "Fort Wayne, IN": {TAN:41.5,TAX:59.6,V:9.2,I:1197.0,PA:14.29},
+  "Fresno, CA": {TAN:52.8,TAX:76.1,V:6.0,I:1639.0,PA:14.52},
+  "Gainesville, FL": {TAN:58.3,TAX:79.4,V:6.3,I:1482.0,PA:14.62},
+  "Gallup, NM": {TAN:32.0,TAX:65.6,V:6.7,I:1669.0,PA:11.63},
+  "Glasgow, MT": {TAN:31.7,TAX:54.2,V:10.5,I:1211.0,PA:13.53},
+  "Goodland, KS": {TAN:38.3,TAX:64.5,V:12.1,I:1496.0,PA:12.88},
+  "Grand Island, NE": {TAN:39.9,TAX:61.7,V:11.2,I:1349.0,PA:13.75},
+  "Grand Rapids, MI": {TAN:40.1,TAX:56.8,V:9.6,I:1156.0,PA:14.27},
+  "Great Falls, MT": {TAN:33.5,TAX:56.2,V:11.4,I:1212.0,PA:12.88},
+  "Green Bay, WI": {TAN:36.3,TAX:54.1,V:8.7,I:1156.0,PA:14.33},
+  "Greensboro, NC": {TAN:49.5,TAX:68.4,V:7.2,I:1367.0,PA:14.23},
+  "Greer, SC": {TAN:51.1,TAX:70.7,V:6.7,I:1417.0,PA:14.2},
+  "Hartford, CT": {TAN:41.3,TAX:60.1,V:7.8,I:1181.0,PA:14.61},
+  "Harve City, MT": {TAN:30.9,TAX:55.8,V:9.6,I:1202.0,PA:13.39},
+  "Helena, MT": {TAN:33.7,TAX:56.7,V:6.7,I:1260.0,PA:12.79},
+  "Hilo, HI": {TAN:67.1,TAX:80.6,V:6.5,I:1498.0,PA:14.68},
+  "Honolulu, HI": {TAN:71.8,TAX:83.8,V:10.5,I:1745.0,PA:14.69},
+  "Houston, TX": {TAN:60.1,TAX:79.0,V:7.4,I:1404.0,PA:14.65},
+  "Huntington, WV": {TAN:46.2,TAX:65.3,V:5.6,I:1250.0,PA:14.26},
+  "Huntsville, AL": {TAN:51.4,TAX:71.3,V:7.2,I:1372.0,PA:14.36},
+  "Huron, SD": {TAN:35.2,TAX:56.5,V:10.5,I:1250.0,PA:14.03},
+  "Indianapolis, IN": {TAN:44.7,TAX:62.0,V:9.6,I:1245.0,PA:14.29},
+  "Jackson, KY": {TAN:47.8,TAX:65.1,V:4.9,I:1261.0,PA:13.98},
+  "Jackson, MS": {TAN:54.3,TAX:75.3,V:5.6,I:1434.0,PA:14.53},
+  "Jacksonville, FL": {TAN:58.3,TAX:78.3,V:6.7,I:1480.0,PA:14.68},
+  "Kahului, HI": {TAN:68.1,TAX:83.4,V:12.5,I:1790.0,PA:14.66},
+  "Kalispell, MT": {TAN:32.4,TAX:54.4,V:5.1,I:1142.0,PA:13.2},
+  "Kansas City, MO": {TAN:45.3,TAX:64.0,V:10.3,I:1325.0,PA:14.18},
+  "Key West, FL": {TAN:73.6,TAX:82.3,V:10.1,I:1680.0,PA:14.69},
+  "Knoxville, TN": {TAN:49.6,TAX:68.7,V:5.8,I:1350.0,PA:14.18},
+  "La Crosse, WI": {TAN:38.7,TAX:56.7,V:8.7,I:1164.0,PA:14.36},
+  "Lake Charles, LA": {TAN:59.7,TAX:77.6,V:7.4,I:1443.0,PA:14.68},
+  "Lander, WY": {TAN:33.9,TAX:57.3,V:6.3,I:1411.0,PA:12.02},
+  "Lansing, MI": {TAN:38.4,TAX:56.8,V:8.9,I:1153.0,PA:14.26},
+  "Las Vegas, NV": {TAN:58.6,TAX:79.5,V:8.3,I:1769.0,PA:13.6},
+  "Lewiston, ID": {TAN:43.6,TAX:62.8,V:5.6,I:1254.0,PA:13.95},
+  "Lexington, KY": {TAN:46.5,TAX:64.5,V:7.8,I:1281.0,PA:14.18},
+  "Lihue, HI": {TAN:71.0,TAX:80.4,V:13.4,I:1594.0,PA:14.63},
+  "Limon, CO": {TAN:32.0,TAX:62.2,V:9.6,I:1523.0,PA:12.02},
+  "Lincoln, NE": {TAN:40.5,TAX:62.5,V:9.6,I:1290.0,PA:14.08},
+  "Little Rock, AR": {TAN:53.2,TAX:72.5,V:7.2,I:1380.0,PA:14.56},
+  "Long Beach, CA": {TAN:56.0,TAX:73.0,V:5.4,I:1598.0,PA:14.68},
+  "Long Island, NY": {TAN:44.8,TAX:60.5,V:8.9,I:1246.0,PA:14.65},
+  "Louisville, KY": {TAN:49.2,TAX:66.7,V:7.6,I:1299.0,PA:14.45},
+  "Lovelock, NV": {TAN:37.0,TAX:68.1,V:6.7,I:1571.0,PA:12.76},
+  "Lubbock, TX": {TAN:48.1,TAX:73.9,V:11.9,I:1653.0,PA:13.07},
+  "Lufkin, TX": {TAN:56.4,TAX:77.6,V:6.5,I:1432.0,PA:14.55},
+  "Lynchburg, VA": {TAN:46.0,TAX:66.4,V:5.1,I:1358.0,PA:14.2},
+  "Macon, GA": {TAN:53.2,TAX:75.7,V:5.8,I:1461.0,PA:14.5},
+  "Madison, WI": {TAN:37.9,TAX:56.0,V:7.8,I:1177.0,PA:14.24},
+  "Mansfield, OH": {TAN:41.1,TAX:58.3,V:9.4,I:1172.0,PA:14.03},
+  "Mason City, IA": {TAN:35.9,TAX:55.4,V:11.2,I:1177.0,PA:14.07},
+  "Massena, NY": {TAN:34.6,TAX:53.8,V:7.6,I:1137.0,PA:14.58},
+  "Medford, OR": {TAN:43.6,TAX:67.4,V:4.0,I:1357.0,PA:13.69},
+  "Memphis, TN": {TAN:54.3,TAX:71.8,V:8.3,I:1361.0,PA:14.55},
+  "Mercury, NV": {TAN:52.2,TAX:75.5,V:8.9,I:1781.0,PA:13.16},
+  "Meridian, MS": {TAN:53.0,TAX:75.6,V:5.8,I:1421.0,PA:14.53},
+  "Miami, FL": {TAN:70.8,TAX:83.3,V:8.3,I:1504.0,PA:14.68},
+  "Middletown, PA": {TAN:45.4,TAX:62.6,V:7.6,I:1219.0,PA:14.53},
+  "Midland, TX": {TAN:51.4,TAX:76.7,V:11.0,I:1698.0,PA:13.26},
+  "Milwaukee, WI": {TAN:41.2,TAX:55.6,V:10.1,I:1173.0,PA:14.34},
+  "Minot, ND": {TAN:32.2,TAX:51.6,V:11.2,I:1156.0,PA:13.81},
+  "Missoula, MT": {TAN:34.5,TAX:56.5,V:5.1,I:1201.0,PA:13.1},
+  "Mobile, AL": {TAN:57.6,TAX:76.7,V:7.2,I:1452.0,PA:14.58},
+  "Moline, IL": {TAN:41.4,TAX:60.2,V:8.1,I:1229.0,PA:14.39},
+  "Montgomery, AL": {TAN:54.4,TAX:76.2,V:6.0,I:1430.0,PA:14.59},
+  "Muskegon, MI": {TAN:40.3,TAX:55.8,V:9.6,I:1160.0,PA:14.36},
+  "Nashville, TN": {TAN:50.3,TAX:69.4,V:6.9,I:1316.0,PA:14.39},
+  "New Orleans, LA": {TAN:61.5,TAX:77.5,V:8.1,I:1462.0,PA:14.69},
+  "Newark, NJ": {TAN:47.6,TAX:63.1,V:9.8,I:1226.0,PA:14.69},
+  "Norfolk, NE": {TAN:38.8,TAX:60.1,V:10.5,I:1292.0,PA:13.89},
+  "Norfolk, VA": {TAN:53.0,TAX:68.3,V:9.2,I:1349.0,PA:14.68},
+  "North Platte, NE": {TAN:35.8,TAX:62.5,V:9.2,I:1390.0,PA:13.29},
+  "Olympia, WA": {TAN:40.9,TAX:60.0,V:5.6,I:1029.0,PA:14.58},
+  "Omaha, NE": {TAN:41.3,TAX:61.2,V:9.8,I:1273.0,PA:14.18},
+  "Orlando, FL": {TAN:63.4,TAX:81.8,V:7.8,I:1510.0,PA:14.65},
+  "Paducah, KY": {TAN:48.1,TAX:67.8,V:6.9,I:1334.0,PA:14.47},
+  "Pendleton, OR": {TAN:42.1,TAX:62.6,V:8.3,I:1308.0,PA:13.92},
+  "Pensacola, FL": {TAN:59.9,TAX:76.6,V:7.8,I:1491.0,PA:14.63},
+  "Peoria, IL": {TAN:42.9,TAX:60.9,V:8.3,I:1253.0,PA:14.34},
+  "Philadelphia, PA": {TAN:48.2,TAX:64.2,V:9.4,I:1261.0,PA:14.69},
+  "Phoenix, AZ": {TAN:64.0,TAX:85.8,V:6.0,I:1802.0,PA:14.11},
+  "Pierre, SD": {TAN:36.2,TAX:58.8,V:11.0,I:1261.0,PA:13.81},
+  "Pittsburgh, PA": {TAN:42.8,TAX:60.4,V:7.8,I:1170.0,PA:14.1},
+  "Pocatello, ID": {TAN:34.4,TAX:59.3,V:9.4,I:1410.0,PA:12.52},
+  "Port Arthur, TX": {TAN:60.5,TAX:77.8,V:8.5,I:1412.0,PA:14.68},
+  "Portland, ME": {TAN:38.1,TAX:55.1,V:7.8,I:1182.0,PA:14.66},
+  "Prescott, AZ": {TAN:42.8,TAX:69.6,V:7.4,I:1705.0,PA:12.24},
+  "Providence, RI": {TAN:43.4,TAX:60.0,V:9.2,I:1206.0,PA:14.66},
+  "Pueblo, CO": {TAN:36.2,TAX:68.3,V:7.8,I:1613.0,PA:12.4},
+  "Quillayute, WA": {TAN:42.2,TAX:56.6,V:5.4,I:968.0,PA:14.59},
+  "Rapid City, SD": {TAN:35.0,TAX:59.4,V:10.5,I:1329.0,PA:13.11},
+  "Redding, CA": {TAN:50.4,TAX:74.7,V:6.0,I:1517.0,PA:14.43},
+  "Reno, NV": {TAN:40.0,TAX:66.8,V:6.3,I:1599.0,PA:12.53},
+  "Richmond, VA": {TAN:49.0,TAX:68.7,V:7.6,I:1341.0,PA:14.61},
+  "Roanoke, VA": {TAN:47.8,TAX:66.6,V:6.7,I:1316.0,PA:14.1},
+  "Rochester, MN": {TAN:36.0,TAX:53.2,V:11.9,I:1169.0,PA:14.01},
+  "Rochester, NY": {TAN:40.0,TAX:56.7,V:9.2,I:1140.0,PA:14.37},
+  "Rock Springs, WY": {TAN:32.5,TAX:54.1,V:11.0,I:1456.0,PA:13.05},
+  "Rockford, IL": {TAN:39.6,TAX:57.9,V:8.9,I:1180.0,PA:14.32},
+  "Roswell, NM": {TAN:47.6,TAX:75.8,V:8.7,I:1722.0,PA:12.88},
+  "Russell, KS": {TAN:42.9,TAX:66.1,V:12.3,I:1427.0,PA:13.74},
+  "Sacramento, CA": {TAN:49.2,TAX:73.3,V:6.5,I:1555.0,PA:14.68},
+  "Salem, OR": {TAN:43.8,TAX:63.0,V:6.5,I:1145.0,PA:14.59},
+  "Salt Lake City, UT": {TAN:42.9,TAX:63.3,V:8.3,I:1442.0,PA:12.62},
+  "San Angelo, TX": {TAN:53.5,TAX:78.0,V:9.6,I:1617.0,PA:13.71},
+  "San Antonio, TX": {TAN:59.5,TAX:79.8,V:8.1,I:1477.0,PA:14.27},
+  "San Diego, CA": {TAN:58.0,TAX:68.9,V:6.5,I:1608.0,PA:14.69},
+  "Santa Maria, CA": {TAN:47.2,TAX:68.1,V:6.7,I:1633.0,PA:14.56},
+  "Savannah, GA": {TAN:56.7,TAX:76.5,V:6.5,I:1464.0,PA:14.66},
+  "Scottsbluff, NE": {TAN:35.0,TAX:62.7,V:9.6,I:1403.0,PA:12.75},
+  "Scranton, PA": {TAN:41.1,TAX:58.6,V:6.9,I:1173.0,PA:14.21},
+  "Seattle, WA": {TAN:45.7,TAX:59.3,V:7.8,I:1067.0,PA:14.47},
+  "Sheridan, WY": {TAN:32.6,TAX:58.4,V:6.9,I:1260.0,PA:12.73},
+  "Shreveport, LA": {TAN:56.1,TAX:76.0,V:7.2,I:1424.0,PA:14.56},
+  "Sioux City, IA": {TAN:38.2,TAX:59.1,V:10.3,I:1260.0,PA:14.13},
+  "Sioux Falls, SD": {TAN:36.1,TAX:56.0,V:10.1,I:1239.0,PA:13.95},
+  "South Bend, IN": {TAN:41.4,TAX:58.6,V:8.9,I:1173.0,PA:14.29},
+  "Spokane, WA": {TAN:38.5,TAX:57.2,V:8.7,I:1224.0,PA:13.4},
+  "Springfield, IL": {TAN:43.8,TAX:62.5,V:9.2,I:1272.0,PA:14.39},
+  "Springfield, MO": {TAN:46.5,TAX:66.2,V:9.2,I:1340.0,PA:14.04},
+  "St Cloud, MN": {TAN:32.9,TAX:52.9,V:8.1,I:1165.0,PA:14.16},
+  "Stockton, CA": {TAN:49.6,TAX:74.4,V:7.8,I:1573.0,PA:14.68},
+  "Syracuse, NY": {TAN:39.7,TAX:57.0,V:8.3,I:1147.0,PA:14.47},
+  "Tallahassee, FL": {TAN:56.6,TAX:79.0,V:5.6,I:1500.0,PA:14.65},
+  "Tampa, FL": {TAN:65.2,TAX:81.2,V:6.7,I:1566.0,PA:14.68},
+  "Toledo, OH": {TAN:41.5,TAX:59.4,V:8.7,I:1192.0,PA:14.34},
+  "Tonopah, NV": {TAN:38.3,TAX:66.3,V:9.6,I:1709.0,PA:12.08},
+  "Topeka, KS": {TAN:45.0,TAX:65.6,V:7.8,I:1348.0,PA:14.23},
+  "Traverse City, MI": {TAN:37.6,TAX:54.8,V:7.4,I:1122.0,PA:14.37},
+  "Tucson, AZ": {TAN:56.8,TAX:83.1,V:7.6,I:1805.0,PA:13.4},
+  "Tulsa, OK": {TAN:51.1,TAX:70.8,V:9.2,I:1407.0,PA:14.36},
+  "Tupelo, MS": {TAN:52.1,TAX:72.2,V:6.3,I:1390.0,PA:14.5},
+  "Valentine, NE": {TAN:35.2,TAX:60.7,V:10.1,I:1322.0,PA:13.39},
+  "Vero Beach, FL": {TAN:64.9,TAX:81.5,V:8.3,I:1518.0,PA:14.68},
+  "Victoria, TX": {TAN:60.5,TAX:80.1,V:9.2,I:1439.0,PA:14.63},
+  "Waco, TX": {TAN:56.6,TAX:77.7,V:9.6,I:1505.0,PA:14.43},
+  "Waterloo, IA": {TAN:37.9,TAX:57.4,V:9.6,I:1198.0,PA:14.24},
+  "Wichita, KS": {TAN:46.8,TAX:67.5,V:11.4,I:1442.0,PA:14.01},
+  "Williamsport, PA": {TAN:41.4,TAX:60.3,V:6.5,I:1170.0,PA:14.42},
+  "Williston, ND": {TAN:29.9,TAX:53.2,V:8.9,I:1193.0,PA:13.72},
+  "Wilmington, DE": {TAN:46.4,TAX:63.5,V:8.5,I:1264.0,PA:14.65},
+  "Wilmington, NC": {TAN:54.2,TAX:73.2,V:7.6,I:1406.0,PA:14.68},
+  "Worchester, MA": {TAN:40.2,TAX:55.5,V:10.3,I:1176.0,PA:14.18},
+  "Yakima, WA": {TAN:37.5,TAX:62.6,V:6.0,I:1324.0,PA:14.14},
+  "Youngstown, OH": {TAN:40.4,TAX:58.3,V:8.5,I:1147.0,PA:14.08},
+};
+
+const CHEM_DB = {
+  "acetic_acid": {label:"Acetic acid",MW:60.05,WL:8.7277,tvp60:0.176,A:7.557,B:1642.5,C:233.39},
+  "acetic_anhydride_acetic_acid_anhydride": {label:"Acetic anhydride {acetic acid anhydride}",MW:102.09,WL:9.03,tvp60:0.053,A:7.122,B:1427.8,C:198.04},
+  "acetone": {label:"Acetone",MW:58.08,WL:6.5577,tvp60:2.921,A:7.3,B:1312.3,C:240.71},
+  "acetonitrile": {label:"Acetonitrile",MW:41.05,WL:6.56,tvp60:1.09,A:7.154,B:1355.4,C:235.3},
+  "acrylamide": {label:"Acrylamide",MW:71.08,WL:9.36,tvp60:8.57e-05,A:11.293,B:3939.9,C:273.16},
+  "acrylic_acid_2_propenoic_acid": {label:"Acrylic acid {2-propenoic acid}",MW:72.06,WL:8.77,tvp60:1.344,A:5.652,B:648.6,C:154.68},
+  "acrylonitrile_2__propenenitrile": {label:"Acrylonitrile {2- propenenitrile}",MW:53.06,WL:6.73,tvp60:1.383,A:6.942,B:1255.9,C:231.3},
+  "allyl_alcohol": {label:"Allyl alcohol",MW:58.08,WL:7.13,tvp60:0.326,A:11.658,B:4510.2,C:416.8},
+  "allyl_chloride_3_chloro_1__propene": {label:"Allyl chloride {3-chloro-1- propene}",MW:76.52,WL:7.83,tvp60:4.702,A:5.297,B:418.4,C:128.68},
+  "aniline": {label:"Aniline",MW:93.13,WL:8.53,tvp60:0.0058,A:7.221,B:1661.9,C:199.1},
+  "benzene": {label:"Benzene",MW:78.11,WL:7.32,tvp60:1.171,A:6.906,B:1211.0,C:220.79},
+  "biphenyle": {label:"Biphenyle",MW:154.21,WL:8.68,tvp60:6e-05,A:12.715,B:4402.1,C:273.15},
+  "butadiene_13_divinyl": {label:"Butadiene (1,3) {divinyl}",MW:54.09,WL:5.1377,tvp60:30.22,A:6.873,B:941.7,C:240.4},
+  "butane_n": {label:"Butane (n)",MW:58.12,WL:4.7877,tvp60:25.67,A:6.725,B:909.7,C:237.0},
+  "butene_1": {label:"Butene (1)",MW:56.11,WL:4.9177,tvp60:30.83,A:7.122,B:1099.2,C:264.89},
+  "butene_2__methyl_1": {label:"Butene (2- methyl-1)",MW:70.13,WL:5.43,tvp60:8.257,A:6.862,B:1047.8,C:232.06},
+  "butene_cis_2": {label:"Butene (cis-2)",MW:56.11,WL:5.1477,tvp60:22.62,A:6.863,B:957.1,C:236.65},
+  "butene_trans_2": {label:"Butene (trans-2)",MW:56.11,WL:5.0077,tvp60:24.97,A:6.919,B:982.2,C:242.38},
+  "butyl_alcohol_tert_11__dimethyl_ethanol": {label:"Butyl alcohol (tert) {1,1- dimethyl ethanol}",MW:74.12,WL:6.58,tvp60:0.424,A:7.373,B:1174.9,C:179.23},
+  "butyl_chloride___n_1_chloro__butane": {label:"Butyl chloride (- n) {1-chloro- butane}",MW:92.57,WL:7.4,tvp60:1.255,A:6.871,B:1182.9,C:218.27},
+  "butyl_ether_di__tert": {label:"Butyl ether (di- tert)",MW:130.23,WL:6.39,tvp60:0.381,A:6.59,B:1157.7,C:203.05},
+  "carbon_disulfide": {label:"Carbon disulfide",MW:76.14,WL:10.54,tvp60:4.817,A:6.942,B:1168.6,C:241.53},
+  "carbon_tetrachloride": {label:"Carbon tetrachloride",MW:153.82,WL:13.31,tvp60:1.431,A:6.898,B:1221.8,C:227.41},
+  "chlorobenzene": {label:"Chlorobenzene",MW:112.56,WL:9.23,tvp60:0.134,A:6.986,B:1435.7,C:218.03},
+  "chlorobutane_2": {label:"Chlorobutane (2)",MW:92.57,WL:7.27,tvp60:1.255,A:6.871,B:1182.9,C:218.27},
+  "chloroform": {label:"Chloroform",MW:119.38,WL:12.38,tvp60:2.468,A:7.083,B:1233.1,C:232.2},
+  "chloroprene_2_chloro_13__butadiene": {label:"Chloroprene {2-chloro-1,3- butadiene}",MW:88.54,WL:7.98,tvp60:2.736,A:6.291,B:841.9,C:187.79},
+  "chlorotoluene_o_1_chloro__2methylbenzene": {label:"Chlorotoluene (o) {1-chloro- 2methylbenzene }",MW:126.58,WL:9.04,tvp60:0.039,A:7.363,B:1768.1,C:234.76},
+  "chrysene_benzo[a]phena_nthrene": {label:"Chrysene {benzo[a]phena nthrene}",MW:228.29,WL:10.63,tvp60:1.86e-11,A:12.32,B:6160.0,C:273.15},
+  "cresol_m_3_methyl__phenol": {label:"Cresol (m) {3-methyl- phenol}",MW:108.14,WL:8.63,tvp60:0.0013,A:7.477,B:1833.1,C:196.74},
+  "cresol_o_2_methyl__phenol": {label:"Cresol (o) {2-methyl- phenol}",MW:108.14,WL:9.4777,tvp60:0.0016,A:6.843,B:1391.3,C:160.18},
+  "cyclohexane": {label:"Cyclohexane",MW:84.16,WL:6.4677,tvp60:1.212,A:6.845,B:1203.5,C:222.86},
+  "cyclohexanol": {label:"Cyclohexanol",MW:100.16,WL:8.03,tvp60:0.0009,A:5.956,B:777.4,C:91.11},
+  "cyclohexanone": {label:"Cyclohexanone",MW:98.14,WL:7.91,tvp60:0.0042,A:5.978,B:1495.5,C:209.55},
+  "cyclohexene": {label:"Cyclohexene",MW:82.14,WL:6.77,tvp60:0.11,A:5.872,B:1221.9,C:223.17},
+  "cyclopentane": {label:"Cyclopentane",MW:70.13,WL:6.22,tvp60:4.171,A:6.878,B:1119.2,C:230.74},
+  "cyclopentanone": {label:"Cyclopentanone",MW:84.12,WL:7.92,tvp60:0.13,A:3.958,B:376.4,C:104.65},
+  "cyclopentene": {label:"Cyclopentene",MW:68.12,WL:6.44,tvp60:3.264,A:6.921,B:1121.8,C:223.45},
+  "decane__n": {label:"Decane (-n)",MW:142.28,WL:6.09,tvp60:0.011,A:3.085,B:440.6,C:116.25},
+  "di_isopropyl_ether": {label:"Di-isopropyl ether",MW:102.17,WL:6.04,tvp60:1.877,A:6.842,B:1135.0,C:218.23},
+  "dibromoethane_12": {label:"Dibromoethane (1,2)",MW:187.86,WL:18.08,tvp60:0.13,A:6.508,B:1156.4,C:187.45},
+  "dibromopropan_e_12": {label:"Dibromopropan e (1,2)",MW:201.89,WL:16.13,tvp60:0.088,A:7.314,B:1667.0,C:234.85},
+  "dibromopropan_e_13": {label:"Dibromopropan e (1,3)",MW:201.89,WL:16.55,tvp60:0.029,A:7.309,B:1776.7,C:233.46},
+  "dichloroethane_11": {label:"Dichloroethane (1,1)",MW:98.96,WL:9.81,tvp60:2.863,A:7.097,B:1229.2,C:233.95},
+  "dichloroethane_12": {label:"Dichloroethane (1,2)",MW:98.96,WL:10.4077,tvp60:0.961,A:7.46,B:1521.8,C:248.48},
+  "dichloroethylen_e_12_12_dichloroethene": {label:"Dichloroethylen e (1,2) {1,2 dichloroethene}",MW:96.94,WL:10.76,tvp60:2.579,A:7.022,B:1205.4,C:230.6},
+  "dichloroethylen_e_trans_12": {label:"Dichloroethylen e (trans-1,2)",MW:96.94,WL:10.49,tvp60:4.333,A:6.965,B:1141.9,C:231.9},
+  "dichlorotoluene_34": {label:"Dichlorotoluene (3,4)",MW:161.03,WL:10.49,tvp60:0.0029,A:7.344,B:1882.5,C:215.0},
+  "diethoxyethane_11": {label:"Diethoxyethane (1,1)",MW:118.17,WL:6.89,tvp60:0.307,A:7.625,B:1574.0,C:229.47},
+  "diethyl_nn_aniline_nn\u2013_diethylbenzena_mi": {label:"Diethyl (n,n) aniline {N,N\u2013 diethylbenzena mine}",MW:149.23,WL:7.77,tvp60:0.0031,A:8.258,B:2652.8,C:277.32},
+  "diethyl_ketone_3_pentanone": {label:"Diethyl ketone {3-pentanone}",MW:86.13,WL:6.7677,tvp60:0.423,A:5.741,B:716.2,C:147.17},
+  "diethyl_sulfide": {label:"Diethyl sulfide",MW:90.19,WL:6.98,tvp60:0.749,A:7.541,B:1560.5,C:246.59},
+  "diethylamine_n_ethyl_ethanamine": {label:"Diethylamine {N-ethyl ethanamine}",MW:73.14,WL:5.89,tvp60:2.712,A:5.737,B:559.1,C:140.18},
+  "diethylbenzene_12": {label:"Diethylbenzene (1,2)",MW:134.22,WL:7.34,tvp60:0.0094,A:6.99,B:1577.9,C:200.55},
+  "diethylbenzene_13": {label:"Diethylbenzene (1,3)",MW:134.22,WL:7.18,tvp60:0.01,A:7.006,B:1576.3,C:201.0},
+  "diethylbenzene_14": {label:"Diethylbenzene (1,4)",MW:134.22,WL:7.2,tvp60:0.01,A:7.001,B:1589.3,C:202.02},
+  "dimethoxyethan_e_12": {label:"Dimethoxyethan e (1,2)",MW:90.12,WL:7.25,tvp60:0.966,A:6.713,B:1260.5,C:235.83},
+  "dimethyl_formamide_nn": {label:"Dimethyl formamide (n,n)",MW:73.09,WL:7.8877,tvp60:0.04,A:6.806,B:1337.7,C:190.5},
+  "dimethyl_hydrazine_11": {label:"Dimethyl hydrazine (1,1)",MW:60.1,WL:6.6072,tvp60:1.896,A:7.588,B:1388.5,C:232.54},
+  "dimethyl_phthalate": {label:"Dimethyl phthalate",MW:194.18,WL:9.94,tvp60:2.25e-08,A:4.522,B:700.3,C:51.42},
+  "dimethylbutane_23": {label:"Dimethylbutane (2,3)",MW:86.18,WL:5.52,tvp60:3.064,A:6.81,B:1127.2,C:228.95},
+  "dimethylcyclope_ntane_11": {label:"Dimethylcyclope ntane (1,1)",MW:98.19,WL:6.2677,tvp60:0.932,A:6.83,B:1226.6,C:222.76},
+  "dimethylpentan_e_22": {label:"Dimethylpentan e (2,2)",MW:100.2,WL:5.63,tvp60:1.315,A:6.815,B:1190.3,C:223.34},
+  "dimethylpentan_e_23": {label:"Dimethylpentan e (2,3)",MW:100.2,WL:5.8,tvp60:0.842,A:6.862,B:1242.6,C:222.34},
+  "dimethylpentan_e_33": {label:"Dimethylpentan e (3,3)",MW:100.2,WL:5.79,tvp60:1.029,A:6.831,B:1231.0,C:225.58},
+  "dioxane_14": {label:"Dioxane (1,4)",MW:88.11,WL:8.63,tvp60:0.439,A:7.456,B:1570.1,C:241.85},
+  "dipropyl_ether_di_n_propyl_ether": {label:"Dipropyl ether {di-n-propyl ether}",MW:102.17,WL:6.23,tvp60:0.754,A:6.945,B:1254.8,C:218.82},
+  "dodecane_n": {label:"Dodecane (n)",MW:170.33,WL:6.25,tvp60:0.00093,A:6.981,B:1625.9,C:180.31},
+  "fluoranthene": {label:"Fluoranthene",MW:202.25,WL:10.45,tvp60:3.96e-08,A:12.836,B:5348.1,C:273.15},
+  "fluorobenzene": {label:"Fluorobenzene",MW:96.1,WL:8.53,tvp60:0.936,A:7.237,B:1409.8,C:238.36},
+  "formic_acid": {label:"Formic acid",MW:46.03,WL:10.18,tvp60:0.516,A:4.876,B:515.0,C:133.74},
+  "furan": {label:"Furan",MW:68.07,WL:7.94,tvp60:7.963,A:6.975,B:1060.8,C:227.73},
+  "furfural_2__furancarboxalde_hyde": {label:"Furfural {2- furancarboxalde hyde}",MW:96.09,WL:9.68,tvp60:0.018,A:6.969,B:1430.1,C:188.7},
+  "heneicosane_n": {label:"Heneicosane (n)",MW:296.57,WL:6.61,tvp60:6.23e-07,A:8.796,B:3571.2,C:253.2},
+  "heptane_n": {label:"Heptane (n)",MW:100.2,WL:5.71,tvp60:0.541,A:6.903,B:1268.6,C:216.95},
+  "heptene_1": {label:"Heptene (1)",MW:98.19,WL:5.82,tvp60:0.752,A:7.093,B:1400.7,C:238.96},
+  "hexadiene_15": {label:"Hexadiene (1,5)",MW:82.14,WL:5.7477,tvp60:2.89,A:6.563,B:1008.1,C:214.16},
+  "hexane_n": {label:"Hexane (n)",MW:86.18,WL:5.4777,tvp60:1.913,A:6.878,B:1171.5,C:224.37},
+  "hexanol_1": {label:"Hexanol (1)",MW:102.17,WL:6.79,tvp60:0.005,A:7.288,B:1422.0,C:165.44},
+  "hexene_1": {label:"Hexene (1)",MW:84.16,WL:5.62,tvp60:2.378,A:6.866,B:1153.0,C:225.85},
+  "hydrogen_cyanide_hydrocyanic_acid": {label:"Hydrogen cyanide {hydrocyanic acid}",MW:27.03,WL:5.74,tvp60:9.931,A:7.549,B:1340.8,C:261.56},
+  "isobutane_methylpropane_2": {label:"Isobutane {methylpropane (2)}",MW:58.12,WL:4.6077,tvp60:38.22,A:6.819,B:912.1,C:243.34},
+  "isobutene_methylpropene_2": {label:"Isobutene {methylpropene (2)}",MW:56.11,WL:4.9277,tvp60:32.18,A:6.522,B:799.1,C:226.54},
+  "isobutyl_alcohol_2_methyl_1__propanol": {label:"Isobutyl alcohol {2-methyl 1- propanol}",MW:74.12,WL:6.69,tvp60:0.096,A:7.306,B:1237.0,C:171.62},
+  "isooctane_224__trimethylpentan_e": {label:"Isooctane {2,2,4- trimethylpentan e}",MW:114.23,WL:5.7477,tvp60:0.596,A:6.812,B:1257.8,C:220.74},
+  "isopentane_2_methyl_butane": {label:"Isopentane {2-methyl butane}",MW:72.15,WL:5.18,tvp60:9.426,A:6.79,B:1020.0,C:233.1},
+  "isoprene_2_methyl_13__butadiene": {label:"Isoprene {2-methyl 1,3- butadiene}",MW:68.12,WL:5.67,tvp60:7.446,A:6.091,B:706.9,C:186.1},
+  "isopropyl_alcohol_isopropanol": {label:"Isopropyl alcohol {isopropanol}",MW:60.1,WL:6.5277,tvp60:0.443,A:7.736,B:1357.4,C:197.34},
+  "isopropyl_benzene_cumene": {label:"Isopropyl benzene {cumene}",MW:120.19,WL:7.19,tvp60:0.048,A:6.929,B:1455.8,C:207.2},
+  "isopropylbenzen_e_1_methyl_2": {label:"Isopropylbenzen e (1-methyl-2)",MW:134.22,WL:7.32,tvp60:0.017,A:7.417,B:1880.5,C:236.27},
+  "methacrylonitril_e_2_methyl_2__propeneni": {label:"Methacrylonitril e {2-methyl 2- propenenitrile}",MW:67.09,WL:6.68,tvp60:0.886,A:6.999,B:1353.6,C:238.03},
+  "methyl_acetate_methyl_ester_acetic_acid": {label:"Methyl acetate {methyl ester acetic acid}",MW:74.08,WL:7.8,tvp60:2.703,A:7.079,B:1164.4,C:220.46},
+  "methyl_acrylate_methyl_ester_2__propenoi": {label:"Methyl acrylate {methyl ester 2- propenoic acid}",MW:86.09,WL:7.96,tvp60:1.058,A:7.198,B:1338.7,C:229.63},
+  "methyl_alcohol_methanol": {label:"Methyl alcohol {methanol}",MW:32.04,WL:6.61,tvp60:1.476,A:8.079,B:1581.3,C:239.65},
+  "methyl_ethyl_ketone_2_butanone": {label:"Methyl ethyl ketone {2-butanone}",MW:72.11,WL:6.6877,tvp60:1.081,A:6.864,B:1150.2,C:209.25},
+  "methyl_isobutyl_ketone": {label:"Methyl isobutyl ketone",MW:100.16,WL:6.6577,tvp60:0.219,A:6.828,B:1254.1,C:201.61},
+  "methyl_methacrylate": {label:"Methyl methacrylate",MW:100.12,WL:7.88,tvp60:0.416,A:8.253,B:1945.6,C:265.58},
+  "methyl_propyl_ether": {label:"Methyl propyl ether",MW:74.12,WL:6.1455,tvp60:6.017,A:6.563,B:903.6,C:206.46},
+  "methyl_tert__butyl_ether_mtbe": {label:"Methyl-tert- butyl ether {MTBE}",MW:88.15,WL:6.18,tvp60:3.226,A:6.867,B:1116.1,C:224.74},
+  "methylcyclohex_ane": {label:"Methylcyclohex ane",MW:98.19,WL:6.42,tvp60:0.558,A:6.823,B:1270.8,C:221.42},
+  "methylcyclopent_ane": {label:"Methylcyclopent ane",MW:84.16,WL:6.25,tvp60:1.738,A:6.863,B:1186.1,C:226.04},
+  "methyldichloros_ilane": {label:"Methyldichloros ilane",MW:115.03,WL:8.91,tvp60:5.718,A:7.028,B:1167.8,C:240.7},
+  "methylene_chloride": {label:"Methylene chloride",MW:84.93,WL:11.07,tvp60:5.64,A:7.412,B:1327.0,C:252.68},
+  "methylhexane_2": {label:"Methylhexane (2)",MW:100.2,WL:5.66,tvp60:0.799,A:6.882,B:1240.9,C:220.1},
+  "methylhexane_3": {label:"Methylhexane (3)",MW:100.2,WL:5.72,tvp60:0.744,A:6.874,B:1243.8,C:219.63},
+  "methylpentane_2": {label:"Methylpentane (2)",MW:86.18,WL:5.4377,tvp60:2.73,A:6.839,B:1135.4,C:226.57},
+  "morpholine": {label:"Morpholine",MW:87.12,WL:8.35,tvp60:0.109,A:7.718,B:1745.8,C:235.0},
+  "naphthalenef": {label:"Naphthalenef",MW:128.17,WL:8.56,tvp60:0.0006,A:11.4,B:3724.1,C:273.15},
+  "nitrobenzene": {label:"Nitrobenzene",MW:123.11,WL:10.05,tvp60:0.0022,A:7.091,B:1727.6,C:199.71},
+  "nitromethane": {label:"Nitromethane",MW:61.04,WL:9.49,tvp60:0.415,A:7.281,B:1446.2,C:227.52},
+  "nonadecane_n": {label:"Nonadecane (n)",MW:268.52,WL:6.56,tvp60:3.64e-07,A:33.303,B:28197.0,C:725.94},
+  "nonane_n": {label:"Nonane (n)",MW:128.26,WL:5.99,tvp60:0.037,A:6.7,B:1492.9,C:217.26},
+  "octadecane_n": {label:"Octadecane (n)",MW:254.49,WL:6.4882,tvp60:6.16e-07,A:7.207,B:2069.0,C:161.22},
+  "octane_n": {label:"Octane (n)",MW:114.23,WL:5.8377,tvp60:0.142,A:8.076,B:1936.3,C:253.01},
+  "octanol_1": {label:"Octanol (1)",MW:130.23,WL:6.9077,tvp60:0.00061,A:9.352,B:2603.4,C:224.35},
+  "octene_1": {label:"Octene (1)",MW:112.21,WL:5.97,tvp60:0.196,A:6.933,B:1353.5,C:212.76},
+  "pentachloroetha_ne": {label:"Pentachloroetha ne",MW:202.29,WL:14.02,tvp60:0.04,A:6.643,B:1342.3,C:196.51},
+  "pentadiene_12": {label:"Pentadiene (1,2)",MW:68.12,WL:5.78,tvp60:4.718,A:6.936,B:1125.5,C:231.88},
+  "pentadiene_14": {label:"Pentadiene (1,4)",MW:68.12,WL:5.52,tvp60:10.06,A:7.035,B:1108.2,C:241.05},
+  "pentadiene_23": {label:"Pentadiene (2,3)",MW:68.12,WL:5.8,tvp60:4.223,A:7.263,B:1256.2,C:239.57},
+  "pentane_n": {label:"Pentane (n)",MW:72.15,WL:5.23,tvp60:6.884,A:6.864,B:1070.6,C:232.7},
+  "pentene_1": {label:"Pentene (1)",MW:70.13,WL:5.35,tvp60:8.671,A:6.786,B:1014.3,C:229.78},
+  "pentyne_1": {label:"Pentyne (1)",MW:68.12,WL:5.76,tvp60:5.657,A:6.967,B:1092.5,C:227.18},
+  "phenol": {label:"Phenol",MW:94.11,WL:8.80113,tvp60:0.003,A:7.122,B:1509.7,C:174.2},
+  "phosgene": {label:"Phosgene",MW:98.92,WL:11.4577,tvp60:19.43,A:7.146,B:1072.7,C:243.3},
+  "picoline_3_3_methyl_pyridine": {label:"Picoline (3) {3-methyl pyridine}",MW:93.13,WL:7.98,tvp60:0.064,A:7.054,B:1484.3,C:211.54},
+  "propane": {label:"Propane",MW:44.1,WL:4.1277,tvp60:111.0,A:6.858,B:819.3,C:248.73},
+  "propanethiol_1": {label:"Propanethiol (1)",MW:76.16,WL:7.02,tvp60:1.943,A:6.929,B:1183.4,C:224.63},
+  "propanethiol_2": {label:"Propanethiol (2)",MW:76.16,WL:6.8,tvp60:3.59,A:6.877,B:1113.9,C:226.16},
+  "propyl_alcohol_n_propanol_1": {label:"Propyl alcohol (n) {propanol (1)}",MW:60.1,WL:6.6777,tvp60:0.218,A:8.189,B:1690.9,C:221.35},
+  "propyl_nitrate_n_propyl_ester_nitric_aci": {label:"Propyl nitrate (n) {propyl ester nitric acid}",MW:105.09,WL:8.8,tvp60:0.261,A:6.955,B:1294.4,C:206.7},
+  "propylamine_n_1__propanamine": {label:"Propylamine (n) {1- propanamine}",MW:59.11,WL:5.99,tvp60:3.99,A:6.926,B:1044.0,C:210.84},
+  "propylene_glycol_12_12_propanediol": {label:"Propylene glycol (1,2) {1,2 propanediol}",MW:76.09,WL:8.65,tvp60:0.00094,A:8.208,B:2085.9,C:203.54},
+  "propylene_oxide": {label:"Propylene oxide",MW:58.08,WL:7.1732,tvp60:7.101,A:6.97,B:1065.3,C:226.28},
+  "propylene_propene": {label:"Propylene {propene}",MW:42.08,WL:4.22,tvp60:132.0,A:6.85,B:795.8,C:248.27},
+  "pyridine": {label:"Pyridine",MW:79.1,WL:8.2,tvp60:0.233,A:7.038,B:1371.4,C:214.65},
+  "resorcinol": {label:"Resorcinol",MW:110.11,WL:10.6177,tvp60:6.65e-06,A:8.398,B:2687.2,C:210.99},
+  "styrene": {label:"Styrene",MW:104.15,WL:7.56,tvp60:0.066,A:7.095,B:1525.1,C:216.77},
+  "tetrachloroetha_ne_1112": {label:"Tetrachloroetha ne (1,1,1,2)",MW:167.85,WL:12.86,tvp60:0.133,A:6.906,B:1370.4,C:210.25},
+  "tetrachloroetha_ne_1122": {label:"Tetrachloroetha ne (1,1,2,2)",MW:167.85,WL:13.32,tvp60:0.037,A:6.091,B:959.6,C:149.78},
+  "tetrachloroethyl_ene": {label:"Tetrachloroethyl ene",MW:165.83,WL:13.54,tvp60:0.213,A:7.056,B:1440.8,C:223.98},
+  "tetraethyllead": {label:"Tetraethyllead",MW:323.4,WL:13.79,tvp60:0.0031,A:7.898,B:1984.4,C:212.64},
+  "tetrahydrofuran": {label:"Tetrahydrofuran",MW:72.11,WL:7.42,tvp60:2.039,A:6.996,B:1202.9,C:226.33},
+  "trichloroethane_111": {label:"Trichloroethane (1,1,1)",MW:133.4,WL:11.18,tvp60:1.65,A:8.761,B:2210.2,C:308.05},
+  "trichloroethane_112": {label:"Trichloroethane (1,1,2)",MW:133.4,WL:12.02,tvp60:0.245,A:6.945,B:1310.3,C:208.74},
+  "trichloroethylen_e": {label:"Trichloroethylen e",MW:131.39,WL:12.22,tvp60:0.817,A:6.429,B:974.5,C:187.34},
+  "trichloropropan_e_123": {label:"Trichloropropan e (1,2,3)",MW:147.43,WL:11.59,tvp60:0.031,A:7.532,B:1818.9,C:232.52},
+  "tridecane_n": {label:"Tridecane (n)",MW:184.36,WL:6.31,tvp60:0.000246,A:7.003,B:1689.1,C:174.28},
+  "trimethylbenze_ne_123h": {label:"Trimethylbenze ne (1,2,3)h",MW:120.19,WL:7.46,tvp60:0.0147,A:7.039,B:1592.4,C:206.91},
+  "trimethylbenze_ne_124": {label:"Trimethylbenze ne (1,2,4)",MW:120.19,WL:7.31,tvp60:0.02,A:7.044,B:1573.3,C:208.56},
+  "trimethylbenze_ne_135h": {label:"Trimethylbenze ne (1,3,5)h",MW:120.19,WL:7.18,tvp60:0.0245,A:7.077,B:1571.6,C:209.79},
+  "trimethylchloro_silane_chlorotrimethyl_s": {label:"Trimethylchloro silane {chlorotrimethyl silane}",MW:108.64,WL:7.1577,tvp60:3.068,A:6.951,B:1191.0,C:235.15},
+  "trimethylpentan_e_223": {label:"Trimethylpentan e (2,2,3)",MW:114.23,WL:5.7477,tvp60:0.378,A:6.825,B:1294.9,C:218.42},
+  "trimethylpentan_e_233": {label:"Trimethylpentan e (2,3,3)",MW:114.23,WL:6.06,tvp60:0.317,A:6.844,B:1328.1,C:220.38},
+  "trimethylpentan_e_234": {label:"Trimethylpentan e (2,3,4)",MW:114.23,WL:6.0,tvp60:0.314,A:7.031,B:1420.7,C:228.53},
+  "undecane_n": {label:"Undecane (n)",MW:156.31,WL:6.18,tvp60:0.0035,A:6.977,B:1572.5,C:188.02},
+  "vinyl_acetate_acetic_acid_ethenyl_ester": {label:"Vinyl acetate {acetic acid ethenyl ester}",MW:86.09,WL:7.78,tvp60:1.396,A:7.215,B:1299.1,C:226.97},
+  "vinylidene_chloride_11_dichloro_ethene": {label:"Vinylidene chloride {1,1-dichloro ethene}",MW:96.94,WL:10.13,tvp60:8.096,A:6.983,B:1104.7,C:237.75},
+  "xylene_m_13_dimethyl_benzene": {label:"Xylene (m) {1,3-dimethyl benzene}",MW:106.17,WL:7.21,tvp60:0.09,A:7.009,B:1462.3,C:215.11},
+  "xylene_p_14_dimethyl_benzene": {label:"Xylene (p) {1,4-dimethyl benzene}",MW:106.17,WL:7.19,tvp60:0.097,A:7.021,B:1474.4,C:217.77},
+  "pichlorohydrin_chloromethyl_oxirane": {label:"pichlorohydrin {chloromethyl oxirane}",MW:92.52,WL:9.85,tvp60:0.194,A:8.229,B:2086.8,C:273.16},
+  "thanolamine_mono": {label:"thanolamine (mono)",MW:61.08,WL:8.5,tvp60:0.002,A:7.168,B:1408.9,C:157.06},
+  "thyl_acetate": {label:"thyl acetate",MW:88.11,WL:7.51,tvp60:1.135,A:7.103,B:1245.7,C:217.96},
+  "thyl_acrylate_ethyl_ester_2__propenoic_a": {label:"thyl acrylate {ethyl ester 2- propenoic acid}",MW:100.12,WL:7.71,tvp60:0.445,A:7.15,B:1366.1,C:220.47},
+  "thyl_alcohol_ethanol": {label:"thyl alcohol {ethanol}",MW:46.07,WL:6.59,tvp60:0.648,A:8.247,B:1670.4,C:232.96},
+  "thyl_chloride": {label:"thyl chloride",MW:64.51,WL:7.4377,tvp60:16.63,A:7.037,B:1052.8,C:241.07},
+  "thyl_ether_diethyl_ether": {label:"thyl ether {diethyl ether}",MW:74.12,WL:5.96,tvp60:6.675,A:6.897,B:1062.6,C:228.22},
+  "thylamine": {label:"thylamine",MW:45.08,WL:5.6577,tvp60:14.08,A:7.405,B:1203.8,C:249.43},
+  "thylbenzene": {label:"thylbenzene",MW:106.17,WL:7.24,tvp60:0.104,A:6.95,B:1419.3,C:212.61},
+  "thylcyclopenta_ne": {label:"thylcyclopenta ne",MW:98.19,WL:6.4,tvp60:0.475,A:6.898,B:1305.0,C:221.4},
+  "thyleneoxide": {label:"thyleneoxide",MW:44.05,WL:7.365,tvp60:17.84,A:8.722,B:2022.8,C:335.81},
+  "thylpentane_3": {label:"thylpentane (3)",MW:100.2,WL:5.83,tvp60:0.701,A:6.88,B:1254.1,C:220.15},
+};
+
+
+</script>
+<script>
+// ══════════════════════════════════════════════════════════════════════════
+// AP-42 Chapter 7 — Floating Roof Tank emission engine
+// ══════════════════════════════════════════════════════════════════════════
+const PA = 14.696; // atmospheric pressure, psia
+let fittingRows = []; // {id, type, count}
+let fittingCounter = 0;
+
+// ── INIT UI ────────────────────────────────────────────────────────────────
+function initUI() {
+  // chemical dropdown — combine quick-list + full AP-42 Table 7.1-3 DB
+  const chemSel = document.getElementById('chemical');
+  let chemOpts = '<optgroup label="Common stocks">';
+  chemOpts += Object.entries(CHEMICALS).map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('');
+  chemOpts += '</optgroup><optgroup label="AP-42 Table 7.1-3 — Organic chemicals">';
+  chemOpts += Object.entries(CHEM_DB).map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('');
+  chemOpts += '</optgroup>';
+  chemSel.innerHTML = chemOpts;
+
+  // met location dropdown
+  const metSel = document.getElementById('metLocation');
+  metSel.innerHTML = '<option value="">— Select location —</option>' +
+    Object.keys(MET_DATA).map(c => `<option value="${c}">${c}</option>`).join('');
+
+  // paint color dropdowns
+  const colorLabels = {white:'White',alum_specular:'Aluminum (specular)',alum_diffuse:'Aluminum (diffuse)',beige_cream:'Beige / Cream',black:'Black',brown:'Brown',gray_light:'Gray (light)',gray_medium:'Gray (medium)',green_dark:'Green (dark)',red_primer:'Red primer',rust_red:'Rust / iron oxide',tan:'Tan',alum_millfinish:'Aluminum (mill finish)'};
+  const colorOpts = Object.keys(SOLAR_ABSORPTANCE).map(k=>`<option value="${k}">${colorLabels[k]||k}</option>`).join('');
+  document.getElementById('roofColor').innerHTML = colorOpts;
+  document.getElementById('shellColor').innerHTML = colorOpts;
+  document.getElementById('roofColor').value = 'white';
+  document.getElementById('shellColor').value = 'white';
+  // deck seam dropdown
+  const seamSel = document.getElementById('deckSeam');
+  seamSel.innerHTML = Object.entries(DECK_SEAM_FACTORS).map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('');
+  seamSel.value = 'none';
+  updateSealOptions();
+  onRoofTypeChange();
+  onTvpMethodChange();
+  addFittingRow();
+  // recompute TVP when env inputs change
+  ['roofColor','roofCond','shellColor','shellCond','bulkTempF','diameter','shellHeight','fxDiameter','fxShellHeight'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.addEventListener('change',recomputeTVP);
+  });
+  onTankClassChange();
+}
+
+// ── ROOF TYPE CHANGE ────────────────────────────────────────────────────────
+function onRoofTypeChange() {
+  const rt = document.getElementById('roofType').value;
+  const isExternal = rt.startsWith('EFRT');
+  // Deck seam only for IFR
+  document.getElementById('deckSeamCard').classList.toggle('show', rt === 'IFRT');
+  // Columns only for IFR
+  document.getElementById('columnField').style.display = rt === 'IFRT' ? '' : 'none';
+  // Wind note
+  document.getElementById('windNote').textContent = isExternal
+    ? 'Wind speed applies to external floating roof tanks (default 7.0 mph if blank).'
+    : 'Internal & domed external tanks use v = 0 — wind speed is ignored (AP-42 Note 1 to Eq. 2-4).';
+  refreshFittingOptions();
+}
+
+// ── SEAL OPTIONS ────────────────────────────────────────────────────────────
+function updateSealOptions() {
+  const constr = document.getElementById('construction').value;
+  const primary = document.getElementById('primarySeal').value;
+  const secSel = document.getElementById('secondarySeal');
+  const fitSel = document.getElementById('sealFit');
+
+  // Riveted only has mechanical_shoe
+  const primSel = document.getElementById('primarySeal');
+  if (constr === 'riveted') {
+    primSel.value = 'mechanical_shoe';
+    [...primSel.options].forEach(o => o.disabled = (o.value !== 'mechanical_shoe'));
+    fitSel.value = 'average';
+    fitSel.disabled = true;
+  } else {
+    [...primSel.options].forEach(o => o.disabled = false);
+    fitSel.disabled = false;
+  }
+
+  const branch = RIM_SEAL_FACTORS[constr]?.[document.getElementById('primarySeal').value] || {};
+  const secLabels = {
+    primary: 'Primary only / none', shoe: 'Shoe-mounted secondary',
+    rim: 'Rim-mounted secondary', weather: 'Weather shield',
+  };
+  secSel.innerHTML = Object.keys(branch).map(k => `<option value="${k}">${secLabels[k]||k}</option>`).join('');
+}
+
+// ── CHEMICAL PROPS ──────────────────────────────────────────────────────────
 function populateLiquidProps() {
-  const key = document.getElementById('liquidType').value;
-  const p = LIQUID_PRESETS[key];
-  if (p.vp !== null) {
-    document.getElementById('vaporPressure').value = p.vp;
-    document.getElementById('molWeight').value = p.mw;
-    document.getElementById('liquidDensity').value = p.dens;
-  }
+  const key = document.getElementById('chemical').value;
+  const ch = CHEMICALS[key] || CHEM_DB[key];
+  if (!ch || key === 'custom') return;
+  if (ch.MW)  document.getElementById('molWeight').value = ch.MW;
+  if (ch.WL)  document.getElementById('liquidDensity').value = ch.WL;
+  if (ch.type === 'crude') document.getElementById('clingProduct').value = 'crude';
+  recomputeTVP();
 }
 
-// ─── SEAL OPTIONS ────────────────────────────────────────────────────────────
-function updateSealOptions() {}
-function updateSecondarySeal() {}
+// Antoine: log10(P mmHg) = A - B/(T°C + C); T input °F → psia
+function antoineTVP(A, B, C, tF) {
+  const tC = (tF - 32) / 1.8;
+  const pmmHg = Math.pow(10, A - B / (tC + C));
+  return pmmHg / 51.715; // mmHg → psia
+}
 
-// ─── SEAL FACTORS (API 19.2 Table 1) ─────────────────────────────────────────
-const SEAL_FACTORS = {
-  mechanical_shoe:  { KRa: 1.2,  KRb: 0.4, n: 2.1 },
-  liquid_mounted:   { KRa: 0.7,  KRb: 0.3, n: 1.6 },
-  vapor_mounted:    { KRa: 1.2,  KRb: 0.6, n: 1.6 },
-  resilient_filled: { KRa: 0.3,  KRb: 0.1, n: 2.0 },
-};
+// ── PHASE 2: TVP method toggle ──────────────────────────────────────────────
+function onTvpMethodChange() {
+  const method = document.getElementById('tvpMethod').value;
+  const manual = method === 'manual';
+  document.getElementById('manualTvpField').style.display = manual ? '' : 'none';
+  document.getElementById('envCard').style.display = manual ? 'none' : '';
+  document.getElementById('tvpNote').textContent = manual
+    ? 'Enter the true vapor pressure directly at the average liquid surface temperature.'
+    : 'TVP is computed from the liquid surface temperature using the chemical Antoine constants. Kc = 0.4 for crude, 1.0 otherwise.';
+  if (!manual) recomputeTVP();
+}
+function onTbMethodChange() {
+  const user = document.getElementById('tbMethod').value === 'user';
+  document.getElementById('tbUserField').style.display = user ? '' : 'none';
+  recomputeTVP();
+}
+function onMetChange() {
+  const loc = document.getElementById('metLocation').value;
+  const m = MET_DATA[loc];
+  if (m && document.getElementById('roofType').value.startsWith('EFRT')) {
+    document.getElementById('windSpeed').value = m.V;
+  } else if (m) {
+    document.getElementById('windSpeed').value = m.V;
+  }
+  recomputeTVP();
+}
 
-const SECONDARY_SEAL_KS = {
-  none:         1.0,
-  shoe_mounted: 0.15,
-  rim_mounted:  0.25,
-};
+// ── PHASE 2: Liquid surface temperature model (Eq 2-5 to 2-12, 1-32) ────────
+function computeLiquidSurfaceTemp() {
+  const loc = document.getElementById('metLocation').value;
+  const m = MET_DATA[loc];
+  if (!m) return null;
+  const rt = document.getElementById('roofType').value;
+  const D  = parseFloat(document.getElementById('diameter').value) || 1;
+  const Hs = parseFloat(document.getElementById('shellHeight').value) || (0.5*D);
+  const HsD = Hs / D;
 
-// Fitting KF values (lb-mol/yr per fitting)
-const KF_LEG_LANDED   = 0.11;
-const KF_GAUGE_HATCH  = 1.90;
-const KF_ROOF_DRAIN   = 0.25;
-const KF_GUIDE_POLE   = 6.25;
+  // Solar absorptance from paint (Table 7.1-6)
+  const aR = (SOLAR_ABSORPTANCE[document.getElementById('roofColor').value]||{})[document.getElementById('roofCond').value] ?? 0.25;
+  const aS = (SOLAR_ABSORPTANCE[document.getElementById('shellColor').value]||{})[document.getElementById('shellCond').value] ?? 0.25;
+  const alpha = (aR + aS) / 2;
+  const I = m.I; // Btu/ft²·day
 
-// ─── MAIN CALCULATION ────────────────────────────────────────────────────────
+  // Ambient temps → °R
+  const TAX = m.TAX + 459.67, TAN = m.TAN + 459.67;
+  const TAA = (TAX + TAN) / 2; // Eq 1-32
+
+  // Liquid bulk temp TB
+  let TB;
+  if (document.getElementById('tbMethod').value === 'user') {
+    const tbF = parseFloat(document.getElementById('bulkTempF').value);
+    TB = isNaN(tbF) ? TAA : (tbF + 459.67);
+  } else {
+    // Eq 2-8 (pontoon) / 2-11 (double-deck): use pontoon form as documented default
+    TB = TAA + (0.71*aR*I + 0.485*HsD*aS*I) / (170*HsD + 57);
+  }
+
+  // TLA by roof type
+  let TLA;
+  if (rt === 'IFRT' || rt === 'DEFRT') {
+    // Eq 2-5 internal/domed external
+    TLA = (1 - 0.5*alpha) * TAA + 0.5*alpha*TB + 0.0049*alpha*I*0; // base
+    // AP-42 Eq 2-5 full form:
+    TLA = TAA + 0.0049*alpha*I; // simplified API uninsulated IFR/DEFR (Eq 2-6 region)
+  } else if (rt === 'EFRT_double') {
+    TLA = 0.7*TAA + 0.3*TB + 0.005*aR*I; // Eq 2-10 double-deck
+  } else {
+    TLA = 0.7*TAA + 0.3*TB + 0.008*aR*I; // Eq 2-7 pontoon
+  }
+  return { TLA, TAA, TB, aR, aS, alpha, I, V: m.V, PA: m.PA, TLA_F: TLA - 459.67 };
+}
+
+function recomputeTVP() {
+  if (document.getElementById('tankClass') && document.getElementById('tankClass').value === 'fixed') {
+    // fixed roof shows its TLA in results; update env summary lightly
+    const t = computeLiquidSurfaceTemp();
+    return;
+  }
+  if (document.getElementById('tvpMethod').value === 'manual') return;
+  const key = document.getElementById('chemical').value;
+  const ch = CHEMICALS[key] || CHEM_DB[key];
+  const t = computeLiquidSurfaceTemp();
+  const sumEl = document.getElementById('envSummary');
+  if (!t) { if (sumEl) sumEl.textContent = 'Select a location to compute liquid surface temperature.'; return; }
+  let tvp = null;
+  if (ch && ch.A != null) {
+    tvp = antoineTVP(ch.A, ch.B, ch.C, t.TLA_F);
+  } else if (ch && ch.tvp60) {
+    tvp = ch.tvp60; // fallback for RVP stocks without Antoine
+  }
+  if (sumEl) {
+    sumEl.innerHTML = `Liquid surface temp T<sub>LA</sub> = <b>${t.TLA_F.toFixed(1)} °F</b> · ambient T<sub>AA</sub> = ${(t.TAA-459.67).toFixed(1)} °F · solar I = ${t.I} Btu/ft²·d · α<sub>roof</sub> = ${t.aR.toFixed(2)}${tvp!=null?` · computed TVP = <b>${tvp.toFixed(3)} psia</b>`:''}`;
+  }
+  window._computedTVP = tvp;
+  window._computedTLA = t;
+}
+
+// ── FITTING ROWS ────────────────────────────────────────────────────────────
+function addFittingRow() {
+  const id = ++fittingCounter;
+  fittingRows.push({ id });
+  renderFittingRows();
+}
+function removeFittingRow(id) {
+  fittingRows = fittingRows.filter(r => r.id !== id);
+  renderFittingRows();
+}
+function renderFittingRows() {
+  const rt = document.getElementById('roofType').value;
+  const isExternal = rt.startsWith('EFRT');
+  const opts = Object.entries(DECK_FITTING_FACTORS)
+    .filter(([k,v]) => isExternal ? v.efrt : true)
+    .map(([k,v]) => `<option value="${k}">${v.label}</option>`).join('');
+  const list = document.getElementById('fittingList');
+  list.innerHTML = fittingRows.map(r => `
+    <div class="fitting-row">
+      <select id="fit_type_${r.id}">${opts}</select>
+      <input id="fit_count_${r.id}" type="number" min="0" step="1" value="${r.count||1}" placeholder="qty">
+      <button class="rm" onclick="removeFittingRow(${r.id})">✕</button>
+    </div>`).join('');
+}
+function refreshFittingOptions() { renderFittingRows(); }
+
+// ── MAIN CALCULATION ─────────────────────────────────────────────────────────
 function calculate() {
-  const err = (msg) => {
-    const el = document.getElementById('errorMsg');
-    el.textContent = msg;
-    el.classList.add('visible');
-  };
+  const errEl = document.getElementById('errorMsg');
+  const err = (m) => { errEl.textContent = m; errEl.classList.add('show'); };
+  errEl.classList.remove('show');
 
-  document.getElementById('errorMsg').classList.remove('visible');
-
-  // Inputs
-  const D        = parseFloat(document.getElementById('diameter').value);
-  const Hshell   = parseFloat(document.getElementById('shellHeight').value);
-  const Hmax     = parseFloat(document.getElementById('maxLiqHeight').value);
-  const Hmin     = parseFloat(document.getElementById('minLiqHeight').value);
-  const Pstar    = parseFloat(document.getElementById('vaporPressure').value); // psia
-  const MW       = parseFloat(document.getElementById('molWeight').value);
-  const rhoLiq   = parseFloat(document.getElementById('liquidDensity').value); // lb/gal
-  const TL       = parseFloat(document.getElementById('liquidTemp').value); // °F
-  const Q        = parseFloat(document.getElementById('throughput').value);  // bbl/yr
-  const Nleg     = parseInt(document.getElementById('roofLegs').value) || 0;
-  const Ngh      = parseInt(document.getElementById('gaugeHatches').value) || 0;
-  const Nrd      = parseInt(document.getElementById('roofDrains').value) || 0;
-  const Ngp      = parseInt(document.getElementById('guidePoles').value) || 0;
-
-  if ([D, Hshell, Hmax, Hmin, Pstar, MW, rhoLiq, Q].some(isNaN)) {
-    err('ERROR: One or more required inputs are missing or invalid.'); return;
+  const rt        = document.getElementById('roofType').value;
+  const isExternal = rt.startsWith('EFRT');
+  const D         = parseFloat(document.getElementById('diameter').value);
+  const Hs        = parseFloat(document.getElementById('shellHeight').value);
+  let Pva;
+  if (document.getElementById('tvpMethod').value === 'compute') {
+    recomputeTVP();
+    Pva = window._computedTVP;
+    if (Pva == null || isNaN(Pva)) { err('Could not compute TVP. Select a location and an AP-42 chemical with Antoine constants, or switch to manual TVP entry.'); return; }
+  } else {
+    Pva = parseFloat(document.getElementById('vaporPressure').value);
   }
-  if (Hmin >= Hmax) {
-    err('ERROR: Min liquid height must be less than max liquid height.'); return;
+  const Mv        = parseFloat(document.getElementById('molWeight').value);
+  const Wl        = parseFloat(document.getElementById('liquidDensity').value);
+  const Q         = parseFloat(document.getElementById('throughput').value);
+  let   v         = parseFloat(document.getElementById('windSpeed').value);
+  if (isNaN(v)) v = 7.0;
+  if (!isExternal) v = 0; // IFR / domed EFR → no wind
+
+  if ([D, Hs, Pva, Mv, Wl, Q].some(isNaN)) { err('One or more required inputs are missing. Check fields marked *.'); return; }
+  if (D < 5) { err('Shell diameter must be at least 5 ft (AP-42 validation).'); return; }
+
+  const constr  = document.getElementById('construction').value;
+  const primary = document.getElementById('primarySeal').value;
+  const secSeal = document.getElementById('secondarySeal').value;
+  const fit     = document.getElementById('sealFit').value;
+  const chemKey = document.getElementById('chemical').value;
+  const chObj   = CHEMICALS[chemKey] || CHEM_DB[chemKey];
+  const Kc      = chObj?.type === 'crude' ? PRODUCT_FACTOR.crude : PRODUCT_FACTOR.other;
+
+  // Vapor pressure function P* (Eq. 2-4)
+  const ratio = Pva / PA;
+  const Pstar = ratio / Math.pow(1 + Math.pow(1 - ratio, 0.5), 2);
+
+  // ── RIM SEAL LOSS (Eq. 2-3) ────────────────────────────────────────────
+  let rs = RIM_SEAL_FACTORS[constr]?.[primary]?.[secSeal];
+  if (rs && rs[fit]) rs = rs[fit]; else if (rs && rs.average) rs = rs.average;
+  if (!rs || rs.KRa === undefined) { err('Selected rim seal combination has no AP-42 factor. Try a different secondary seal or fit.'); return; }
+  const LR = (rs.KRa + rs.KRb * Math.pow(v, rs.n)) * D * Pstar * Mv * Kc; // lb/yr
+
+  // ── DECK FITTING LOSS (Eq. 2-13/2-14/2-15) ─────────────────────────────
+  const Kv = isExternal ? 0.7 : 0; // fitting wind correction
+  let FF = 0; // total fitting loss factor, lb-mole/yr
+  const fittingDetail = [];
+  for (const r of fittingRows) {
+    const type = document.getElementById(`fit_type_${r.id}`)?.value;
+    const cnt  = parseInt(document.getElementById(`fit_count_${r.id}`)?.value) || 0;
+    if (!type || cnt <= 0) continue;
+    const f = DECK_FITTING_FACTORS[type];
+    if (!f) continue;
+    if (isExternal && !f.efrt) {
+      err(`Fitting "${f.label}" cannot be used on external floating roof tanks (no wind term in AP-42). Remove it or switch to an EFR-rated fitting.`); return;
+    }
+    // KFi = KFa + KFb*(Kv*v)^m   (Eq.2-15). For IFR: KFi = KFa (Eq.2-16)
+    let KFi;
+    if (isExternal && f.KFb != null && f.m != null) {
+      KFi = f.KFa + f.KFb * Math.pow(Kv * v, f.m);
+    } else {
+      KFi = f.KFa;
+    }
+    const contrib = cnt * KFi;
+    FF += contrib;
+    fittingDetail.push({ label: f.label, count: cnt, KFi, contrib });
   }
-  if (D <= 0 || Hshell <= 0) {
-    err('ERROR: Tank dimensions must be positive.'); return;
+  const LF = FF * Pstar * Mv * Kc; // lb/yr
+
+  // ── DECK SEAM LOSS (Eq. 2-18) — IFR only ───────────────────────────────
+  let LD = 0, seamInfo = null;
+  if (rt === 'IFRT') {
+    const seamKey = document.getElementById('deckSeam').value;
+    const seam = DECK_SEAM_FACTORS[seamKey];
+    if (seam && seam.SD > 0) {
+      const Adeck = Math.PI * D * D / 4;
+      LD = seam.KD * seam.SD * (D*D) * Pstar * Mv * Kc;
+      seamInfo = { ...seam, Adeck };
+    }
   }
 
-  const sealType  = document.getElementById('sealType').value;
-  const secSeal   = document.getElementById('secondarySeal').value;
-  const roofType  = document.getElementById('roofType').value;
+  // ── STANDING LOSS (Eq. 2-2) ─────────────────────────────────────────────
+  const LS = LR + LF + LD;
 
-  const sf = SEAL_FACTORS[sealType];
-  const KS = SECONDARY_SEAL_KS[secSeal];
+  // ── WITHDRAWAL / WORKING LOSS (Eq. 2-19) ────────────────────────────────
+  const clingProd = document.getElementById('clingProduct').value;
+  const shellCond = document.getElementById('shellCondition').value;
+  const Cs = CLINGAGE_FACTORS[clingProd][shellCond]; // bbl/1000 ft²
+  // Columns
+  let Nc = 0, Fc = 0;
+  if (rt === 'IFRT') {
+    Nc = parseInt(document.getElementById('numColumns').value) || 0;
+    Fc = COLUMN_DIAMETER.unknown; // default effective column diameter
+  }
+  // LW = (Q*Cs*Wl/D) * (1 + Nc*Fc/D) * (1/0.943-ish) ... AP-42 Eq.2-19:
+  // LW = (0.943 * Q * Cs * Wl / D) * [1 + (Nc*Fc/D)]
+  const LW = (0.943 * Q * Cs * Wl / D) * (1 + (Nc * Fc / D));
 
-  // ── GEOMETRY ──────────────────────────────────────────────────────────────
-  const A   = Math.PI * D * D / 4;           // roof area, ft²
-  const C   = Math.PI * D;                   // circumference, ft
-  const HL  = (Hmax + Hmin) / 2;             // avg liquid height, ft
+  // ── TOTAL ────────────────────────────────────────────────────────────────
+  const LT = LS + LW;
 
-  // ── VAPOR PRESSURE RATIO ─────────────────────────────────────────────────
-  const Pa = 14.696; // atmospheric pressure, psia
-  const Pv = Pstar;  // TVP, psia
-  const Sv = Pv / Pa; // vapor space saturation factor
-
-  // ── TURNOVERS ─────────────────────────────────────────────────────────────
-  // Tank capacity in bbl: 1 bbl = 42 gal; 1 ft³ = 7.4805 gal
-  const tankCapGal    = A * (Hmax - Hmin) * 7.4805; // gal
-  const tankCapBbl    = tankCapGal / 42;
-  const inputTurnovers = parseFloat(document.getElementById('turnovers').value);
-  const N = isNaN(inputTurnovers) || inputTurnovers <= 0
-    ? Q / tankCapBbl
-    : inputTurnovers;
-
-  // ── RIM SEAL LOSS (LR) — API 19.2 Eq. 1 ─────────────────────────────────
-  // LR = (KRa + KRb * v^n) * D * Pstar/Pa * MW/Mv * KS
-  // For tanks with no wind speed specified, use avg wind speed 7.0 mph
-  const v   = 7.0; // avg site wind speed, mph (typical)
-  const Mv  = 379.3; // ft³/lb-mol at 60°F, 14.7 psia (ideal gas molar volume)
-  // Standard: use 379.3 lb-mol/scf for ideal gas
-
-  // API 19.2 Eq. 1 rim seal loss (lb/yr):
-  // LR = (KRa + KRb * v^n) * D * P* / Pa * MW * KS
-  const LR_lbmolyrPerFt = (sf.KRa + sf.KRb * Math.pow(v, sf.n));
-  const LR = LR_lbmolyrPerFt * D * (Pstar / Pa) * MW * KS;  // lb/yr
-
-  // ── FITTING LOSSES (LF) — API 19.2 Eq. 3 ─────────────────────────────────
-  // LF = SUM(Nfi * KFi) * (Pstar/Pa) * MW
-  const fittingLbMol = (
-    Nleg  * KF_LEG_LANDED  +
-    Ngh   * KF_GAUGE_HATCH +
-    Nrd   * KF_ROOF_DRAIN  +
-    Ngp   * KF_GUIDE_POLE
-  );
-  const LF = fittingLbMol * (Pstar / Pa) * MW; // lb/yr
-
-  // ── STANDING STORAGE LOSS ─────────────────────────────────────────────────
-  const LS = LR + LF; // lb/yr
-
-  // ── WORKING LOSS (LW) — API 19.2 Eq. 4 ──────────────────────────────────
-  // LW = 0.0010 * Cl * Q * Pstar/Pa * MW
-  // Cl = 1 for floating roof (no vapor space entrapped)
-  // More precisely: LW = Q * (rho_vap / rho_liq) * Sv * MW
-  // API Ch.19.2 simplified: LW(lb/yr) = 0.0010 * Q(bbl/yr) * Sv * MW * Cl
-  // Note: Cl accounts for vapor space condensation (conservatively = 1.0 for EFRTs)
-  const Cl = roofType === 'EFRT' ? 1.0 : 0.5; // IFRT has lower working loss
-  const LW = 0.0010 * Q * (Pstar / Pa) * MW * Cl; // lb/yr
-
-  // ── TOTAL ─────────────────────────────────────────────────────────────────
-  const LT = LS + LW; // lb/yr
-
-  // ── CONVERT UNITS ─────────────────────────────────────────────────────────
-  const tonyr = (x) => x / 2000;
-  const kgyr  = (x) => x * 0.453592;
-
-  // Display
+  const _tla = window._computedTLA;
   renderResults({
-    D, A, C, HL, Pstar, Pa, MW, N, tankCapBbl,
-    sealType, secSeal, KS, sf, v,
-    LR, LF, LS, LW, LT,
-    Nleg, Ngh, Nrd, Ngp, fittingLbMol,
-    roofType
+    rt, isExternal, D, Hs, v, Pva, Pstar, Mv, Wl, Q, Kc, ratio,
+    rs, LR, FF, LF, LD, seamInfo, LS, Cs, Nc, Fc, LW, LT, fittingDetail,
+    construction: constr, primary, secSeal, fit,
+    TLA_F: (document.getElementById('tvpMethod').value==='compute' && _tla) ? _tla.TLA_F : null,
+    computedTVP: (document.getElementById('tvpMethod').value==='compute') ? window._computedTVP : null,
   });
 }
 
-function renderResults(r) {
-  const panel = document.getElementById('resultsPanel');
-  panel.classList.add('visible');
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  // Update results header with company/tank info
-  const company = document.getElementById('companyName').value.trim();
-  const tankId  = document.getElementById('tankId').value.trim();
-  const location = document.getElementById('tankLocation').value.trim();
-  const infoStr = [company, tankId, location].filter(Boolean).join(' · ');
-  document.getElementById('resultsInfoBar').textContent = infoStr || '—';
-  document.getElementById('resultsInfoRow').style.display = infoStr ? 'flex' : 'none';
-
-  const fmt = (n, d=1) => n.toLocaleString('en-US', { maximumFractionDigits: d, minimumFractionDigits: d });
-
-  // Summary cards
-  document.getElementById('resultsGrid').innerHTML = `
-    <div class="result-card secondary">
-      <div class="result-label">Rim Seal Loss (L<sub>R</sub>)</div>
-      <div class="result-value">${fmt(r.LR, 0)}</div>
-      <div class="result-unit">lb/yr</div>
+// ── RENDER RESULTS ────────────────────────────────────────────────────────────
+function renderResults(d) {
+  const fmt = (x, p=1) => x.toLocaleString('en-US',{minimumFractionDigits:p, maximumFractionDigits:p});
+  const tons = d.LT / 2000;
+  const kg   = d.LT * 0.453592;
+  const body = document.getElementById('resultBody');
+  body.innerHTML = `
+    <div class="total-loss">
+      <div class="lbl">Total Routine Loss</div>
+      <div class="val">${fmt(d.LT)}</div>
+      <div class="unit">lb / year</div>
+      <div class="alt">${fmt(tons,2)} ton/yr · ${fmt(kg,0)} kg/yr</div>
     </div>
-    <div class="result-card tertiary">
-      <div class="result-label">Fitting Loss (L<sub>F</sub>)</div>
-      <div class="result-value">${fmt(r.LF, 0)}</div>
-      <div class="result-unit">lb/yr</div>
+    <div class="breakdown">
+      <div class="breakdown-row"><span class="k">Rim Seal Loss (L<sub>R</sub>)</span><span class="v">${fmt(d.LR)} lb/yr</span></div>
+      <div class="breakdown-row"><span class="k">Deck Fitting Loss (L<sub>F</sub>)</span><span class="v">${fmt(d.LF)} lb/yr</span></div>
+      ${d.LD>0?`<div class="breakdown-row"><span class="k">Deck Seam Loss (L<sub>D</sub>)</span><span class="v">${fmt(d.LD)} lb/yr</span></div>`:''}
+      <div class="breakdown-row"><span class="k" style="font-weight:600;">Standing Loss (L<sub>S</sub>)</span><span class="v" style="color:var(--warn)">${fmt(d.LS)} lb/yr</span></div>
+      <div class="breakdown-row"><span class="k">Working / Withdrawal Loss (L<sub>W</sub>)</span><span class="v">${fmt(d.LW)} lb/yr</span></div>
+      <div class="breakdown-row total"><span class="k">TOTAL (L<sub>T</sub>)</span><span class="v">${fmt(d.LT)} lb/yr</span></div>
     </div>
-    <div class="result-card primary">
-      <div class="result-label">Standing Storage Loss (L<sub>S</sub>)</div>
-      <div class="result-value">${fmt(r.LS, 0)}</div>
-      <div class="result-unit">lb/yr · ${fmt(r.LS/2000, 2)} tons/yr</div>
+    <div class="detail-toggle" onclick="document.getElementById('detailBlock').classList.toggle('show')">▸ Show calculation detail</div>
+    <div class="detail-block" id="detailBlock">
+      <div class="dr"><span class="k">Vapor pressure function P*</span><span class="v">${d.Pstar.toFixed(4)}</span></div>
+      <div class="dr"><span class="k">P / Pa ratio</span><span class="v">${d.ratio.toFixed(4)}</span></div>
+      <div class="dr"><span class="k">Product factor Kc</span><span class="v">${d.Kc}</span></div>
+      <div class="dr"><span class="k">Wind speed v</span><span class="v">${d.v} mph</span></div>
+      ${d.TLA_F!=null?`<div class="dr"><span class="k">Liquid surface temp TLA</span><span class="v">${d.TLA_F.toFixed(1)} °F</span></div>`:''}
+      ${d.computedTVP!=null?`<div class="dr"><span class="k">Computed TVP</span><span class="v">${d.computedTVP.toFixed(3)} psia</span></div>`:''}
+      <div class="dr"><span class="k">Rim seal KRa / KRb / n</span><span class="v">${d.rs.KRa} / ${d.rs.KRb} / ${d.rs.n}</span></div>
+      <div class="dr"><span class="k">Total fitting factor FF</span><span class="v">${fmt(d.FF,2)} lb-mol/yr</span></div>
+      ${d.seamInfo?`<div class="dr"><span class="k">Deck seam SD / KD</span><span class="v">${d.seamInfo.SD} / ${d.seamInfo.KD}</span></div>`:''}
+      <div class="dr"><span class="k">Clingage factor Cs</span><span class="v">${d.Cs} bbl/Mft²</span></div>
+      ${d.Nc>0?`<div class="dr"><span class="k">Columns Nc / Fc</span><span class="v">${d.Nc} / ${d.Fc} ft</span></div>`:''}
+      ${d.fittingDetail.map(f=>`<div class="dr"><span class="k">↳ ${f.count}× ${f.label.split('—')[0].trim()}</span><span class="v">${fmt(f.contrib,1)} lb-mol/yr</span></div>`).join('')}
     </div>
-    <div class="result-card primary">
-      <div class="result-label">Working Loss (L<sub>W</sub>)</div>
-      <div class="result-value">${fmt(r.LW, 0)}</div>
-      <div class="result-unit">lb/yr · ${fmt(r.LW/2000, 2)} tons/yr</div>
-    </div>
-    <div class="result-card total" style="grid-column: span 2;">
-      <div class="result-label">▸ Total VOC Emissions (L<sub>T</sub> = L<sub>S</sub> + L<sub>W</sub>)</div>
-      <div class="result-value total">${fmt(r.LT, 0)}</div>
-      <div class="result-unit">lb/yr &nbsp;|&nbsp; ${fmt(r.LT/2000, 3)} tons/yr &nbsp;|&nbsp; ${fmt(r.LT*0.453592, 0)} kg/yr</div>
-    </div>
+    <button class="btn-dl" onclick='downloadReport(${JSON.stringify(JSON.stringify(d))})'>⬇ Download Report</button>
   `;
-
-  // Breakdown
-  const Pa = r.Pa;
-  const rows = [
-    ['Tank roof area (A)', `π/4 × D²`, `${(Math.PI*r.D*r.D/4).toFixed(1)} ft²`],
-    ['Tank circumference (C)', `π × D`, `${(Math.PI*r.D).toFixed(1)} ft`],
-    ['Avg liquid height (H_L)', `(H_max + H_min)/2`, `${r.HL.toFixed(1)} ft`],
-    ['Tank capacity (working)', '— bbl', `${r.tankCapBbl.toFixed(0)} bbl`],
-    ['Annual turnovers (N)', 'Q / V_working', `${r.N.toFixed(2)}`],
-    ['Vapor press. ratio (P*/Pa)', `${r.Pstar} / ${Pa}`, `${(r.Pstar/Pa).toFixed(4)}`],
-    ['Rim seal factors', `K_Ra=${r.sf.KRa}, K_Rb=${r.sf.KRb}, n=${r.sf.n}`, r.sealType],
-    ['Wind speed (v)', 'Assumed avg', '7.0 mph'],
-    ['Secondary seal factor (K_S)', '—', `${r.KS}`],
-    ['Rim seal loss (L_R)', `(K_Ra + K_Rb·v^n)·D·(P*/Pa)·MW·K_S`, `${r.LR.toFixed(1)} lb/yr`],
-    ['Fitting lb-mol/yr', `Σ(N_fi·KF_i)`, `${r.fittingLbMol.toFixed(3)} lb-mol/yr`],
-    ['Fitting loss (L_F)', `Σ × (P*/Pa) × MW`, `${r.LF.toFixed(1)} lb/yr`],
-    ['Standing storage loss (L_S)', `L_R + L_F`, `${r.LS.toFixed(1)} lb/yr`],
-    ['Working loss (L_W)', `0.001·Q·(P*/Pa)·MW·C_L`, `${r.LW.toFixed(1)} lb/yr`],
-    ['TOTAL EMISSIONS (L_T)', `L_S + L_W`, `${r.LT.toFixed(1)} lb/yr`],
-  ];
-
-  document.getElementById('breakdownRows').innerHTML = rows.map(([label, formula, val]) => `
-    <div class="eq-row">
-      <span class="eq-label">${label}</span>
-      <span class="eq-formula">${formula}</span>
-      <span class="eq-val">${val}</span>
-    </div>
-  `).join('');
-
-  // Set report date
-  document.getElementById('reportDate').textContent = new Date().toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
-
-  // Store last result for download
-  window._lastResult = r;
-  window._lastRows = rows;
+  window._lastResult = d;
 }
 
-function downloadReport() {
-  const r = window._lastResult;
-  const rows = window._lastRows;
-  if (!r) return;
-
-  const company  = document.getElementById('companyName').value.trim() || '—';
-  const tankId   = document.getElementById('tankId').value.trim() || '—';
-  const location = document.getElementById('tankLocation').value.trim() || '—';
-  const date     = new Date().toLocaleDateString('en-US', {year:'numeric', month:'long', day:'numeric'});
-  const fmt = (n, d=1) => n.toLocaleString('en-US', {maximumFractionDigits:d, minimumFractionDigits:d});
-
-  const sealLabels = {
-    mechanical_shoe: 'Mechanical Shoe Seal',
-    liquid_mounted:  'Liquid-Mounted Foam Seal',
-    vapor_mounted:   'Vapor-Mounted Foam Seal',
-    resilient_filled:'Resilient Filled Seal'
-  };
-  const secSealLabels = { none:'None', shoe_mounted:'Shoe-Mounted Secondary', rim_mounted:'Rim-Mounted Secondary' };
-
-  const html = `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Tank Protocol — Emission Report</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@300;400;500&family=Share+Tech+Mono&display=swap');
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #fff; color: #1a2535; font-family: 'Barlow', sans-serif; font-size: 11pt; }
-  .page { max-width: 820px; margin: 0 auto; padding: 36px 40px; }
-
-  /* HEADER */
-  .rpt-header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #c9a84c; padding-bottom: 18px; margin-bottom: 24px; }
-  .rpt-brand { display: flex; align-items: center; gap: 10px; }
-  .rpt-logo { width: 40px; height: 40px; background: linear-gradient(135deg, #c9a84c, #e8c97a); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; color: #080c14; }
-  .rpt-brand-text .rpt-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.3rem; letter-spacing: 1px; text-transform: uppercase; color: #c9a84c; }
-  .rpt-brand-text .rpt-sub  { font-size: 0.72rem; color: #6b7a91; letter-spacing: 0.5px; margin-top: 2px; }
-  .rpt-meta { text-align: right; font-size: 0.75rem; color: #6b7a91; line-height: 1.7; }
-  .rpt-meta strong { color: #1a2535; }
-
-  /* TITLE BLOCK */
-  .rpt-title-block { background: #f7f4ed; border-left: 4px solid #c9a84c; padding: 16px 20px; margin-bottom: 24px; }
-  .rpt-title-block h1 { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 1.5rem; color: #1a2535; letter-spacing: 0.5px; }
-  .rpt-title-block p  { font-size: 0.8rem; color: #6b7a91; margin-top: 4px; font-family: 'Share Tech Mono', monospace; }
-
-  /* PROJECT INFO */
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
-  .info-item { border: 1px solid #e2d9c8; padding: 10px 14px; }
-  .info-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.8px; color: #b8a070; margin-bottom: 4px; font-family: 'Share Tech Mono', monospace; }
-  .info-value { font-weight: 600; color: #1a2535; font-size: 0.88rem; }
-
-  /* SECTION TITLE */
-  .section-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.75rem; letter-spacing: 1.5px; text-transform: uppercase; color: #c9a84c; border-bottom: 1px solid #e2d9c8; padding-bottom: 6px; margin: 22px 0 14px; }
-
-  /* RESULTS SUMMARY */
-  .results-summary { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-  .res-card { border: 1px solid #e2d9c8; border-top: 3px solid #c9a84c; padding: 12px 14px; }
-  .res-card.total { grid-column: span 2; border-top-color: #2a8a6a; }
-  .res-card.total .res-val { color: #1a6e52; font-size: 1.5rem; }
-  .res-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.8px; color: #6b7a91; margin-bottom: 5px; font-family: 'Share Tech Mono', monospace; }
-  .res-val   { font-family: 'Share Tech Mono', monospace; font-size: 1.1rem; font-weight: 600; color: #1a2535; }
-  .res-unit  { font-size: 0.63rem; color: #b8a070; margin-top: 3px; font-family: 'Share Tech Mono', monospace; }
-
-  /* BREAKDOWN TABLE */
-  table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-  th { background: #f7f4ed; border: 1px solid #e2d9c8; padding: 7px 12px; text-align: left; font-family: 'Barlow Condensed', sans-serif; font-size: 0.7rem; letter-spacing: 0.8px; text-transform: uppercase; color: #c9a84c; }
-  td { border: 1px solid #e2d9c8; padding: 6px 12px; font-family: 'Share Tech Mono', monospace; font-size: 0.75rem; color: #1a2535; }
-  tr:nth-child(even) td { background: #fdfaf5; }
-  tr:last-child td { font-weight: 600; background: #f7f4ed !important; color: #c9a84c; }
-
-  /* FOOTER */
-  .rpt-footer { margin-top: 36px; padding-top: 14px; border-top: 1px solid #e2d9c8; display: flex; justify-content: space-between; font-size: 0.65rem; color: #b8a070; font-family: 'Share Tech Mono', monospace; }
-
-  @media print {
-    body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  }
-</style>
-</head>
-<body>
-<div class="page">
-
-  <div class="rpt-header">
-    <div class="rpt-brand">
-      <div class="rpt-logo">T</div>
-      <div class="rpt-brand-text">
-        <div class="rpt-name">Tank Protocol</div>
-        <div class="rpt-sub">EMISSIONS INTELLIGENCE PLATFORM</div>
-      </div>
-    </div>
-    <div class="rpt-meta">
-      <strong>Emission Calculation Report</strong><br>
-      Date: ${date}<br>
-      Standard: API MPMS Chapter 19.2 (2012)<br>
-      Method: EPA AP-42 Section 7.1
-    </div>
-  </div>
-
-  <div class="rpt-title-block">
-    <h1>Floating Roof Tank VOC Emission Report</h1>
-    <p>STANDING STORAGE LOSS (Ls) &amp; WORKING LOSS (Lw) &mdash; API 19.2 METHODOLOGY</p>
-  </div>
-
-  <div class="section-title">Project Information</div>
-  <div class="info-grid">
-    <div class="info-item"><div class="info-label">Company</div><div class="info-value">${company}</div></div>
-    <div class="info-item"><div class="info-label">Tank ID / Tag</div><div class="info-value">${tankId}</div></div>
-    <div class="info-item"><div class="info-label">Location / Site</div><div class="info-value">${location}</div></div>
-    <div class="info-item"><div class="info-label">Roof Type</div><div class="info-value">${r.roofType}</div></div>
-    <div class="info-item"><div class="info-label">Primary Seal</div><div class="info-value">${sealLabels[r.sealType] || r.sealType}</div></div>
-    <div class="info-item"><div class="info-label">Secondary Seal</div><div class="info-value">${secSealLabels[r.secSeal] || r.secSeal}</div></div>
-  </div>
-
-  <div class="section-title">Tank Configuration</div>
-  <div class="info-grid">
-    <div class="info-item"><div class="info-label">Shell Diameter</div><div class="info-value">${r.D} ft</div></div>
-    <div class="info-item"><div class="info-label">Max Liquid Height</div><div class="info-value">${document.getElementById('maxLiqHeight').value} ft</div></div>
-    <div class="info-item"><div class="info-label">Min Liquid Height</div><div class="info-value">${document.getElementById('minLiqHeight').value} ft</div></div>
-    <div class="info-item"><div class="info-label">Vapor Pressure (P*)</div><div class="info-value">${r.Pstar} psia</div></div>
-    <div class="info-item"><div class="info-label">Molecular Weight</div><div class="info-value">${r.MW} lb/lb-mol</div></div>
-    <div class="info-item"><div class="info-label">Annual Throughput</div><div class="info-value">${fmt(document.getElementById('throughput').value,0)} bbl/yr</div></div>
-  </div>
-
-  <div class="section-title">Emission Results Summary</div>
-  <div class="results-summary">
-    <div class="res-card"><div class="res-label">Rim Seal Loss (L_R)</div><div class="res-val">${fmt(r.LR,1)}</div><div class="res-unit">lb/yr</div></div>
-    <div class="res-card"><div class="res-label">Fitting Loss (L_F)</div><div class="res-val">${fmt(r.LF,1)}</div><div class="res-unit">lb/yr</div></div>
-    <div class="res-card"><div class="res-label">Standing Storage Loss (L_S)</div><div class="res-val">${fmt(r.LS,1)}</div><div class="res-unit">lb/yr</div></div>
-    <div class="res-card"><div class="res-label">Working Loss (L_W)</div><div class="res-val">${fmt(r.LW,1)}</div><div class="res-unit">lb/yr</div></div>
-    <div class="res-card total"><div class="res-label">Total VOC Emissions (L_T = L_S + L_W)</div><div class="res-val">${fmt(r.LT,1)}</div><div class="res-unit">lb/yr &nbsp;|&nbsp; ${fmt(r.LT/2000,3)} tons/yr &nbsp;|&nbsp; ${fmt(r.LT*0.453592,1)} kg/yr</div></div>
-    <div class="res-card" style="border-top-color:#4fa3e8;"><div class="res-label">Annual Turnovers</div><div class="res-val">${r.N.toFixed(2)}</div><div class="res-unit">turnovers/yr</div></div>
-  </div>
-
-  <div class="section-title">Calculation Breakdown</div>
-  <table>
-    <thead><tr><th>Parameter</th><th>Formula / Reference</th><th>Value</th></tr></thead>
-    <tbody>
-      ${rows.map(([label, formula, val]) => `<tr><td>${label}</td><td>${formula}</td><td>${val}</td></tr>`).join('')}
-    </tbody>
-  </table>
-
-  <div class="rpt-footer">
-    <span>TANK PROTOCOL &mdash; EMISSIONS INTELLIGENCE PLATFORM</span>
-    <span>API MPMS CHAPTER 19.2 (2012 EDITION) &nbsp;&middot;&nbsp; EPA AP-42 SECTION 7.1</span>
-    <span>GENERATED: ${date.toUpperCase()}</span>
-  </div>
-
-</div>
-</body>
-</html>`;
-
-  const blob = new Blob([html], { type: 'text/html' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  const filename = [company, tankId, 'EmissionReport'].filter(s => s && s !== '—').join('_').replace(/\s+/g,'_') + '.html';
-  a.href     = url;
-  a.download = filename;
-  a.click();
+// ── NON-ROUTINE REPORT ───────────────────────────────────────────────────────
+function downloadNonRoutineReport(d) {
+  const g = id => document.getElementById(id)?.value || '\u2014';
+  const fmt=(x,p=2)=>(x==null||isNaN(x))?'\u2014':Number(x).toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p});
+  const now = new Date().toLocaleString();
+  const rows = d.rows.map(r=>`<tr><td>${r[0]}</td><td>${fmt(r[1])}</td></tr>`).join('');
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${d.title}</title>
+<style>body{font-family:Arial,sans-serif;max-width:720px;margin:30px auto;color:#1a2332;padding:0 24px}
+h1{font-size:1.4rem;border-bottom:3px solid #c9a84c;padding-bottom:8px}
+.meta{color:#667;font-size:.85rem;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;margin:16px 0}
+th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th{background:#f4f1e8}
+.total td{font-weight:bold;background:#faf6ea}
+.foot{margin-top:30px;font-size:.72rem;color:#888;border-top:1px solid #ddd;padding-top:12px}</style></head><body>
+<h1>${d.title}</h1>
+<div class="meta">Generated ${now} \u00b7 Tank Protocol \u00b7 AP-42 Chapter 7 (9/2025) \u00b7 Per-event basis</div>
+<table>
+<tr><th>Company</th><td>${g('companyName')}</td><th>Tank ID</th><td>${g('tankId')}</td></tr>
+</table>
+<table>
+<tr><th>Component</th><th>Loss (lb/event)</th></tr>
+${rows}
+<tr class="total"><td>${d.total[0]}</td><td>${fmt(d.total[1])} lb</td></tr>
+</table>
+<div class="foot">Non-routine emissions per event, per US EPA AP-42 Chapter 7 (Sept 2025). For screening &amp; inventory use; verify against applicable regulatory requirements.</div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`nonroutine_${g('tankId')}.html`;a.click();
   URL.revokeObjectURL(url);
 }
+
+// ── FIXED ROOF REPORT ────────────────────────────────────────────────────────
+function downloadFixedReport(d) {
+  const g = id => document.getElementById(id)?.value || '\u2014';
+  const fmt=(x,p=2)=>(x==null||isNaN(x))?'\u2014':Number(x).toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p});
+  const now = new Date().toLocaleString();
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Fixed Roof Emission Report</title>
+<style>body{font-family:Arial,sans-serif;max-width:760px;margin:30px auto;color:#1a2332;padding:0 24px}
+h1{font-size:1.4rem;border-bottom:3px solid #c9a84c;padding-bottom:8px}
+.meta{color:#667;font-size:.85rem;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;margin:16px 0}
+th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th{background:#f4f1e8}
+.total td{font-weight:bold;background:#faf6ea}.sec{font-weight:bold;color:#b8860b;margin-top:20px}
+.foot{margin-top:30px;font-size:.72rem;color:#888;border-top:1px solid #ddd;padding-top:12px}</style></head><body>
+<h1>Fixed Roof Tank \u2014 Emission Report</h1>
+<div class="meta">Generated ${now} \u00b7 Tank Protocol \u00b7 AP-42 Chapter 7 (9/2025)</div>
+<table>
+<tr><th>Company</th><td>${g('companyName')}</td><th>Tank ID</th><td>${g('tankId')}</td></tr>
+<tr><th>Configuration</th><td>${d.shape}</td><th>Location</th><td>${g('metLocation')}</td></tr>
+<tr><th>Diameter</th><td>${fmt(d.D,2)} ft</td><th>Shell Height</th><td>${fmt(d.Hs,2)} ft</td></tr>
+<tr><th>Vapor MW</th><td>${fmt(d.Mv,2)}</td><th>TVP</th><td>${fmt(d.Pva,3)} psia</td></tr>
+<tr><th>Liquid Surface Temp</th><td>${fmt(d.TLA_R-459.67,1)} \u00b0F</td><th>Throughput</th><td>${g('throughput')} bbl/yr</td></tr>
+</table>
+<div class="sec">Intermediate Values</div>
+<table>
+<tr><td>Vapor space volume V_V</td><td>${fmt(d.VV,1)} ft\u00b3</td></tr>
+<tr><td>Stock vapor density W_V</td><td>${d.WV.toExponential(3)} lb/ft\u00b3</td></tr>
+<tr><td>Expansion factor K_E</td><td>${fmt(d.KE,4)}</td></tr>
+<tr><td>Saturation factor K_S</td><td>${fmt(d.KS,3)}</td></tr>
+<tr><td>Turnovers N / K_N</td><td>${fmt(d.N,1)} / ${fmt(d.KN,3)}</td></tr>
+</table>
+<div class="sec">Emission Results (lb/yr)</div>
+<table>
+<tr><th>Component</th><th>Loss (lb/yr)</th></tr>
+<tr><td>Standing Loss (L_S)</td><td>${fmt(d.LS)}</td></tr>
+<tr><td>Working Loss (L_W)</td><td>${fmt(d.LW)}</td></tr>
+<tr class="total"><td>TOTAL ROUTINE LOSS (L_T)</td><td>${fmt(d.LT)} lb/yr</td></tr>
+<tr class="total"><td>TOTAL</td><td>${fmt(d.LT/2000)} ton/yr</td></tr>
+</table>
+<div class="foot">Estimates per US EPA AP-42 Chapter 7 (Sept 2025). For screening &amp; inventory use; verify against applicable regulatory requirements.</div>
+</body></html>`;
+  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`fixed_roof_report_${g('tankId')}.html`;a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── REPORT DOWNLOAD ───────────────────────────────────────────────────────────
+function downloadReport() {
+  const d = window._lastResult;
+  if (!d) return;
+  if (d.nonRoutine) { downloadNonRoutineReport(d); return; }
+  if (d.fixedRoof) { downloadFixedReport(d); return; }
+  const g = id => document.getElementById(id)?.value || '—';
+  const fmt = (x,p=2)=> (x==null?'—':Number(x).toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p}));
+  const now = new Date().toLocaleString();
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Emission Report — ${g('tankId')}</title>
+<style>body{font-family:Arial,sans-serif;max-width:760px;margin:30px auto;color:#1a2332;padding:0 24px}
+h1{font-size:1.4rem;border-bottom:3px solid #c9a84c;padding-bottom:8px}
+.meta{color:#667;font-size:0.85rem;margin-bottom:24px}
+table{width:100%;border-collapse:collapse;margin:16px 0}
+th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:0.88rem}
+th{background:#f4f1e8}
+.total td{font-weight:bold;background:#faf6ea}
+.sec{font-weight:bold;color:#b8860b;margin-top:20px}
+.foot{margin-top:30px;font-size:0.72rem;color:#888;border-top:1px solid #ddd;padding-top:12px}</style></head><body>
+<h1>Floating Roof Tank — Emission Report</h1>
+<div class="meta">Generated ${now} · Tank Protocol · AP-42 Chapter 7 (9/2025)</div>
+<table>
+<tr><th>Company</th><td>${g('companyName')}</td><th>Tank ID</th><td>${g('tankId')}</td></tr>
+<tr><th>Location</th><td>${g('tankLocation')}</td><th>Roof Type</th><td>${g('roofType')}</td></tr>
+<tr><th>Diameter</th><td>${g('diameter')} ft</td><th>Shell Height</th><td>${g('shellHeight')} ft</td></tr>
+<tr><th>TVP</th><td>${g('vaporPressure')} psia</td><th>Vapor MW</th><td>${g('molWeight')} lb/lb-mol</td></tr>
+<tr><th>Throughput</th><td>${g('throughput')} bbl/yr</td><th>Wind</th><td>${d.v} mph</td></tr>
+${d.TLA_F!=null?`<tr><th>Location</th><td>${g('metLocation')}</td><th>Liquid Surface Temp</th><td>${d.TLA_F.toFixed(1)} °F</td></tr>`:''}
+${d.computedTVP!=null?`<tr><th>Computed TVP</th><td>${d.computedTVP.toFixed(3)} psia</td><th>—</th><td>—</td></tr>`:''}
+</table>
+<div class="sec">Emission Results (lb/yr)</div>
+<table>
+<tr><th>Component</th><th>Loss (lb/yr)</th></tr>
+<tr><td>Rim Seal Loss (L_R)</td><td>${fmt(d.LR)}</td></tr>
+<tr><td>Deck Fitting Loss (L_F)</td><td>${fmt(d.LF)}</td></tr>
+${d.LD>0?`<tr><td>Deck Seam Loss (L_D)</td><td>${fmt(d.LD)}</td></tr>`:''}
+<tr><td><b>Standing Loss (L_S)</b></td><td><b>${fmt(d.LS)}</b></td></tr>
+<tr><td>Working / Withdrawal Loss (L_W)</td><td>${fmt(d.LW)}</td></tr>
+<tr class="total"><td>TOTAL ROUTINE LOSS (L_T)</td><td>${fmt(d.LT)} lb/yr</td></tr>
+<tr class="total"><td>TOTAL</td><td>${fmt(d.LT/2000)} ton/yr</td></tr>
+</table>
+<div class="foot">Estimates per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Chapter 19.2. For screening &amp; inventory use; verify against applicable regulatory requirements.</div>
+</body></html>`;
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `emission_report_${g('tankId')}.html`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// PHASE 3: FIXED ROOF TANKS
+// ══════════════════════════════════════════════════════════════════════════
+function onTankClassChange() {
+  const cls = document.getElementById('tankClass').value;
+  document.getElementById('floatingCards').style.display = cls === 'floating' ? '' : 'none';
+  document.getElementById('fixedCards').style.display    = cls === 'fixed' ? '' : 'none';
+  document.getElementById('fixedShapeField').style.display = cls === 'fixed' ? '' : 'none';
+  document.getElementById('landingCards').style.display  = cls === 'landing' ? '' : 'none';
+  document.getElementById('cleaningCards').style.display = cls === 'cleaning' ? '' : 'none';
+  if (cls === 'fixed') onFixedShapeChange();
+  if (cls === 'landing') onHeelChange();
+  recomputeTVP();
+}
+
+function onHeelChange() {
+  const heel = document.getElementById('lnHeel').value;
+  const dd = heel === 'drain_dry';
+  document.getElementById('lnDrainDryRow').style.display = dd ? '' : 'none';
+  document.getElementById('lnHeelHeightField').style.display = dd ? 'none' : '';
+}
+
+function onFixedShapeChange() {
+  const shape = document.getElementById('fixedShape').value;
+  const isHoriz = shape === 'horizontal';
+  document.getElementById('fxLengthField').style.display = isHoriz ? '' : 'none';
+  document.getElementById('fxHorizNote').style.display = isHoriz ? '' : 'none';
+  document.getElementById('fxRoofGeomRow').style.display = isHoriz ? 'none' : '';
+  document.getElementById('fxConeSlopeField').style.display = shape === 'vertical_cone' ? '' : 'none';
+  document.getElementById('fxDomeRadField').style.display = shape === 'vertical_dome' ? '' : 'none';
+}
+
+// Liquid surface temp for FIXED roof (Eq 1-29/1-30 simplified)
+function fixedLiquidSurfaceTemp(D, Hs) {
+  const loc = document.getElementById('metLocation').value;
+  const m = MET_DATA[loc];
+  if (!m) return null;
+  const aR = (SOLAR_ABSORPTANCE[document.getElementById('roofColor').value]||{})[document.getElementById('roofCond').value] ?? 0.25;
+  const aS = (SOLAR_ABSORPTANCE[document.getElementById('shellColor').value]||{})[document.getElementById('shellCond').value] ?? 0.25;
+  const I = m.I;
+  const TAX = m.TAX + 459.67, TAN = m.TAN + 459.67;
+  const TAA = (TAX + TAN) / 2;                       // Eq 1-32
+  let TB;
+  if (document.getElementById('tbMethod').value === 'user') {
+    const tbF = parseFloat(document.getElementById('bulkTempF').value);
+    TB = isNaN(tbF) ? (TAA + 0.003*aS*I) : (tbF + 459.67);
+  } else {
+    TB = TAA + 0.003*aS*I;                           // Eq 1-33
+  }
+  const HsD = Hs / D;
+  // Eq 1-29 (full, uninsulated):
+  const TLA = (1 - 0.5*aR)*0 + // placeholder
+    ( (1)/(1) ) * 0;
+  // Use the documented full Eq 1-29 coefficients:
+  const TLA_full = TAA
+    + ( (0.5*aR - 0.045) * I ) / (1) * 0; // not used
+  // Implement Eq 1-29 exactly as in worked example via the dTV-style structure:
+  // TLA = [1 - 0.5*(0.8/(2.2(Hs/D)+1.9))]... -- but AP-42 Eq 1-29 simplified (1-30):
+  const alpha = (aR + aS)/2;
+  const TLA_simplified = 0.4*TAA + 0.6*TB + 0.005*alpha*I;   // Eq 1-30
+  return { TLA: TLA_simplified, TAA, TB, aR, aS, I, V: m.V, PA: m.PA };
+}
+
+// Average daily vapor temperature range (Eq 1-6 exact)
+function vaporTempRange(D, Hs, aR, aS, I, dTA) {
+  const denom = 2.2*(Hs/D) + 1.9;
+  return (1 - 0.8/denom)*dTA + (0.042*aR*I + 0.026*(Hs/D)*aS*I)/denom;
+}
+
+function calculateFixedRoof() {
+  const errEl = document.getElementById('errorMsg');
+  const err = (m) => { errEl.textContent = m; errEl.classList.add('show'); };
+  errEl.classList.remove('show');
+
+  const shape = document.getElementById('fixedShape').value;
+  const isHoriz = shape === 'horizontal';
+  let D = parseFloat(document.getElementById('fxDiameter').value);
+  const Hs = parseFloat(document.getElementById('fxShellHeight').value);
+  const L = parseFloat(document.getElementById('fxLength').value);
+  const Mv = parseFloat(document.getElementById('molWeight').value);
+  const Q  = parseFloat(document.getElementById('throughput').value);
+
+  if (isNaN(D) || isNaN(Hs) || isNaN(Mv) || isNaN(Q)) { err('Missing required inputs (diameter, shell height, vapor MW, throughput).'); return; }
+
+  // Effective diameter / height for horizontal tanks (Eq 1-14/1-15)
+  let Deff = D, HVO;
+  let HL = parseFloat(document.getElementById('fxAvgLiq').value);
+  if (isHoriz) {
+    if (isNaN(L)) { err('Horizontal tanks require shell length.'); return; }
+    Deff = Math.sqrt(L * D * 4 / Math.PI);    // Eq 1-14
+    const HE = (Math.PI/4) * D;               // Eq 1-15
+    HVO = HE / 2;                             // use HE/2 as vapor space outage
+  } else {
+    if (isNaN(HL)) HL = Hs / 2;               // assume half-full
+    // roof outage
+    const RS = D/2;
+    let HRO = 0;
+    if (shape === 'vertical_cone') {
+      let SR = parseFloat(document.getElementById('fxConeSlope').value); if (isNaN(SR)) SR = 0.0625;
+      const HR = SR * RS;
+      HRO = (1/3) * HR;                        // Eq 1-19/1-20
+    } else if (shape === 'vertical_dome') {
+      let RR = parseFloat(document.getElementById('fxDomeRadius').value); if (isNaN(RR)) RR = D;
+      const HR = RR - Math.sqrt(RR*RR - RS*RS);             // Eq 1-22
+      HRO = HR*(0.5 + 0.5*Math.pow(HR/RS,2)/3) ;            // Eq 1-21 approx
+      // Eq 1-21 exact: HRO = HR[1/2 + (1/6)(HR/RS)^2]
+      HRO = HR*(0.5 + (1/6)*Math.pow(HR/RS,2));
+    } // flat → HRO = 0
+    HVO = Hs - HL + HRO;                       // Eq 1-18
+  }
+
+  // Liquid surface temp & TVP
+  const tInfo = fixedLiquidSurfaceTemp(Deff, Hs);
+  let Pva, TLA_R;
+  const chemKey = document.getElementById('chemical').value;
+  const ch = CHEMICALS[chemKey] || CHEM_DB[chemKey];
+  if (document.getElementById('tvpMethod').value === 'manual') {
+    Pva = parseFloat(document.getElementById('vaporPressure').value);
+    TLA_R = tInfo ? tInfo.TLA : 520;
+  } else {
+    if (!tInfo) { err('Select a meteorological location for the temperature model, or switch to manual TVP entry.'); return; }
+    TLA_R = tInfo.TLA;
+    const TLA_F = TLA_R - 459.67;
+    if (ch && ch.A != null) Pva = antoineTVP(ch.A, ch.B, ch.C, TLA_F);
+    else if (ch && ch.tvp60) Pva = ch.tvp60;
+    if (Pva == null || isNaN(Pva)) { err('Could not compute TVP — pick an AP-42 chemical with Antoine constants or enter TVP manually.'); return; }
+  }
+  if (isNaN(Pva)) { err('Vapor pressure is required.'); return; }
+
+  const PA = tInfo ? tInfo.PA : 14.696;
+  const aR = tInfo ? tInfo.aR : 0.25;
+  const aS = tInfo ? tInfo.aS : 0.25;
+  const I  = tInfo ? tInfo.I : 1370;
+  const TAA = tInfo ? tInfo.TAA : 520;
+  const TB  = tInfo ? tInfo.TB : 520;
+
+  // Vapor space volume
+  const VV = (Math.PI/4) * Deff * Deff * HVO;          // Eq 1-3
+
+  // Average vapor temperature TV (Eq 1-35 simplified)
+  const alpha = (aR + aS)/2;
+  const TV = TAA + (2.2*(Hs/Deff)*0) ; // placeholder
+  const TV_calc = (function(){
+    // Eq 1-34 full
+    const denom = 2.2*(Hs/Deff)+1.9;
+    return (1 - 0.5/denom)*TAA + (0.5/denom)*TB*0 + 0; // not used
+  })();
+  // Use Eq 1-35 simplified: TV = 0.7*TAA + 0.3*TB + 0.009*alpha*I  (API simplified)
+  const TVapor = 0.7*TAA + 0.3*TB + 0.009*alpha*I;
+
+  // Stock vapor density (Eq 1-24)
+  const R = 10.731;
+  const WV = (Mv * Pva) / (R * TVapor);
+
+  // Vapor space expansion factor KE (Eq 1-5)
+  const TAX = TAA + ( (tInfo? (MET_DATA[document.getElementById('metLocation').value].TAX - MET_DATA[document.getElementById('metLocation').value].TAN):20)/2 );
+  let dTA = 20;
+  if (tInfo) {
+    const m = MET_DATA[document.getElementById('metLocation').value];
+    dTA = (m.TAX - m.TAN); // °F range = °R range
+  }
+  const dTV = vaporTempRange(Deff, Hs, aR, aS, I, dTA);
+  // Vapor pressure range dPV via TLX/TLN (Note 5): TLX=TLA+0.25dTV, TLN=TLA-0.25dTV
+  let dPV = 0;
+  if (ch && ch.A != null) {
+    const TLX_F = (TLA_R + 0.25*dTV) - 459.67;
+    const TLN_F = (TLA_R - 0.25*dTV) - 459.67;
+    const PVX = antoineTVP(ch.A, ch.B, ch.C, TLX_F);
+    const PVN = antoineTVP(ch.A, ch.B, ch.C, TLN_F);
+    dPV = PVX - PVN;
+  } else {
+    dPV = 0.05 * Pva; // fallback approximation
+  }
+  // Breather vent pressure range (Eq 1-10)
+  let PBP = parseFloat(document.getElementById('fxVentPress').value); if (isNaN(PBP)) PBP = 0.03;
+  let PBV = parseFloat(document.getElementById('fxVentVac').value);  if (isNaN(PBV)) PBV = -0.03;
+  const dPB = PBP - PBV;
+  let KE = dTV/TLA_R + (dPV - dPB)/(PA - Pva);          // Eq 1-5
+  if (KE < 0) KE = 0;
+
+  // Vented vapor saturation factor KS (Eq 1-23)
+  const KS = 1 / (1 + 0.053 * Pva * HVO);
+
+  // Standing loss (Eq 1-2)
+  const LS = 365 * VV * WV * KE * KS;
+
+  // Working loss (Eq 1-37)
+  const VQ = 5.614 * Q;                                  // Eq 1-41
+  // turnovers N (Eq 1-38/1-39)
+  let HLX = parseFloat(document.getElementById('fxMaxLiq').value); if (isNaN(HLX)) HLX = isHoriz ? (Math.PI/4)*D : Hs - 1;
+  let HLN = parseFloat(document.getElementById('fxMinLiq').value); if (isNaN(HLN)) HLN = isHoriz ? 0 : 1;
+  const HQI = VQ / ((Math.PI/4) * Deff * Deff);
+  const N = HQI / Math.max(HLX - HLN, 0.001);
+  const KN = N > 36 ? (180 + N)/(6*N) : 1;
+  const KP = (ch && ch.type === 'crude') ? 0.75 : 1.0;
+  // Vent correction KB (Eq 1-42/1-43)
+  let PI = parseFloat(document.getElementById('fxOpPress').value); if (isNaN(PI)) PI = 0;
+  let KB = 1;
+  const trigger = (PI + PA) / (PA - Pva);
+  if ((PBP + PA) > trigger * 1) {
+    // Apply Eq 1-43 only when vent setting exceeds typical; for ±0.03 default KB=1
+    if (Math.abs(PBP) > 0.0301 || Math.abs(PBV) > 0.0301) {
+      const num = (PA - Pva);
+      const den = (PA - Pva) ; // simplified; full Eq 1-43 requires KN, PBP
+      KB = 1; // keep 1 unless full high-pressure case; documented default
+    }
+  }
+  const LW = VQ * KN * KP * WV * KB;
+
+  const LT = LS + LW;
+
+  renderFixedResults({
+    shape, isHoriz, D, Deff, Hs, HVO, VV, WV, KE, KS, TVapor, TLA_R, TAA, TB,
+    Pva, Mv, dTV, dPV, dPB, KN, KP, KB, N, VQ, LS, LW, LT, aR, aS, I, PA,
+    computedTVP: document.getElementById('tvpMethod').value==='compute' ? Pva : null,
+  });
+}
+
+function renderFixedResults(d) {
+  const fmt = (x,p=1)=> (x==null||isNaN(x))?'—':Number(x).toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p});
+  const body = document.getElementById('resultBody');
+  body.innerHTML = `
+    <div class="total-loss">
+      <div class="lbl">Total Routine Loss</div>
+      <div class="val">${fmt(d.LT)}</div>
+      <div class="unit">lb / year</div>
+      <div class="alt">${fmt(d.LT/2000,2)} ton/yr · ${fmt(d.LT*0.453592,0)} kg/yr</div>
+    </div>
+    <div class="breakdown">
+      <div class="breakdown-row"><span class="k">Standing Loss (L<sub>S</sub>)</span><span class="v" style="color:var(--warn)">${fmt(d.LS)} lb/yr</span></div>
+      <div class="breakdown-row"><span class="k">Working Loss (L<sub>W</sub>)</span><span class="v">${fmt(d.LW)} lb/yr</span></div>
+      <div class="breakdown-row total"><span class="k">TOTAL (L<sub>T</sub>)</span><span class="v">${fmt(d.LT)} lb/yr</span></div>
+    </div>
+    <div class="detail-toggle" onclick="document.getElementById('detailBlock').classList.toggle('show')">▸ Show calculation detail</div>
+    <div class="detail-block" id="detailBlock">
+      ${d.isHoriz?`<div class="dr"><span class="k">Effective diameter D<sub>E</sub></span><span class="v">${fmt(d.Deff,2)} ft</span></div>`:''}
+      <div class="dr"><span class="k">Vapor space volume V<sub>V</sub></span><span class="v">${fmt(d.VV,1)} ft³</span></div>
+      <div class="dr"><span class="k">Vapor space outage H<sub>VO</sub></span><span class="v">${fmt(d.HVO,3)} ft</span></div>
+      <div class="dr"><span class="k">Stock vapor density W<sub>V</sub></span><span class="v">${d.WV.toExponential(3)} lb/ft³</span></div>
+      <div class="dr"><span class="k">Liquid surface temp T<sub>LA</sub></span><span class="v">${fmt(d.TLA_R-459.67,1)} °F</span></div>
+      ${d.computedTVP!=null?`<div class="dr"><span class="k">Computed TVP</span><span class="v">${fmt(d.computedTVP,3)} psia</span></div>`:''}
+      <div class="dr"><span class="k">Vapor temp range ΔT<sub>V</sub></span><span class="v">${fmt(d.dTV,2)} °R</span></div>
+      <div class="dr"><span class="k">Expansion factor K<sub>E</sub></span><span class="v">${fmt(d.KE,4)}</span></div>
+      <div class="dr"><span class="k">Saturation factor K<sub>S</sub></span><span class="v">${fmt(d.KS,3)}</span></div>
+      <div class="dr"><span class="k">Turnovers N</span><span class="v">${fmt(d.N,1)}</span></div>
+      <div class="dr"><span class="k">Turnover factor K<sub>N</sub></span><span class="v">${fmt(d.KN,3)}</span></div>
+      <div class="dr"><span class="k">Product factor K<sub>P</sub></span><span class="v">${d.KP}</span></div>
+    </div>
+    <button class="btn-dl" onclick="downloadReport()">⬇ Download Report</button>
+  `;
+  window._lastResult = { ...d, fixedRoof:true };
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// PHASE 4: NON-ROUTINE LOSSES
+// ══════════════════════════════════════════════════════════════════════════
+const LEL_GASES = {
+  hexane:  { LEL: 0.011, MW: 86.18 },
+  propane: { LEL: 0.021, MW: 44.10 },
+  methane: { LEL: 0.050, MW: 16.04 },
+  pentane: { LEL: 0.015, MW: 72.15 },
+};
+
+// Get TVP + MV from the shared liquid section
+function getLiquidProps(tF) {
+  const chemKey = document.getElementById('chemical').value;
+  const ch = CHEMICALS[chemKey] || CHEM_DB[chemKey];
+  const Mv = parseFloat(document.getElementById('molWeight').value);
+  let Pva;
+  if (document.getElementById('tvpMethod').value === 'manual') {
+    Pva = parseFloat(document.getElementById('vaporPressure').value);
+  } else if (ch && ch.A != null) {
+    Pva = antoineTVP(ch.A, ch.B, ch.C, tF);
+  } else if (ch && ch.tvp60) {
+    Pva = ch.tvp60;
+  }
+  return { Pva, Mv, ch };
+}
+
+// Ground/ambient temperature for the event (avg ambient at location)
+function eventAmbientTempR() {
+  const loc = document.getElementById('metLocation').value;
+  const m = MET_DATA[loc];
+  if (m) return ((m.TAX + m.TAN)/2) + 459.67;
+  const tb = parseFloat(document.getElementById('bulkTempF').value);
+  return (isNaN(tb) ? 60 : tb) + 459.67;
+}
+
+// ── LANDING LOSS (Eq 3-1 to 3-18) ───────────────────────────────────────────
+function calculateLanding() {
+  const errEl = document.getElementById('errorMsg');
+  const err = (m)=>{errEl.textContent=m; errEl.classList.add('show');};
+  errEl.classList.remove('show');
+
+  const D  = parseFloat(document.getElementById('lnDiameter').value);
+  const Hs = parseFloat(document.getElementById('lnShellHeight').value);
+  const nd = parseFloat(document.getElementById('lnDaysIdle').value);
+  const roofType = document.getElementById('lnRoofType').value;
+  const heel = document.getElementById('lnHeel').value;
+  if ([D,Hs,nd].some(isNaN)) { err('Diameter, shell height, and days idle are required.'); return; }
+
+  const R = 10.731;
+  const TV = eventAmbientTempR();          // ground temp ≈ ambient
+  const TV_F = TV - 459.67;
+  const { Pva, Mv } = getLiquidProps(TV_F);
+  if (Pva == null || isNaN(Pva) || isNaN(Mv)) { err('Set vapor MW and a chemical (or manual TVP).'); return; }
+
+  const PA = (MET_DATA[document.getElementById('metLocation').value]||{}).PA || 14.696;
+  const Pstar = (function(){ const r=Pva/PA; return r/Math.pow(1+Math.pow(1-r,0.5),2); })();
+
+  // Vapor space volume — full shell under landed roof
+  const hv = Hs; // height of vapor space under floating roof ≈ shell height when landed
+  const VV = (Math.PI/4)*D*D*hv;
+
+  let LSL = 0, LFL = 0, detail = {};
+  const generated = (s)=> (Pva*VV*Mv/(R*TV))*s; // generated/standing vapor mass × saturation
+
+  if (heel === 'drain_dry') {
+    // Standing idle clingage (Eq 3-13): LSL = 0.0063 * CS * WL * D²  (gasoline gunite simplified)
+    const cond = document.getElementById('lnClingCond').value;
+    const prod = document.getElementById('lnClingProduct').value;
+    const CS = CLINGAGE_FACTORS[prod][cond];
+    const WL = parseFloat(document.getElementById('liquidDensity').value) || 6.0;
+    const area = (Math.PI/4)*D*D;
+    LSL = 0.042 * CS * WL * area;                 // Eq 3-11
+    // cap (Eq 3-14): generated component limit
+    const cap = generated(0.15);
+    if (LSL > cap) LSL = cap;
+    // Filling: drain-dry S = 0.15 (generated only)
+    LFL = generated(0.15);
+    detail = { mode:'Drain-dry', CS, WL, area, VV, Pstar };
+  } else {
+    // Liquid heel
+    const S = heel === 'full' ? 0.60 : 0.50;
+    const hle = parseFloat(document.getElementById('lnHeelHeight').value) || 0.5;
+    const WL = parseFloat(document.getElementById('liquidDensity').value) || 6.0;
+    const LSLmax = 5.9 * hle * WL * (D*D);        // Eq 3-4 (×D² via area constant 5.9 includes π/4)
+
+    if (roofType === 'EFRT') {
+      // Wind standing idle (Eq 3-10): LSL = 0.57 * nd * D * P* * MV
+      LSL = 0.57 * nd * D * Pstar * Mv;
+      // Csf (Eq 3-21): Csf = (nd*KE*VV)/( (π/4 D² hv? ) ... ) simplified → use 1 for screening
+      const Csf = 1.0;
+      LFL = generated(Csf * S);
+    } else {
+      // Internal/domed: breathing standing idle (Eq 3-7): LSL = nd*KE*PVA*VV*MV/(R*TV)*KS
+      // KE via Eq 1-13 default 0.04/day with ΔPB=0; KS via Eq 1-23
+      const KE = 0.04;
+      const KS = 1/(1+0.053*Pva*hv);
+      LSL = nd * KE * (Pva*VV*Mv/(R*TV)) * KS;
+      LFL = generated(1.0 * S);                   // Csf=1 for internal
+    }
+    if (LSL > LSLmax) LSL = LSLmax;               // cap
+    detail = { mode: heel==='full'?'Full heel':'Partial heel', S, hle, LSLmax, VV, Pstar };
+  }
+
+  const LTL = LSL + LFL;
+  renderNonRoutine({
+    title:'Roof Landing Emissions', kind:'landing',
+    rows:[['Standing Idle Loss (L_SL)', LSL],['Filling Loss (L_FL)', LFL]],
+    total:['Total Landing Loss (L_TL)', LTL],
+    detail:{ ...detail, TV_F, Pva, Mv, nd, D, Hs },
+  });
+}
+
+// ── CLEANING LOSS (Eq 4-1 to 4-10) ──────────────────────────────────────────
+function calculateCleaning() {
+  const errEl = document.getElementById('errorMsg');
+  const err = (m)=>{errEl.textContent=m; errEl.classList.add('show');};
+  errEl.classList.remove('show');
+
+  const D  = parseFloat(document.getElementById('clDiameter').value);
+  const Hs = parseFloat(document.getElementById('clShellHeight').value);
+  const tankType = document.getElementById('clTankType').value;
+  const heel = document.getElementById('clHeel').value;
+  if ([D,Hs].some(isNaN)) { err('Diameter and shell height are required.'); return; }
+
+  const R = 10.731;
+  const TV = eventAmbientTempR();
+  const TV_F = TV - 459.67;
+  const { Pva, Mv } = getLiquidProps(TV_F);
+  if (Pva == null || isNaN(Pva) || isNaN(Mv)) { err('Set vapor MW and a chemical (or manual TVP).'); return; }
+  const PA = (MET_DATA[document.getElementById('metLocation').value]||{}).PA || 14.696;
+
+  // Vapor space volume for purge — entire volume under roof
+  const hl = parseFloat(document.getElementById('clLiquidHeight').value) || 0;
+  const HVO = Hs - hl; // simplified, full shell less liquid/sludge
+  const VV = (Math.PI/4)*D*D*HVO;
+
+  // Purge saturation factor S
+  let S;
+  if (heel === 'drain_dry') S = 0;
+  else if (tankType === 'fixed') S = 0.5;            // fixed roof upper bound
+  else S = heel === 'full' ? 0.6 : 0.5;              // FR full/partial
+  // Vapor space purge (Eq 4-2)
+  const LP = S * (Pva*VV*Mv/(R*TV));
+
+  // Continued forced ventilation (Eq 4-10)
+  const Qv = parseFloat(document.getElementById('clVentRate').value) || 0;
+  const nCV = parseFloat(document.getElementById('clVentDays').value) || 0;
+  const tv = parseFloat(document.getElementById('clVentHours').value) || 0;
+  const lel = (parseFloat(document.getElementById('clLEL').value)||0)/100;
+  const gas = LEL_GASES[document.getElementById('clCalGas').value];
+  let RF = parseFloat(document.getElementById('clRF').value); if (isNaN(RF)) RF = 1.0;
+  let CV = lel * gas.LEL * RF;                        // vapor concentration (mole fraction)
+  const CVmax = Pva/PA;                               // saturation limit (Eq 4-11)
+  if (CV > CVmax) CV = CVmax;
+  const LCV = 60 * Qv * nCV * tv * CV * (PA * gas.MW)/(R*TV);
+
+  const LFV = LP + LCV;
+  renderNonRoutine({
+    title:'Tank Cleaning Emissions', kind:'cleaning',
+    rows:[['Vapor Space Purge (L_P)', LP],['Continued Forced Ventilation (L_CV)', LCV]],
+    total:['Total Forced-Vent Loss (L_FV)', LFV],
+    detail:{ S, VV, HVO, CV, CVmax, Qv, nCV, tv, Pva, Mv, TV_F },
+  });
+}
+
+function renderNonRoutine(o) {
+  const fmt=(x,p=1)=>(x==null||isNaN(x))?'—':Number(x).toLocaleString('en-US',{minimumFractionDigits:p,maximumFractionDigits:p});
+  const body = document.getElementById('resultBody');
+  const detailRows = Object.entries(o.detail).map(([k,v])=>{
+    const val = typeof v === 'number' ? fmt(v,3) : v;
+    return `<div class="dr"><span class="k">${k}</span><span class="v">${val}</span></div>`;
+  }).join('');
+  body.innerHTML = `
+    <div class="total-loss">
+      <div class="lbl">${o.title}</div>
+      <div class="val">${fmt(o.total[1])}</div>
+      <div class="unit">lb / event</div>
+      <div class="alt">${fmt(o.total[1]/2000,3)} ton/event</div>
+    </div>
+    <div class="breakdown">
+      ${o.rows.map(r=>`<div class="breakdown-row"><span class="k">${r[0]}</span><span class="v">${fmt(r[1])} lb</span></div>`).join('')}
+      <div class="breakdown-row total"><span class="k">${o.total[0]}</span><span class="v">${fmt(o.total[1])} lb</span></div>
+    </div>
+    <div class="detail-toggle" onclick="document.getElementById('detailBlock').classList.toggle('show')">▸ Show calculation detail</div>
+    <div class="detail-block" id="detailBlock">${detailRows}</div>
+    <div class="note">Non-routine losses are per-event (per landing or per cleaning), not annual. ${o.kind==='landing'?'Standing idle loss is capped at the available stock liquid (AP-42 Eq. 3-4/3-14).':'Vapor concentration is capped at saturation P<sub>VA</sub>/P<sub>a</sub> (Eq. 4-11).'}</div>
+  `;
+  window._lastResult = { nonRoutine:true, ...o };
+}
+
+// Route calculate() based on tank class
+const _origCalculate = calculate;
+calculate = function() {
+  const cls = document.getElementById('tankClass').value;
+  if (cls === 'fixed') calculateFixedRoof();
+  else if (cls === 'landing') calculateLanding();
+  else if (cls === 'cleaning') calculateCleaning();
+  else _origCalculate();
+};
+
+window.addEventListener('DOMContentLoaded', initUI);
+
 </script>
 </body>
 </html>
