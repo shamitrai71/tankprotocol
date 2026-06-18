@@ -98,6 +98,19 @@ a { color: var(--accent); }
 .note { font-size:0.72rem; color:var(--text-dim); margin-top:14px; padding:10px 12px; background:var(--surface2); border-radius:7px; border-left:2px solid var(--border); }
 .cond-fields { display:none; }
 .cond-fields.show { display:block; }
+.disclaimer { background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:10px; margin-bottom:20px; overflow:hidden; }
+.disclaimer-head { display:flex; align-items:center; gap:9px; padding:13px 18px; cursor:pointer; user-select:none; }
+.disclaimer-head .ico { color:var(--accent); font-size:0.95rem; }
+.disclaimer-head .ttl { font-family:var(--cond); font-weight:600; font-size:0.92rem; letter-spacing:0.5px; color:var(--text-bright); text-transform:uppercase; flex:1; }
+.disclaimer-head .chev { color:var(--text-dim); font-size:0.8rem; transition:transform .2s; }
+.disclaimer.open .disclaimer-head .chev { transform:rotate(180deg); }
+.disclaimer-body { display:none; padding:0 18px 16px; font-size:0.78rem; color:var(--text-dim); line-height:1.6; }
+.disclaimer.open .disclaimer-body { display:block; }
+.disclaimer-body p { margin-bottom:10px; }
+.disclaimer-body strong { color:var(--text); }
+.disclaimer-body ul { margin:8px 0 12px; padding-left:18px; }
+.disclaimer-body li { margin-bottom:6px; }
+.disclaimer-lead { color:var(--text); }
 .footer { text-align:center; color:var(--text-dim); font-size:0.72rem; margin-top:40px; padding-top:20px; border-top:1px solid var(--border); }
 </style>
 </head>
@@ -117,6 +130,28 @@ a { color: var(--accent); }
   <div class="page-title">Storage Tank Emission Calculator</div>
   <div class="page-sub">Routine loss estimation for floating roof and fixed roof organic liquid storage tanks</div>
   <div class="std-badge">⬡ AP-42 CHAPTER 7 (9/2025) · API MPMS 19.2</div>
+
+  <div class="disclaimer open" id="disclaimerPanel">
+    <div class="disclaimer-head" onclick="document.getElementById('disclaimerPanel').classList.toggle('open')">
+      <span class="ico">⚠</span>
+      <span class="ttl">Disclaimer — Indicative &amp; Comparative Use Only</span>
+      <span class="chev">▼</span>
+    </div>
+    <div class="disclaimer-body">
+      <p class="disclaimer-lead">This calculator provides <strong>indicative, comparative estimates</strong> of routine and non-routine vapor losses from organic liquid storage tanks. It implements the emission estimation equations published in <strong>US EPA AP-42, Chapter 7 — Organic Liquid Storage Tanks (September 2025)</strong>, which are based on the correlations developed and copyrighted by the <strong>American Petroleum Institute (API MPMS Chapter 19.2)</strong>.</p>
+      <p>The results are intended only to help users <strong>compare relative emission magnitudes</strong> between tanks, configurations, products, and operating scenarios. They are <strong>not</strong> a substitute for the official EPA TANKS software, a certified emissions calculation, or professional engineering judgment.</p>
+      <p>Estimates are subject to important limitations:</p>
+      <ul>
+        <li>The AP-42 equations are themselves <strong>approximations</strong>, derived from empirical data and simplifying assumptions. AP-42 emission factors are averages and may not represent any specific tank; actual emissions can differ substantially from calculated values.</li>
+        <li>Accuracy depends entirely on the <strong>quality and completeness of the inputs</strong> provided. Default values, estimated meteorological data, simplified geometry, and assumed liquid properties all introduce uncertainty.</li>
+        <li>The equations do <strong>not</strong> apply to certain scenarios, including unstable or boiling stocks, tanks with deteriorated or permeated seals/fittings, heated or pressurized tanks outside the documented range, flashing service, or mixtures whose vapor pressure cannot be reliably predicted.</li>
+        <li>Some parameters use <strong>simplified or default treatments</strong> (for example, saturation and wind correction factors, single-component vapor pressure in place of true mixture behaviour under Raoult's Law, and screening-level non-routine assumptions). Speciated, mixture, and partial-year results may differ from a full TANKS analysis.</li>
+      </ul>
+      <p>Emission values are reported in pounds per year for routine losses and pounds per event for non-routine (landing and cleaning) losses.</p>
+      <p><strong>This tool does not constitute regulatory compliance, permitting, or reporting.</strong> Any emissions used for regulatory submissions, permit applications, fee calculations, or compliance demonstrations must be verified using the official EPA TANKS application and applicable regulatory methods, and reviewed by a qualified professional. The developers make no warranty as to accuracy, fitness for any purpose, or regulatory acceptability, and accept no liability for decisions made on the basis of these estimates.</p>
+      <p>API retains copyright to the underlying emission estimation equations; this tool is provided for non-commercial, indicative use consistent with AP-42's public availability.</p>
+    </div>
+  </div>
 
   <div class="card" style="padding:16px 22px;">
     <div class="grid2" style="align-items:end;">
@@ -474,9 +509,10 @@ a { color: var(--accent); }
     </div>
   </div>
 
-  <div class="footer">
-    Tank Protocol · Floating Roof Tank Calculator · Emission estimates per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Chapter 19.2.<br>
-    Estimates are for screening and inventory purposes. Verify against regulatory requirements.
+    <div class="footer">
+    Tank Protocol · Storage Tank Emission Calculator · Equations per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Chapter 19.2.<br>
+    <strong style="color:var(--text-dim)">Indicative comparative estimates only — not for regulatory compliance, permitting, or reporting.</strong>
+    Verify with official EPA TANKS software and a qualified professional. See full disclaimer above.
   </div>
 </div>
 
@@ -1437,7 +1473,7 @@ th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th
 ${rows}
 <tr class="total"><td>${d.total[0]}</td><td>${fmt(d.total[1])} lb</td></tr>
 </table>
-<div class="foot">Non-routine emissions per event, per US EPA AP-42 Chapter 7 (Sept 2025). For screening &amp; inventory use; verify against applicable regulatory requirements.</div>
+<div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
 </body></html>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`nonroutine_${g('tankId')}.html`;a.click();
@@ -1482,7 +1518,7 @@ th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th
 <tr class="total"><td>TOTAL ROUTINE LOSS (L_T)</td><td>${fmt(d.LT)} lb/yr</td></tr>
 <tr class="total"><td>TOTAL</td><td>${fmt(d.LT/2000)} ton/yr</td></tr>
 </table>
-<div class="foot">Estimates per US EPA AP-42 Chapter 7 (Sept 2025). For screening &amp; inventory use; verify against applicable regulatory requirements.</div>
+<div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
 </body></html>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`fixed_roof_report_${g('tankId')}.html`;a.click();
@@ -1530,7 +1566,7 @@ ${d.LD>0?`<tr><td>Deck Seam Loss (L_D)</td><td>${fmt(d.LD)}</td></tr>`:''}
 <tr class="total"><td>TOTAL ROUTINE LOSS (L_T)</td><td>${fmt(d.LT)} lb/yr</td></tr>
 <tr class="total"><td>TOTAL</td><td>${fmt(d.LT/2000)} ton/yr</td></tr>
 </table>
-<div class="foot">Estimates per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Chapter 19.2. For screening &amp; inventory use; verify against applicable regulatory requirements.</div>
+<div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
 </body></html>`;
   const blob = new Blob([html], {type:'text/html'});
   const url = URL.createObjectURL(blob);
