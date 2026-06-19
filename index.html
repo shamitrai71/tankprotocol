@@ -2900,7 +2900,7 @@ body.editing .report-delete-btn { display: block; }
     getAuth, onAuthStateChanged,
     signInWithEmailAndPassword, createUserWithEmailAndPassword,
     sendPasswordResetEmail, signOut,
-    GoogleAuthProvider, signInWithPopup
+    GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult
   } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
   import {
     getFirestore, initializeFirestore, doc, getDoc, getDocFromServer, setDoc, updateDoc, deleteDoc,
@@ -2938,6 +2938,8 @@ body.editing .report-delete-btn { display: block; }
     resetPassword: (email) => sendPasswordResetEmail(auth, email),
     signOut: () => signOut(auth),
     googleSignIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
+    googleSignInRedirect: () => signInWithRedirect(auth, new GoogleAuthProvider()),
+    getRedirectResult: () => getRedirectResult(auth),
     // Firestore helpers
     userDoc: (uid) => doc(db, 'users', uid),
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
@@ -5219,9 +5221,14 @@ function doGoogleLogin() {
   if (errEl) errEl.style.display = 'none';
   if (!window.fb) { if(errEl){errEl.textContent='Still connecting to the server. Please try again in a moment.'; errEl.style.display='block';} return; }
   _routingAfterLogin = true;
-  window.fb.googleSignIn().catch(e => {
-    _routingAfterLogin = false;
-    if (errEl) { errEl.textContent = friendlyAuthError(e); errEl.style.display='block'; }
+  // Popups break under strict Cross-Origin-Opener-Policy (the popup cannot
+  // report back via window.closed). Use full-page redirect, which is COOP-safe.
+  window.fb.googleSignInRedirect().catch(e => {
+    // If redirect itself is blocked, fall back to popup as a last resort.
+    window.fb.googleSignIn().catch(e2 => {
+      _routingAfterLogin = false;
+      if (errEl) { errEl.textContent = friendlyAuthError(e2); errEl.style.display='block'; }
+    });
   });
 }
 
@@ -5742,8 +5749,18 @@ function startUsersWatcher() {
 
 function initFirebaseAuth() {
   if (!window.fb) return;
-  // Only react to auth state here. The users-collection listener is started
-  // later, from routeUser(), once an admin identity is confirmed.
+  // If we are returning from a Google redirect sign-in, complete it.
+  // (onAuthStateChanged will also fire, but this surfaces redirect errors.)
+  if (window.fb.getRedirectResult) {
+    window.fb.getRedirectResult().then(res => {
+      if (res && res.user) { _routingAfterLogin = true; }
+    }).catch(e => {
+      const errEl = document.getElementById('loginError');
+      if (errEl) { errEl.textContent = friendlyAuthError(e); errEl.style.display='block'; }
+    });
+  }
+  // React to auth state. The users-collection listener is started later,
+  // from routeUser(), once an admin identity is confirmed.
   window.fb.onAuthStateChanged((fbUser) => {
     handleAuthState(fbUser);
   });
