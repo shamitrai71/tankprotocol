@@ -2903,7 +2903,7 @@ body.editing .report-delete-btn { display: block; }
     GoogleAuthProvider, signInWithPopup
   } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
   import {
-    getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
+    getFirestore, initializeFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
     collection, query, where, orderBy, onSnapshot, addDoc,
     serverTimestamp, getDocs, increment
   } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
@@ -2919,7 +2919,15 @@ body.editing .report-delete-btn { display: block; }
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
-  const db = getFirestore(app);
+  // Auto-detect long-polling: works through proxies/networks/extensions that
+  // block Firestore's default WebChannel streaming transport (the cause of
+  // misleading "could not reach the server" / "client is offline" errors).
+  let db;
+  try {
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+  } catch (e) {
+    db = getFirestore(app); // already initialized elsewhere — fall back
+  }
 
   // Expose a single bridge object for the (non-module) app code.
   window.fb = {
@@ -5238,8 +5246,16 @@ function handleAuthState(fbUser) {
     if (!_routingAfterLogin) showView('loginView');
     return;
   }
-  // Load (or create) the Firestore profile
-  window.fb.getUser(fbUser.uid).then(snap => {
+  // Load (or create) the Firestore profile, with one retry for a transient
+  // first-connection failure (long-polling handshake can need a moment).
+  const getWithRetry = (uid, tries) => window.fb.getUser(uid).catch(err => {
+    const code = (err && err.code) || '';
+    if (tries > 0 && (code === 'unavailable' || /offline/i.test(err.message||''))) {
+      return new Promise(res => setTimeout(res, 1200)).then(() => getWithRetry(uid, tries - 1));
+    }
+    throw err;
+  });
+  getWithRetry(fbUser.uid, 2).then(snap => {
     if (!snap.exists()) {
       // First-time Google sign-in (or missing doc): create a pending member profile
       const parts = (fbUser.displayName || '').split(' ');
