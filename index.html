@@ -5259,8 +5259,19 @@ function handleAuthState(fbUser) {
     currentUser = user;
     routeUser(user);
   }).catch(e => {
+    _routingAfterLogin = false;
     const errEl = document.getElementById('loginError');
-    if (errEl) { errEl.textContent = 'Could not load your profile: ' + (e.message||e); errEl.style.display='block'; }
+    const code = (e && e.code) || '';
+    let msg;
+    if (code === 'permission-denied') {
+      msg = 'Access denied loading your profile. Please contact an administrator.';
+    } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
+      msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
+    } else {
+      msg = 'Could not load your profile: ' + (e.message || e);
+    }
+    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+    console.error('Profile load error:', code, e);
   });
 }
 
@@ -5275,6 +5286,8 @@ function routeUser(user) {
     }
     window.location.href = 'floating-roof-tank-calculator.html';
   } else {
+    // Admin / super_admin: now safe to start the collection-wide users listener
+    startUsersWatcher();
     loadDashboard();
     showView('dashView');
   }
@@ -5669,29 +5682,37 @@ document.getElementById('loginPassword').addEventListener('keydown', e => {
 // If a valid session exists, auto-restore the dashboard (skip login on refresh)
 // ── FIREBASE AUTH STATE LISTENER ─────────────────────────────────────────────
 // Replaces the old sessionStorage check. Firebase persists the session itself.
-function initFirebaseAuth() {
-  if (!window.fb) return;
-  // Realtime mirror of the users collection into the in-memory USERS array
-  // so all existing admin/profile functions keep working unchanged.
+let _usersWatcherStarted = false;
+
+// Start the collection-wide users listener ONLY after we know the signed-in
+// user is an admin/super_admin. Security rules forbid reading the whole
+// collection otherwise, and a denied listen wedges the Firestore client
+// (surfacing later as a misleading "client is offline" error).
+function startUsersWatcher() {
+  if (_usersWatcherStarted || !window.fb) return;
+  _usersWatcherStarted = true;
   try {
     window.fb.watchUsers((users) => {
       USERS.length = 0;
       users.forEach(u => USERS.push(mapUserDoc(u.uid, u)));
-      // Refresh admin views if they're open
       if (typeof renderMembersTable === 'function' && document.getElementById('membersTableBody')) {
         try { renderMembersTable(); } catch(e){}
       }
       if (typeof renderApprovals === 'function' && document.getElementById('approvalsList')) {
         try { renderApprovals(); } catch(e){}
       }
-      // Keep currentUser fresh
       if (currentUser) {
         const me = USERS.find(u => u.uid === currentUser.uid);
         if (me) currentUser = me;
       }
     });
-  } catch(e) { console.warn('watchUsers failed (likely permissions until signed in):', e); }
+  } catch(e) { console.warn('watchUsers failed:', e); }
+}
 
+function initFirebaseAuth() {
+  if (!window.fb) return;
+  // Only react to auth state here. The users-collection listener is started
+  // later, from routeUser(), once an admin identity is confirmed.
   window.fb.onAuthStateChanged((fbUser) => {
     handleAuthState(fbUser);
   });
