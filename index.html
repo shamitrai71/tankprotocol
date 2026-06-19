@@ -2887,7 +2887,70 @@ body.editing .report-delete-btn { display: block; }
 .email-textarea { width:100%;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text-bright);font-family:var(--body);font-size:0.85rem;padding:9px 13px;outline:none;resize:vertical;min-height:120px;transition:border-color 0.18s; }
 .email-textarea:focus { border-color:rgba(201,168,76,0.4); }
 
+
+.auth-divider { display:flex; align-items:center; text-align:center; margin:18px 0; color:var(--text-dim); font-size:0.72rem; }
+.auth-divider::before, .auth-divider::after { content:''; flex:1; border-bottom:1px solid var(--border); }
+.auth-divider span { padding:0 12px; text-transform:uppercase; letter-spacing:1px; }
+.btn-google { width:100%; display:flex; align-items:center; justify-content:center; background:#fff; color:#1f2937; border:1px solid #dadce0; border-radius:9px; font-family:var(--sans,sans-serif); font-weight:500; font-size:0.9rem; padding:11px; cursor:pointer; transition:all .18s; }
+.btn-google:hover { background:#f7f8f9; box-shadow:0 1px 6px rgba(0,0,0,0.15); }
 </style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+  import {
+    getAuth, onAuthStateChanged,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    sendPasswordResetEmail, signOut,
+    GoogleAuthProvider, signInWithPopup
+  } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+  import {
+    getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc,
+    collection, query, where, orderBy, onSnapshot, addDoc,
+    serverTimestamp, getDocs, increment
+  } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCP0GxYSHveuD6DuFye27a90on0OnmOkqs",
+    authDomain: "tankprotocol-d903b.firebaseapp.com",
+    projectId: "tankprotocol-d903b",
+    storageBucket: "tankprotocol-d903b.firebasestorage.app",
+    messagingSenderId: "873305711680",
+    appId: "1:873305711680:web:dccd32c48d5bbc30db6ba5"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+
+  // Expose a single bridge object for the (non-module) app code.
+  window.fb = {
+    auth, db,
+    onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
+    signInEmail: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
+    signUpEmail: (email, pw) => createUserWithEmailAndPassword(auth, email, pw),
+    resetPassword: (email) => sendPasswordResetEmail(auth, email),
+    signOut: () => signOut(auth),
+    googleSignIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
+    // Firestore helpers
+    userDoc: (uid) => doc(db, 'users', uid),
+    getUser: (uid) => getDoc(doc(db, 'users', uid)),
+    setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
+    setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
+    updateUser: (uid, data) => updateDoc(doc(db, 'users', uid), data),
+    deleteUser: (uid) => deleteDoc(doc(db, 'users', uid)),
+    watchUsers: (cb) => onSnapshot(collection(db, 'users'), (snap) => {
+      cb(snap.docs.map(d => ({ uid: d.id, ...d.data() })));
+    }),
+    addReport: (data) => addDoc(collection(db, 'reports'), { ...data, createdAt: serverTimestamp() }),
+    watchReports: (cb) => onSnapshot(query(collection(db, 'reports'), orderBy('createdAt','desc')), (snap) => {
+      cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    }),
+    bumpDownloads: (uid) => updateDoc(doc(db, 'users', uid), { downloadsUsed: increment(1) }),
+    serverTimestamp,
+  };
+
+  // Signal the app that Firebase is ready.
+  window.dispatchEvent(new Event('firebase-ready'));
+</script>
 </head>
 <body>
 
@@ -3057,6 +3120,18 @@ body.editing .report-delete-btn { display: block; }
     <a class="forgot-link" onclick="showView('forgotView')">Forgot password?</a>
 
     <button class="btn-primary" onclick="doLogin()">Sign In</button>
+
+    <div class="auth-divider"><span>or</span></div>
+
+    <button class="btn-google" onclick="doGoogleLogin()" type="button">
+      <svg width="16" height="16" viewBox="0 0 18 18" style="vertical-align:middle;margin-right:9px;">
+        <path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 01-1.8 2.72v2.26h2.92c1.71-1.57 2.68-3.88 2.68-6.62z"/>
+        <path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 009 18z"/>
+        <path fill="#FBBC05" d="M3.97 10.72a5.4 5.4 0 010-3.44V4.95H.96a9 9 0 000 8.1l3.01-2.33z"/>
+        <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A9 9 0 00.96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/>
+      </svg>
+      Continue with Google
+    </button>
 
     <div class="auth-hint">
       Don't have an account? <a onclick="showView('signupView')">Create account</a>
@@ -4769,9 +4844,11 @@ function renderMembersTable() {
 
 // ── Member Actions ──────────────────────────────────────────
 function toggleGoldMember(id) {
-  const u = USERS.find(x => x.id === id);
+  const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u || u.role === 'super_admin') return;
-  u.role = u.role === 'gold' ? 'user' : 'gold';
+  const nextRole = u.role === 'gold' ? 'user' : 'gold';
+  if (window.fb && u.uid) window.fb.updateUser(u.uid, { role: nextRole }).catch(e=>showAdminToast('Error: '+e.message));
+  u.role = nextRole;
   u.downloadLimit = getDownloadLimit(u);
   renderMembersTable();
   if (u.role === 'gold') {
@@ -4783,18 +4860,19 @@ function toggleGoldMember(id) {
 }
 
 function resetDownloads(id) {
-  const u = USERS.find(x => x.id === id);
+  const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u) return;
+  if (window.fb && u.uid) window.fb.updateUser(u.uid, { downloadsUsed: 0 }).catch(e=>showAdminToast('Error: '+e.message));
   u.downloadsUsed = 0;
   renderMembersTable();
   showAdminToast(`Downloads reset for ${u.firstName} ${u.lastName}`);
 }
 
 function removeMember(id) {
-  const u = USERS.find(x => x.id === id);
+  const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u || u.role === 'super_admin') return;
   if (!confirm(`Remove ${u.firstName} ${u.lastName}? This cannot be undone.`)) return;
-  USERS.splice(USERS.findIndex(x => x.id === id), 1);
+  if (window.fb && u.uid) window.fb.deleteUser(u.uid).catch(e=>showAdminToast('Error: '+e.message));
   renderMembersTable();
   showAdminToast(`${u.firstName} ${u.lastName} removed`);
 }
@@ -4828,8 +4906,9 @@ function renderApprovals() {
 }
 
 function approveAndWelcome(id) {
-  const u = USERS.find(x => x.id === id);
+  const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u) return;
+  if (window.fb && u.uid) window.fb.updateUser(u.uid, { approved: true }).catch(e=>showAdminToast('Error: '+e.message));
   u.approved = true;
   u.status   = 'active';
   const welcome = `Dear ${u.firstName},\n\nWelcome to Tank Protocol! Your account has been approved.\n\nYou can now log in and access the Floating Roof Tank Emissions Calculator.\n\nAs a Member you have 2 report downloads included. Upgrade to Gold for 10 downloads.\n\nBest regards,\nTank Protocol Team`;
@@ -4843,10 +4922,10 @@ function approveAndWelcome(id) {
 }
 
 function rejectMember(id) {
-  const u = USERS.find(x => x.id === id);
+  const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u) return;
   if (!confirm(`Reject and remove ${u.firstName} ${u.lastName}'s application?`)) return;
-  USERS.splice(USERS.findIndex(x => x.id === id), 1);
+  if (window.fb && u.uid) window.fb.deleteUser(u.uid).catch(e=>showAdminToast('Error: '+e.message));
   showAdminToast(`Application rejected and removed`);
   renderApprovals();
   renderMembersTable();
@@ -5064,53 +5143,7 @@ function openAdminOverlay() {
 
 
 // ─── DATA ────────────────────────────────────────────────────
-const USERS = [
-  {
-    id: 0, email: 'esraigroup@gmail.com', password: 'super123',
-    firstName: 'ESRAI', lastName: 'Group', role: 'super_admin',
-    dept: 'Executive', title: 'Super Administrator', phone: '',
-    company: 'ESRAI Group', designation: 'Super Administrator',
-    location: 'Mumbai, India', industry: 'Oil & Gas',
-    bio: 'Root-level platform access with all privileges.',
-    status: 'active', approved: true, joined: '2026',
-    downloadLimit: Infinity, downloadsUsed: 0, myReports: [],
-    calcs: 142, experience: '20+ years', specialisations: 'Environmental Compliance, VOC Emissions'
-  },
-  {
-    id: 1, email: 'admin@tankprotocol.com', password: 'admin123',
-    firstName: 'Alexandra', lastName: 'Stone', role: 'admin',
-    dept: 'Management', title: 'System Administrator', phone: '+1 (555) 010-2030',
-    company: 'Tank Protocol', designation: 'System Administrator',
-    location: 'Houston, TX', industry: 'Oil & Gas',
-    bio: 'Platform admin with full system access.',
-    status: 'active', approved: true, joined: '2023',
-    downloadLimit: Infinity, downloadsUsed: 0, myReports: [],
-    calcs: 58, experience: '10-15 years', specialisations: 'Platform Administration'
-  },
-  {
-    id: 2, email: 'user@tankprotocol.com', password: 'user123',
-    firstName: 'Jordan', lastName: 'Lee', role: 'user',
-    dept: 'Engineering', title: 'Senior Engineer', phone: '+1 (555) 040-5060',
-    company: 'Tank Protocol', designation: 'Senior Engineer',
-    location: 'Austin, TX', industry: 'Petrochemicals',
-    bio: 'Works on backend systems and data pipelines.',
-    status: 'active', approved: true, joined: '2024',
-    downloadLimit: 2, downloadsUsed: 0, myReports: [
-      { name: 'Jordan_TK-33_JetA_Report', company: 'Tank Protocol', tank: 'TK-33', location: 'Austin, TX', liquid: 'Jet A', date: 'Mar 16, 2026', type: 'EFRT', size: '143 KB' }
-    ],
-    calcs: 34, experience: '5-10 years', specialisations: 'Process Engineering'
-  },
-  {
-    id: 3, email: 'charlie@tankprotocol.com', password: 'charlie123',
-    firstName: 'Charlie', lastName: 'Kim', role: 'user',
-    dept: 'Design', title: 'UX Designer', phone: '',
-    company: 'Tank Protocol', designation: 'UX Designer',
-    location: 'Seoul, KR', industry: 'Environmental Consulting',
-    bio: '', status: 'pending', approved: false, joined: '2025',
-    downloadLimit: 2, downloadsUsed: 0, myReports: [],
-    calcs: 0, experience: '2-5 years', specialisations: ''
-  }
-];
+let USERS = [];  // Populated in realtime from Firestore (window.fb.watchUsers)
 
 // Download limits per role
 const DOWNLOAD_LIMITS = { super_admin: Infinity, admin: Infinity, gold: 10, user: 2 };
@@ -5132,53 +5165,126 @@ let pendingAction = null;
 
 // ─── AUTH ─────────────────────────────────────────────────────
 
+let _authReady = false;
+let _routingAfterLogin = false;
+
+// Map a Firestore user doc into the in-memory shape the app expects
+function mapUserDoc(uid, d) {
+  return {
+    id: uid, uid, email: d.email || '',
+    firstName: d.firstName || '', lastName: d.lastName || '',
+    role: d.role || 'user',
+    company: d.company || '', designation: d.designation || d.title || '',
+    title: d.title || d.designation || '', dept: d.dept || '',
+    location: d.location || '', industry: d.industry || '',
+    phone: d.phone || '', bio: d.bio || '',
+    status: d.approved ? 'active' : 'pending',
+    approved: d.approved === true,
+    joined: d.joined || (d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().getFullYear().toString() : ''),
+    downloadLimit: DOWNLOAD_LIMITS[d.role] ?? 2,
+    downloadsUsed: d.downloadsUsed || 0,
+    myReports: d.myReports || [],
+    calcs: d.calcs || 0,
+    experience: d.experience || '', specialisations: d.specialisations || ''
+  };
+}
+
 function doLogin() {
   const email = document.getElementById('loginEmail').value.trim();
   const pw    = document.getElementById('loginPassword').value;
   const errEl = document.getElementById('loginError');
   errEl.style.display = 'none';
+  if (!email.includes('@')) { errEl.textContent = 'Please enter a valid email address.'; errEl.style.display='block'; return; }
+  if (!window.fb) { errEl.textContent = 'Still connecting to the server. Please try again in a moment.'; errEl.style.display='block'; return; }
 
-  const user = USERS.find(u => u.email === email && u.password === pw);
-  if (!user) {
-    errEl.textContent = 'Invalid email or password. Please try again.';
+  _routingAfterLogin = true;
+  window.fb.signInEmail(email, pw).catch(e => {
+    _routingAfterLogin = false;
+    errEl.textContent = friendlyAuthError(e);
     errEl.style.display = 'block';
+  });
+}
+
+function doGoogleLogin() {
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.style.display = 'none';
+  if (!window.fb) { if(errEl){errEl.textContent='Still connecting to the server. Please try again in a moment.'; errEl.style.display='block';} return; }
+  _routingAfterLogin = true;
+  window.fb.googleSignIn().catch(e => {
+    _routingAfterLogin = false;
+    if (errEl) { errEl.textContent = friendlyAuthError(e); errEl.style.display='block'; }
+  });
+}
+
+function friendlyAuthError(e) {
+  const code = (e && e.code) || '';
+  const map = {
+    'auth/invalid-credential': 'Invalid email or password. Please try again.',
+    'auth/wrong-password': 'Invalid email or password. Please try again.',
+    'auth/user-not-found': 'No account found with that email.',
+    'auth/email-already-in-use': 'An account with this email already exists.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/too-many-requests': 'Too many attempts. Please wait a moment and try again.',
+    'auth/popup-closed-by-user': 'Sign-in was cancelled.',
+    'auth/network-request-failed': 'Network error. Check your connection and try again.',
+  };
+  return map[code] || (e && e.message) || 'Authentication failed. Please try again.';
+}
+
+// Central auth-state handler — runs on login, signup, refresh, logout
+function handleAuthState(fbUser) {
+  if (!fbUser) {
+    currentUser = null;
+    if (!_routingAfterLogin) showView('loginView');
     return;
   }
+  // Load (or create) the Firestore profile
+  window.fb.getUser(fbUser.uid).then(snap => {
+    if (!snap.exists()) {
+      // First-time Google sign-in (or missing doc): create a pending member profile
+      const parts = (fbUser.displayName || '').split(' ');
+      const profile = {
+        email: fbUser.email || '',
+        firstName: parts[0] || (fbUser.email||'').split('@')[0],
+        lastName: parts.slice(1).join(' ') || '',
+        role: 'user', approved: false,
+        company: '', designation: '', location: '', industry: '',
+        phone: '', bio: '', downloadsUsed: 0,
+        createdAt: window.fb.serverTimestamp()
+      };
+      return window.fb.setUser(fbUser.uid, profile).then(() => mapUserDoc(fbUser.uid, profile));
+    }
+    return mapUserDoc(fbUser.uid, snap.data());
+  }).then(user => {
+    currentUser = user;
+    routeUser(user);
+  }).catch(e => {
+    const errEl = document.getElementById('loginError');
+    if (errEl) { errEl.textContent = 'Could not load your profile: ' + (e.message||e); errEl.style.display='block'; }
+  });
+}
 
-  currentUser = user;
-
-  // Write session for all users (used for auth guard on refresh)
-  sessionStorage.setItem('tp_session', JSON.stringify({
-    id: user.id,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    email: user.email,
-    role: user.role
-  }));
-
-  // Check if member account is approved
+function routeUser(user) {
+  _routingAfterLogin = false;
   if (user.role === 'user' || user.role === 'gold') {
-    if (user.approved === false) {
-      currentUser = null;
-      sessionStorage.removeItem('tp_session');
-      errEl.textContent = 'Your account is pending approval. You will receive an email once approved.';
-      errEl.style.display = 'block';
+    if (!user.approved) {
+      const errEl = document.getElementById('loginError');
+      if (errEl) { errEl.textContent = 'Your account is pending approval. You will receive an email once approved.'; errEl.style.display='block'; }
+      window.fb.signOut();
       return;
     }
-    // Approved members go straight to the calculator
     window.location.href = 'floating-roof-tank-calculator.html';
   } else {
-    // Admin / Super Admin stay in the app dashboard
     loadDashboard();
     showView('dashView');
   }
 }
 
 function doLogout() {
+  if (window.fb) window.fb.signOut();
   currentUser = null;
-  sessionStorage.removeItem('tp_session');
-  document.getElementById('loginEmail').value = '';
-  document.getElementById('loginPassword').value = '';
+  const le = document.getElementById('loginEmail'); if (le) le.value='';
+  const lp = document.getElementById('loginPassword'); if (lp) lp.value='';
   showView('loginView');
 }
 
@@ -5187,15 +5293,12 @@ function doReset() {
   const err = document.getElementById('resetError');
   const suc = document.getElementById('resetSuccess');
   err.style.display = 'none'; suc.style.display = 'none';
-
-  if (!email.includes('@')) {
-    err.textContent = 'Please enter a valid email address.';
-    err.style.display = 'block';
-    return;
-  }
-
-  suc.style.display = 'block';
-  setTimeout(() => showView('loginView'), 2200);
+  if (!email.includes('@')) { err.textContent = 'Please enter a valid email address.'; err.style.display = 'block'; return; }
+  if (!window.fb) { err.textContent = 'Still connecting. Please try again in a moment.'; err.style.display='block'; return; }
+  window.fb.resetPassword(email).then(() => {
+    suc.style.display = 'block';
+    setTimeout(() => showView('loginView'), 2600);
+  }).catch(e => { err.textContent = friendlyAuthError(e); err.style.display='block'; });
 }
 
 // ─── VIEWS ────────────────────────────────────────────────────
@@ -5324,7 +5427,18 @@ function saveProfile() {
   if (_g('editLocation'))    currentUser.location    = _g('editLocation').value;
   if (_g('editDesignation')) currentUser.designation = _g('editDesignation').value;
   if (_g('editIndustry'))    currentUser.industry    = _g('editIndustry').value;
-  if (np) currentUser.password = np;
+  // Persist profile changes to Firestore
+  if (window.fb && currentUser.uid) {
+    window.fb.updateUser(currentUser.uid, {
+      firstName: currentUser.firstName, lastName: currentUser.lastName,
+      dept: currentUser.dept || '', title: currentUser.title || '',
+      phone: currentUser.phone || '', bio: currentUser.bio || '',
+      company: currentUser.company || '', location: currentUser.location || '',
+      designation: currentUser.designation || '', industry: currentUser.industry || ''
+    }).catch(e => toast('Could not save to server: ' + e.message, true));
+  }
+  // Password change via Firebase Auth (if requested) is handled separately;
+  // for now direct users to the reset-password flow for credential changes.
 
   // Refresh new sidebar fields safely
   if (_g('sidebarDesignation')) _g('sidebarDesignation').textContent = currentUser.designation || currentUser.title || '';
@@ -5513,6 +5627,7 @@ function changeUserRole(id, newRole) {
     return;
   }
   const oldRole = u.role;
+  if (window.fb && u.uid) window.fb.updateUser(u.uid, { role: newRole }).catch(e=>toast('Error: '+e.message));
   u.role = newRole;
   renderUserTable();
   const msg = newRole === 'admin'
@@ -5552,28 +5667,41 @@ document.getElementById('loginPassword').addEventListener('keydown', e => {
 
 // ── PAGE LOAD AUTH CHECK ─────────────────────────────────────────────────────
 // If a valid session exists, auto-restore the dashboard (skip login on refresh)
-(function checkSession() {
-  const raw = sessionStorage.getItem('tp_session');
-  if (!raw) return; // no session → stay on login
+// ── FIREBASE AUTH STATE LISTENER ─────────────────────────────────────────────
+// Replaces the old sessionStorage check. Firebase persists the session itself.
+function initFirebaseAuth() {
+  if (!window.fb) return;
+  // Realtime mirror of the users collection into the in-memory USERS array
+  // so all existing admin/profile functions keep working unchanged.
   try {
-    const session = JSON.parse(raw);
-    const user = USERS.find(u => u.id === session.id && u.email === session.email);
-    if (!user) { sessionStorage.removeItem('tp_session'); return; }
-    // Valid session found - restore by role
-    currentUser = user;
-    if (user.role === 'user') {
-      // Members go to calculator (but don't redirect on refresh - stay on page)
-      // Just show the dashboard view so they can access profile if needed
-      loadDashboard();
-      showView('dashView');
-    } else {
-      loadDashboard();
-      showView('dashView');
-    }
-  } catch(e) {
-    sessionStorage.removeItem('tp_session');
-  }
-})();
+    window.fb.watchUsers((users) => {
+      USERS.length = 0;
+      users.forEach(u => USERS.push(mapUserDoc(u.uid, u)));
+      // Refresh admin views if they're open
+      if (typeof renderMembersTable === 'function' && document.getElementById('membersTableBody')) {
+        try { renderMembersTable(); } catch(e){}
+      }
+      if (typeof renderApprovals === 'function' && document.getElementById('approvalsList')) {
+        try { renderApprovals(); } catch(e){}
+      }
+      // Keep currentUser fresh
+      if (currentUser) {
+        const me = USERS.find(u => u.uid === currentUser.uid);
+        if (me) currentUser = me;
+      }
+    });
+  } catch(e) { console.warn('watchUsers failed (likely permissions until signed in):', e); }
+
+  window.fb.onAuthStateChanged((fbUser) => {
+    handleAuthState(fbUser);
+  });
+}
+
+if (window.fb) {
+  initFirebaseAuth();
+} else {
+  window.addEventListener('firebase-ready', initFirebaseAuth, { once: true });
+}
 
 // ─── SIGNUP ───────────────────────────────────────────────────────
 let signupData = {};
@@ -5616,22 +5744,42 @@ function signupSubmit() {
   if (pw.length < 8)   { showSignupError('Password must be at least 8 characters.'); return; }
   if (pw !== cpw)       { showSignupError('Passwords do not match.'); return; }
   if (!tms)             { showSignupError('Please accept the Terms of Service to continue.'); return; }
-  signupData.password = pw;
-  const newUser = {
-    id: Date.now(), email: signupData.email, password: signupData.password,
-    firstName: signupData.firstName, lastName: signupData.lastName,
-    role: 'user', dept: signupData.dept || '', title: signupData.designation || '',
-    designation: signupData.designation || '', company: signupData.company || '',
-    location: signupData.location || '', industry: signupData.industry || '',
-    phone: '', bio: '', status: 'active', joined: new Date().getFullYear().toString()
-  };
-  USERS.push(newUser);
-  document.getElementById('su_successName').textContent = 'Welcome, ' + newUser.firstName + '!';
-  document.getElementById('su_successMeta').innerHTML =
-    newUser.company + ' &nbsp;&middot;&nbsp; ' + newUser.designation +
-    (newUser.location ? '<br>&#128205; ' + newUser.location : '');
-  document.getElementById('signupBackLink').style.display = 'none';
-  goToStep(4);
+  if (!window.fb)      { showSignupError('Still connecting to the server. Please try again in a moment.'); return; }
+
+  // Suppress auto-routing while we create the profile, so the pending user
+  // sees the success screen rather than being bounced by the approval gate.
+  _routingAfterLogin = true;
+  const btn = document.getElementById('su_submitBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Creating account…'; }
+
+  window.fb.signUpEmail(signupData.email, pw).then(cred => {
+    const uid = cred.user.uid;
+    const profile = {
+      email: signupData.email,
+      firstName: signupData.firstName, lastName: signupData.lastName,
+      role: 'user', approved: false,
+      dept: signupData.dept || '', title: signupData.designation || '',
+      designation: signupData.designation || '', company: signupData.company || '',
+      location: signupData.location || '', industry: signupData.industry || '',
+      phone: '', bio: '', downloadsUsed: 0,
+      createdAt: window.fb.serverTimestamp()
+    };
+    return window.fb.setUser(uid, profile).then(() => {
+      document.getElementById('su_successName').textContent = 'Welcome, ' + signupData.firstName + '!';
+      document.getElementById('su_successMeta').innerHTML =
+        (signupData.company || '') + ' &nbsp;&middot;&nbsp; ' + (signupData.designation || '') +
+        (signupData.location ? '<br>&#128205; ' + signupData.location : '') +
+        '<br><span style="color:var(--gold-light);font-size:0.8rem;">Your account is pending approval by an administrator.</span>';
+      const bl = document.getElementById('signupBackLink'); if (bl) bl.style.display = 'none';
+      goToStep(4);
+      // Sign out so they can't sit in an unapproved session
+      setTimeout(() => { window.fb.signOut(); _routingAfterLogin = false; }, 400);
+    });
+  }).catch(e => {
+    _routingAfterLogin = false;
+    showSignupError(friendlyAuthError(e));
+    if (btn) { btn.disabled = false; btn.textContent = 'Create Account'; }
+  });
 }
 
 function signupDone() {
@@ -5761,13 +5909,8 @@ let isEditable = false;
 let pendingChanges = {};
 
 function initProfile() {
-  // Try reading session
-  const raw = sessionStorage.getItem('tp_session');
-  if (raw) {
-    try { sessionUser = JSON.parse(raw); } catch(e) {}
-  }
-
-  // If no session found, exit - user must log in first
+  // Use the authenticated currentUser (Firebase) instead of the old session store
+  sessionUser = currentUser;
   if (!sessionUser) return;
 
   isSuperAdmin = sessionUser.role === 'super_admin';
@@ -5777,8 +5920,8 @@ function initProfile() {
   const viewId = params.get('view');
 
   if (viewId && isSuperAdmin) {
-    viewingUser = USERS.find(u => u.id === parseInt(viewId)) || USERS.find(u => u.id === sessionUser.id);
-    if (viewingUser.id !== sessionUser.id) {
+    viewingUser = USERS.find(u => u.uid === viewId || u.id === viewId) || USERS.find(u => u.id === sessionUser.id);
+    if (viewingUser && viewingUser.id !== sessionUser.id) {
       document.getElementById('adminViewBanner').classList.add('show');
       document.getElementById('adminViewName').textContent = viewingUser.firstName + ' ' + viewingUser.lastName;
       document.getElementById('viewingBanner').classList.add('show');

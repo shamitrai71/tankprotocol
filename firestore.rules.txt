@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() { return request.auth != null; }
+    function myRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    function isAdmin() {
+      return isSignedIn() && (myRole() == 'admin' || myRole() == 'super_admin');
+    }
+
+    match /users/{uid} {
+      // A user can read their own doc; admins can read all
+      allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
+      // On signup, a user creates their OWN doc, but cannot self-promote or self-approve
+      allow create: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.role == 'user'
+                    && request.resource.data.approved == false;
+      // Users may edit their own profile but NOT role/approved
+      allow update: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.role == resource.data.role
+                    && request.resource.data.approved == resource.data.approved;
+      // Only super_admin can change role/approved or delete
+      allow update, delete: if isSignedIn() && myRole() == 'super_admin';
+    }
+
+    match /reports/{id} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow update, delete: if false;
+    }
+  }
+}
