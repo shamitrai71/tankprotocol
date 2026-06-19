@@ -1,2 +1,2 @@
 [build.environment]
-  SECRETS_SCAN_OMIT_KEYS = "AIzaSyCP0GxYSHveuD6DuFye27a90on0OnmOkqs"
+  SECRETS_SCAN_OMIT_VALUES = "AIzaSyCP0GxYSHveuD6DuFye27a90on0OnmOkqs"
