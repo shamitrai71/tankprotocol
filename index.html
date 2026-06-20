@@ -5221,14 +5221,13 @@ function doGoogleLogin() {
   if (errEl) errEl.style.display = 'none';
   if (!window.fb) { if(errEl){errEl.textContent='Still connecting to the server. Please try again in a moment.'; errEl.style.display='block';} return; }
   _routingAfterLogin = true;
-  // Popups break under strict Cross-Origin-Opener-Policy (the popup cannot
-  // report back via window.closed). Use full-page redirect, which is COOP-safe.
-  window.fb.googleSignInRedirect().catch(e => {
-    // If redirect itself is blocked, fall back to popup as a last resort.
-    window.fb.googleSignIn().catch(e2 => {
-      _routingAfterLogin = false;
-      if (errEl) { errEl.textContent = friendlyAuthError(e2); errEl.style.display='block'; }
-    });
+  // Use popup with the COOP header "same-origin-allow-popups" (set in netlify.toml),
+  // which lets the popup report back. Redirect mode is avoided here because the
+  // app runs on a custom domain (tankprotocol.com) while the Firebase auth handler
+  // lives on firebaseapp.com, and that cross-domain redirect handshake fails.
+  window.fb.googleSignIn().catch(e => {
+    _routingAfterLogin = false;
+    if (errEl) { errEl.textContent = friendlyAuthError(e); errEl.style.display='block'; }
   });
 }
 
@@ -5313,8 +5312,21 @@ function handleAuthState(fbUser) {
   });
 }
 
+function dismissSplash() {
+  const overlay = document.getElementById('splashOverlay');
+  if (overlay && overlay.style.display !== 'none') {
+    overlay.style.display = 'none';
+    if (window._splashAnimRunning) window._splashAnimRunning = false;
+    const cur = document.getElementById('cursor');
+    if (cur) cur.style.display = 'none';
+  }
+}
+
 function routeUser(user) {
   _routingAfterLogin = false;
+  // After a redirect-login the page reloads fresh with the splash overlay on
+  // top — dismiss it so the routed view is actually visible.
+  dismissSplash();
   if (user.role === 'user' || user.role === 'gold') {
     if (!user.approved) {
       const errEl = document.getElementById('loginError');
