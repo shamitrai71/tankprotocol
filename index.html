@@ -2944,6 +2944,15 @@ body.editing .report-delete-btn { display: block; }
     userDoc: (uid) => doc(db, 'users', uid),
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
+    // One-time read via realtime listener — uses the streaming transport that
+    // works on networks where one-shot getDoc stalls. Resolves on first snapshot.
+    getUserOnce: (uid) => new Promise((resolve, reject) => {
+      let done = false;
+      const unsub = onSnapshot(doc(db, 'users', uid),
+        (snap) => { if (done) return; done = true; try { unsub(); } catch(e){} resolve(snap); },
+        (err)  => { if (done) return; done = true; try { unsub(); } catch(e){} reject(err); }
+      );
+    }),
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
     updateUser: (uid, data) => updateDoc(doc(db, 'users', uid), data),
@@ -5261,16 +5270,17 @@ function handleAuthState(fbUser) {
   // Clear any stale error banner the moment we start a fresh load
   const _e0 = document.getElementById('loginError'); if (_e0) _e0.style.display = 'none';
 
-  // Plain getDoc resolves over the realtime channel (proven working: 200s).
-  // getDocFromServer was hanging in this environment, so we avoid it.
-  // A timeout guarantees the flow never freezes silently.
+  // Read the profile via a one-time realtime-listener snapshot. The streaming
+  // transport is proven working here (channel requests returned 200), whereas
+  // one-shot getDoc/getDocFromServer stall on this network.
   const withTimeout = (p, ms) => Promise.race([
     p,
     new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout', message: 'profile read timed out' }), ms))
   ]);
-  const readProfile = (uid, tries) => withTimeout(window.fb.getUser(uid), 8000).catch(err => {
-    if (tries > 0) return new Promise(res => setTimeout(res, 1000)).then(() => readProfile(uid, tries - 1));
-    throw err;
+  const readProfile = (uid, tries) => withTimeout(window.fb.getUserOnce(uid), 10000).catch(err => {
+    if (tries > 0) return new Promise(res => setTimeout(res, 1200)).then(() => readProfile(uid, tries - 1));
+    // final fallback: try plain getDoc once
+    return window.fb.getUser(uid);
   });
   readProfile(fbUser.uid, 2).then(snap => {
     if (!snap.exists()) {
