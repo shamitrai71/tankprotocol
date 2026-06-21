@@ -5256,24 +5256,23 @@ function handleAuthState(fbUser) {
     if (!_routingAfterLogin) showView('loginView');
     return;
   }
-  if (_authHandling || _profileLoaded) { TPLOG('handleAuthState: skipped (handling='+_authHandling+', loaded='+_profileLoaded+')'); return; }
+  if (_authHandling || _profileLoaded) { return; }
   _authHandling = true;
-  TPLOG('handleAuthState: loading profile for '+fbUser.uid);
   // Clear any stale error banner the moment we start a fresh load
   const _e0 = document.getElementById('loginError'); if (_e0) _e0.style.display = 'none';
 
-  // Server-first read avoids a stale/empty local cache resolving as "offline".
-  const getWithRetry = (uid, tries) => window.fb.getUserServer(uid).catch(err => {
-    const code = (err && err.code) || '';
-    if (tries > 0 && (code === 'unavailable' || /offline/i.test(err.message||''))) {
-      return new Promise(res => setTimeout(res, 1500)).then(() => getWithRetry(uid, tries - 1));
-    }
-    // last resort: try cache-tolerant read before giving up
-    if (tries === 0) return window.fb.getUser(uid);
+  // Plain getDoc resolves over the realtime channel (proven working: 200s).
+  // getDocFromServer was hanging in this environment, so we avoid it.
+  // A timeout guarantees the flow never freezes silently.
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout', message: 'profile read timed out' }), ms))
+  ]);
+  const readProfile = (uid, tries) => withTimeout(window.fb.getUser(uid), 8000).catch(err => {
+    if (tries > 0) return new Promise(res => setTimeout(res, 1000)).then(() => readProfile(uid, tries - 1));
     throw err;
   });
-  getWithRetry(fbUser.uid, 3).then(snap => {
-    TPLOG('profile read OK', 'exists='+snap.exists());
+  readProfile(fbUser.uid, 2).then(snap => {
     if (!snap.exists()) {
       // First-time Google sign-in (or missing doc): create a pending member profile
       const parts = (fbUser.displayName || '').split(' ');
@@ -5293,7 +5292,6 @@ function handleAuthState(fbUser) {
     _profileLoaded = true;
     _authHandling = false;
     currentUser = user;
-    TPLOG('profile mapped', 'role='+user.role+' approved='+user.approved);
     const errEl = document.getElementById('loginError'); if (errEl) errEl.style.display = 'none';
     routeUser(user);
   }).catch(e => {
@@ -5311,7 +5309,6 @@ function handleAuthState(fbUser) {
       msg = 'Could not load your profile: ' + (e.message || e);
     }
     if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
-    TPLOG('PROFILE LOAD ERROR', code+' :: '+(e.message||e));
     console.error('Profile load error:', code, e);
   });
 }
@@ -5328,9 +5325,7 @@ function dismissSplash() {
 
 function routeUser(user) {
   _routingAfterLogin = false;
-  TPLOG('routeUser', 'role='+user.role+' approved='+user.approved);
   dismissSplash();
-  TPLOG('splash dismissed');
   if (user.role === 'user' || user.role === 'gold') {
     if (!user.approved) {
       const errEl = document.getElementById('loginError');
@@ -5338,14 +5333,11 @@ function routeUser(user) {
       window.fb.signOut();
       return;
     }
-    TPLOG('routing -> calculator (approved member)');
     window.location.href = 'floating-roof-tank-calculator.html';
   } else {
-    TPLOG('routing -> dashboard (admin)');
     startUsersWatcher();
     loadDashboard();
     showView('dashView');
-    TPLOG('dashboard shown');
   }
 }
 
@@ -5766,16 +5758,13 @@ function startUsersWatcher() {
 }
 
 function initFirebaseAuth() {
-  if (!window.fb) { TPLOG('initFirebaseAuth: no window.fb!'); return; }
-  TPLOG('initFirebaseAuth: start');
+  if (!window.fb) { return; }
   // If we are returning from a Google redirect sign-in, complete it.
   // (onAuthStateChanged will also fire, but this surfaces redirect errors.)
   if (window.fb.getRedirectResult) {
     window.fb.getRedirectResult().then(res => {
-      TPLOG('getRedirectResult', res && res.user ? ('user='+res.user.uid) : 'no pending redirect');
       if (res && res.user) { _routingAfterLogin = true; }
     }).catch(e => {
-      TPLOG('getRedirectResult ERROR', (e&&e.code)||e.message);
       const errEl = document.getElementById('loginError');
       if (errEl) { errEl.textContent = friendlyAuthError(e); errEl.style.display='block'; }
     });
@@ -5783,35 +5772,14 @@ function initFirebaseAuth() {
   // React to auth state. The users-collection listener is started later,
   // from routeUser(), once an admin identity is confirmed.
   window.fb.onAuthStateChanged((fbUser) => {
-    TPLOG('onAuthStateChanged', fbUser ? ('signed-in uid='+fbUser.uid) : 'signed-out');
     handleAuthState(fbUser);
   });
-  TPLOG('initFirebaseAuth: listener attached');
-}
-
-// ── TEMP DEBUG LOGGER (remove once auth confirmed) ──────────────────────────
-window._TPLOG = [];
-function TPLOG(step, extra) {
-  const line = '[TP] ' + step + (extra ? ' :: ' + extra : '');
-  window._TPLOG.push(line);
-  console.log('%c'+line, 'color:#c9a84c;font-weight:bold');
-  // Also paint to an on-screen box so we can read it without console
-  let box = document.getElementById('tpDebugBox');
-  if (!box) {
-    box = document.createElement('div');
-    box.id = 'tpDebugBox';
-    box.style.cssText = 'position:fixed;left:8px;bottom:8px;z-index:99999;max-width:90vw;max-height:40vh;overflow:auto;background:rgba(8,12,20,0.95);color:#9fe;border:1px solid #c9a84c;border-radius:8px;padding:8px 10px;font:11px monospace;white-space:pre-wrap;';
-    document.body.appendChild(box);
-  }
-  box.textContent = window._TPLOG.join('\n');
 }
 
 if (window.fb) {
-  TPLOG('firebase bridge present at load');
   initFirebaseAuth();
 } else {
-  TPLOG('waiting for firebase-ready event');
-  window.addEventListener('firebase-ready', () => { TPLOG('firebase-ready fired'); initFirebaseAuth(); }, { once: true });
+  window.addEventListener('firebase-ready', initFirebaseAuth, { once: true });
 }
 
 // ─── SIGNUP ───────────────────────────────────────────────────────
