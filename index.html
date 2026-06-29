@@ -2950,25 +2950,14 @@ body.editing .report-delete-btn { display: block; }
     getUserOnce: (uid) => new Promise((resolve, reject) => {
       let done = false;
       const finish = (fn, val) => { if (done) return; done = true; try { unsub(); } catch(e){} fn(val); };
-      // Listen with metadata so we can prefer a SERVER snapshot. Transient
-      // "unavailable/offline" errors are ignored — onSnapshot keeps retrying
-      // and will deliver the doc once the channel (proven 200) is ready.
+      // Accept the FIRST snapshot that arrives — cache or server, doesn't matter,
+      // the data is correct either way. (The earlier "wait for server snapshot"
+      // logic could hang when the server-confirm metadata never flipped.)
       const unsub = onSnapshot(
         doc(db, 'users', uid),
-        { includeMetadataChanges: true },
-        (snap) => {
-          // Accept the snapshot once it's from the server (not just cold cache),
-          // OR if it exists at all (cache hit is fine too).
-          if (!snap.metadata.fromCache || snap.exists()) finish(resolve, snap);
-        },
-        (err) => {
-          const code = (err && err.code) || '';
-          // Only give up on real, non-transient errors (e.g. permission-denied).
-          if (code !== 'unavailable') finish(reject, err);
-          // else: ignore and let the listener keep retrying.
-        }
+        (snap) => finish(resolve, snap),
+        (err) => finish(reject, err)
       );
-      // Safety net: if nothing arrives in 15s, reject so the UI can react.
       setTimeout(() => finish(reject, { code: 'timeout', message: 'profile read timed out' }), 15000);
     }),
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
