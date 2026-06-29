@@ -2903,7 +2903,7 @@ body.editing .report-delete-btn { display: block; }
     GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult
   } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
   import {
-    getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+    getFirestore, initializeFirestore,
     doc, getDoc, getDocFromServer, setDoc, updateDoc, deleteDoc,
     collection, query, where, orderBy, onSnapshot, addDoc,
     serverTimestamp, getDocs, increment
@@ -2925,13 +2925,9 @@ body.editing .report-delete-btn { display: block; }
   // misleading "could not reach the server" / "client is offline" errors).
   let db;
   try {
-    db = initializeFirestore(app, {
-      experimentalAutoDetectLongPolling: true,
-      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-    });
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
   } catch (e) {
-    try { db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true }); }
-    catch (e2) { db = getFirestore(app); }
+    db = getFirestore(app);
   }
 
   // Expose a single bridge object for the (non-module) app code.
@@ -2953,10 +2949,27 @@ body.editing .report-delete-btn { display: block; }
     // works on networks where one-shot getDoc stalls. Resolves on first snapshot.
     getUserOnce: (uid) => new Promise((resolve, reject) => {
       let done = false;
-      const unsub = onSnapshot(doc(db, 'users', uid),
-        (snap) => { if (done) return; done = true; try { unsub(); } catch(e){} resolve(snap); },
-        (err)  => { if (done) return; done = true; try { unsub(); } catch(e){} reject(err); }
+      const finish = (fn, val) => { if (done) return; done = true; try { unsub(); } catch(e){} fn(val); };
+      // Listen with metadata so we can prefer a SERVER snapshot. Transient
+      // "unavailable/offline" errors are ignored — onSnapshot keeps retrying
+      // and will deliver the doc once the channel (proven 200) is ready.
+      const unsub = onSnapshot(
+        doc(db, 'users', uid),
+        { includeMetadataChanges: true },
+        (snap) => {
+          // Accept the snapshot once it's from the server (not just cold cache),
+          // OR if it exists at all (cache hit is fine too).
+          if (!snap.metadata.fromCache || snap.exists()) finish(resolve, snap);
+        },
+        (err) => {
+          const code = (err && err.code) || '';
+          // Only give up on real, non-transient errors (e.g. permission-denied).
+          if (code !== 'unavailable') finish(reject, err);
+          // else: ignore and let the listener keep retrying.
+        }
       );
+      // Safety net: if nothing arrives in 15s, reject so the UI can react.
+      setTimeout(() => finish(reject, { code: 'timeout', message: 'profile read timed out' }), 15000);
     }),
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
@@ -5282,10 +5295,12 @@ function handleAuthState(fbUser) {
     p,
     new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout', message: 'profile read timed out' }), ms))
   ]);
-  const readProfile = (uid, tries) => withTimeout(window.fb.getUserOnce(uid), 10000).catch(err => {
-    if (tries > 0) return new Promise(res => setTimeout(res, 1200)).then(() => readProfile(uid, tries - 1));
-    // final fallback: try plain getDoc once
-    return window.fb.getUser(uid);
+  const readProfile = (uid, tries) => window.fb.getUserOnce(uid).catch(err => {
+    const code = (err && err.code) || '';
+    if (tries > 0 && (code === 'timeout' || code === 'unavailable')) {
+      return new Promise(res => setTimeout(res, 1000)).then(() => readProfile(uid, tries - 1));
+    }
+    throw err;
   });
   readProfile(fbUser.uid, 2).then(snap => {
     if (!snap.exists()) {
