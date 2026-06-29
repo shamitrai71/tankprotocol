@@ -2925,7 +2925,12 @@ body.editing .report-delete-btn { display: block; }
   // misleading "could not reach the server" / "client is offline" errors).
   let db;
   try {
-    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+    // Force long-polling instead of auto-DETECT. Auto-detect probes the
+    // connection by repeatedly opening channels; on this network that probe
+    // never converges and loops forever (dozens of channel? requests over 50s),
+    // so the snapshot listener never settles and reads time out. Forcing it
+    // uses one stable long-poll connection.
+    db = initializeFirestore(app, { experimentalForceLongPolling: true });
   } catch (e) {
     db = getFirestore(app);
   }
