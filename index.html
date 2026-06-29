@@ -2951,8 +2951,6 @@ body.editing .report-delete-btn { display: block; }
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
     getUserCacheFirst: (uid) => getDoc(doc(db, 'users', uid)),
-    // Robust one-time read: server first, then cache/default getDoc, then a short
-    // realtime-listener fallback for networks where one-shot reads behave poorly.
     getUserOnce: async (uid) => {
       const ref = doc(db, 'users', uid);
       const withTimeout = (p, ms, code='timeout', message='profile read timed out') => Promise.race([
@@ -2990,6 +2988,10 @@ body.editing .report-delete-btn { display: block; }
     watchUsers: (cb) => onSnapshot(collection(db, 'users'), (snap) => {
       cb(snap.docs.map(d => ({ uid: d.id, ...d.data() })));
     }),
+    findUserByEmail: async (email) => {
+      const qy = query(collection(db, 'users'), where('email', '==', email), limit(2));
+      return getDocs(qy);
+    },
     addReport: (data) => addDoc(collection(db, 'reports'), { ...data, createdAt: serverTimestamp() }),
     watchReports: (cb) => onSnapshot(query(collection(db, 'reports'), orderBy('createdAt','desc')), (snap) => {
       cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -5300,6 +5302,7 @@ function handleAuthState(fbUser) {
   const errEl = document.getElementById('loginError');
   if (errEl) errEl.style.display = 'none';
 
+  const isGoogleUser = !!fbUser.providerData?.some(p => p.providerId === 'google.com');
   const readProfile = (uid, tries) => window.fb.getUserOnce(uid).catch(err => {
     const code = (err && err.code) || '';
     if (tries > 0 && (code === 'timeout' || code === 'unavailable' || code === 'deadline-exceeded')) {
@@ -5308,15 +5311,38 @@ function handleAuthState(fbUser) {
     throw err;
   });
 
+  const resolveByEmail = async () => {
+    if (!fbUser.email || !window.fb.findUserByEmail) {
+      const err = new Error('Profile read timed out and email fallback is unavailable.');
+      err.code = 'timeout';
+      throw err;
+    }
+    const snap = await window.fb.findUserByEmail(fbUser.email);
+    if (snap.empty) {
+      const err = new Error('No Firestore user profile was found for this email.');
+      err.code = 'profile-not-found';
+      throw err;
+    }
+    if (snap.docs.length > 1) {
+      const err = new Error('Multiple Firestore user profiles were found for this email.');
+      err.code = 'duplicate-profile';
+      throw err;
+    }
+    const d = snap.docs[0];
+    const raw = d.data() || {};
+    const user = mapUserDoc(d.id, raw);
+    user._resolvedByEmail = true;
+    user._authUid = fbUser.uid;
+    return user;
+  };
+
   readProfile(fbUser.uid, 1).then(snap => {
     if (!snap.exists()) {
-      const isGoogleUser = !!fbUser.providerData?.some(p => p.providerId === 'google.com');
       if (!isGoogleUser) {
         const missing = new Error('Profile document not found for this account.');
         missing.code = 'profile-not-found';
         throw missing;
       }
-      // First-time Google sign-in: create a pending member profile.
       const parts = (fbUser.displayName || '').split(' ');
       const profile = {
         email: fbUser.email || '',
@@ -5335,10 +5361,20 @@ function handleAuthState(fbUser) {
       console.warn('Profile loaded without explicit role; defaulting to user for', fbUser.email);
     }
     return user;
+  }).catch(async e => {
+    const code = (e && e.code) || '';
+    if ((code === 'timeout' || code === 'deadline-exceeded' || code === 'unavailable') && fbUser.email) {
+      console.warn('Primary UID profile read failed; trying email fallback for', fbUser.email, code);
+      return resolveByEmail();
+    }
+    throw e;
   }).then(user => {
     _profileLoaded = true;
     _authHandling = false;
     currentUser = user;
+    if (user && user._resolvedByEmail) {
+      console.warn('Recovered login via email lookup. Firestore document ID does not match Auth UID.', { authUid: fbUser.uid, profileUid: user.uid, email: fbUser.email });
+    }
     if (errEl) errEl.style.display = 'none';
     routeUser(user);
   }).catch(e => {
@@ -5350,9 +5386,11 @@ function handleAuthState(fbUser) {
     if (code === 'permission-denied') {
       msg = 'Access denied loading your profile. Please contact an administrator.';
     } else if (code === 'profile-not-found') {
-      msg = 'Your account signed in, but no matching profile document was found for this Firebase Auth user. Verify that the Firestore document ID matches the Auth UID.';
+      msg = 'Sign-in succeeded, but no matching Firestore user profile could be found. The most likely issue is that the Firestore document ID does not match the Firebase Auth UID.';
+    } else if (code === 'duplicate-profile') {
+      msg = 'Multiple Firestore user profiles share this email address. Clean up duplicate user documents before retrying login.';
     } else if (code === 'timeout' || code === 'deadline-exceeded') {
-      msg = 'Your sign-in succeeded, but the profile read timed out. Please disable blockers/proxy interference and try again.';
+      msg = 'Sign-in succeeded, but both direct profile read and fallback lookup timed out. This still points to Firestore connectivity or browser/network interference.';
     } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
       msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
     } else {
