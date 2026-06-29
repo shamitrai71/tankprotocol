@@ -2925,14 +2925,13 @@ body.editing .report-delete-btn { display: block; }
   // misleading "could not reach the server" / "client is offline" errors).
   let db;
   try {
-    // Force long-polling instead of auto-DETECT. Auto-detect probes the
-    // connection by repeatedly opening channels; on this network that probe
-    // never converges and loops forever (dozens of channel? requests over 50s),
-    // so the snapshot listener never settles and reads time out. Forcing it
-    // uses one stable long-poll connection.
-    db = initializeFirestore(app, { experimentalForceLongPolling: true });
-  } catch (e) {
+    // Prefer the standard Firestore client in production. The previous build
+    // forced long-polling, which can trigger unstable Write/channel behavior
+    // in some browser/network combinations and cause post-login profile reads
+    // to time out.
     db = getFirestore(app);
+  } catch (e) {
+    db = initializeFirestore(app, { experimentalForceLongPolling: true });
   }
 
   // Expose a single bridge object for the (non-module) app code.
@@ -2950,7 +2949,6 @@ body.editing .report-delete-btn { display: block; }
     userDoc: (uid) => doc(db, 'users', uid),
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
-    getUserCacheFirst: (uid) => getDoc(doc(db, 'users', uid)),
     getUserOnce: async (uid) => {
       const ref = doc(db, 'users', uid);
       const withTimeout = (p, ms, code='timeout', message='profile read timed out') => Promise.race([
@@ -2963,23 +2961,7 @@ body.editing .report-delete-btn { display: block; }
         const code1 = (err1 && err1.code) || '';
         if (code1 === 'permission-denied' || code1 === 'not-found') throw err1;
       }
-      try {
-        return await withTimeout(getDoc(ref), 6000, 'timeout', 'profile cache read timed out');
-      } catch (err2) {
-        const code2 = (err2 && err2.code) || '';
-        if (code2 === 'permission-denied' || code2 === 'not-found') throw err2;
-      }
-      return await new Promise((resolve, reject) => {
-        let done = false;
-        let unsub = () => {};
-        const finish = (fn, val) => { if (done) return; done = true; try { unsub(); } catch(e){} fn(val); };
-        unsub = onSnapshot(
-          ref,
-          (snap) => finish(resolve, snap),
-          (err) => finish(reject, err)
-        );
-        setTimeout(() => finish(reject, { code: 'timeout', message: 'profile listener read timed out' }), 8000);
-      });
+      return await withTimeout(getDoc(ref), 6000, 'timeout', 'profile cache read timed out');
     },
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
@@ -2988,10 +2970,6 @@ body.editing .report-delete-btn { display: block; }
     watchUsers: (cb) => onSnapshot(collection(db, 'users'), (snap) => {
       cb(snap.docs.map(d => ({ uid: d.id, ...d.data() })));
     }),
-    findUserByEmail: async (email) => {
-      const qy = query(collection(db, 'users'), where('email', '==', email), limit(2));
-      return getDocs(qy);
-    },
     addReport: (data) => addDoc(collection(db, 'reports'), { ...data, createdAt: serverTimestamp() }),
     watchReports: (cb) => onSnapshot(query(collection(db, 'reports'), orderBy('createdAt','desc')), (snap) => {
       cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
@@ -5311,31 +5289,6 @@ function handleAuthState(fbUser) {
     throw err;
   });
 
-  const resolveByEmail = async () => {
-    if (!fbUser.email || !window.fb.findUserByEmail) {
-      const err = new Error('Profile read timed out and email fallback is unavailable.');
-      err.code = 'timeout';
-      throw err;
-    }
-    const snap = await window.fb.findUserByEmail(fbUser.email);
-    if (snap.empty) {
-      const err = new Error('No Firestore user profile was found for this email.');
-      err.code = 'profile-not-found';
-      throw err;
-    }
-    if (snap.docs.length > 1) {
-      const err = new Error('Multiple Firestore user profiles were found for this email.');
-      err.code = 'duplicate-profile';
-      throw err;
-    }
-    const d = snap.docs[0];
-    const raw = d.data() || {};
-    const user = mapUserDoc(d.id, raw);
-    user._resolvedByEmail = true;
-    user._authUid = fbUser.uid;
-    return user;
-  };
-
   readProfile(fbUser.uid, 1).then(snap => {
     if (!snap.exists()) {
       if (!isGoogleUser) {
@@ -5355,26 +5308,11 @@ function handleAuthState(fbUser) {
       };
       return window.fb.setUser(fbUser.uid, profile).then(() => mapUserDoc(fbUser.uid, profile));
     }
-    const raw = snap.data() || {};
-    const user = mapUserDoc(fbUser.uid, raw);
-    if (!raw.role && user.role === 'user' && fbUser.email) {
-      console.warn('Profile loaded without explicit role; defaulting to user for', fbUser.email);
-    }
-    return user;
-  }).catch(async e => {
-    const code = (e && e.code) || '';
-    if ((code === 'timeout' || code === 'deadline-exceeded' || code === 'unavailable') && fbUser.email) {
-      console.warn('Primary UID profile read failed; trying email fallback for', fbUser.email, code);
-      return resolveByEmail();
-    }
-    throw e;
+    return mapUserDoc(fbUser.uid, snap.data());
   }).then(user => {
     _profileLoaded = true;
     _authHandling = false;
     currentUser = user;
-    if (user && user._resolvedByEmail) {
-      console.warn('Recovered login via email lookup. Firestore document ID does not match Auth UID.', { authUid: fbUser.uid, profileUid: user.uid, email: fbUser.email });
-    }
     if (errEl) errEl.style.display = 'none';
     routeUser(user);
   }).catch(e => {
@@ -5386,11 +5324,9 @@ function handleAuthState(fbUser) {
     if (code === 'permission-denied') {
       msg = 'Access denied loading your profile. Please contact an administrator.';
     } else if (code === 'profile-not-found') {
-      msg = 'Sign-in succeeded, but no matching Firestore user profile could be found. The most likely issue is that the Firestore document ID does not match the Firebase Auth UID.';
-    } else if (code === 'duplicate-profile') {
-      msg = 'Multiple Firestore user profiles share this email address. Clean up duplicate user documents before retrying login.';
+      msg = 'Sign-in succeeded, but no Firestore profile document exists at users/<auth uid> for this account.';
     } else if (code === 'timeout' || code === 'deadline-exceeded') {
-      msg = 'Sign-in succeeded, but both direct profile read and fallback lookup timed out. This still points to Firestore connectivity or browser/network interference.';
+      msg = 'Sign-in succeeded, but the initial Firestore profile read timed out. This now points to Firestore connectivity rather than popup-window handling.';
     } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
       msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
     } else {
