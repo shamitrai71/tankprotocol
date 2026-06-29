@@ -2950,21 +2950,39 @@ body.editing .report-delete-btn { display: block; }
     userDoc: (uid) => doc(db, 'users', uid),
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
-    // One-time read via realtime listener — uses the streaming transport that
-    // works on networks where one-shot getDoc stalls. Resolves on first snapshot.
-    getUserOnce: (uid) => new Promise((resolve, reject) => {
-      let done = false;
-      const finish = (fn, val) => { if (done) return; done = true; try { unsub(); } catch(e){} fn(val); };
-      // Accept the FIRST snapshot that arrives — cache or server, doesn't matter,
-      // the data is correct either way. (The earlier "wait for server snapshot"
-      // logic could hang when the server-confirm metadata never flipped.)
-      const unsub = onSnapshot(
-        doc(db, 'users', uid),
-        (snap) => finish(resolve, snap),
-        (err) => finish(reject, err)
-      );
-      setTimeout(() => finish(reject, { code: 'timeout', message: 'profile read timed out' }), 15000);
-    }),
+    getUserCacheFirst: (uid) => getDoc(doc(db, 'users', uid)),
+    // Robust one-time read: server first, then cache/default getDoc, then a short
+    // realtime-listener fallback for networks where one-shot reads behave poorly.
+    getUserOnce: async (uid) => {
+      const ref = doc(db, 'users', uid);
+      const withTimeout = (p, ms, code='timeout', message='profile read timed out') => Promise.race([
+        p,
+        new Promise((_, reject) => setTimeout(() => reject({ code, message }), ms))
+      ]);
+      try {
+        return await withTimeout(getDocFromServer(ref), 8000, 'timeout', 'profile server read timed out');
+      } catch (err1) {
+        const code1 = (err1 && err1.code) || '';
+        if (code1 === 'permission-denied' || code1 === 'not-found') throw err1;
+      }
+      try {
+        return await withTimeout(getDoc(ref), 6000, 'timeout', 'profile cache read timed out');
+      } catch (err2) {
+        const code2 = (err2 && err2.code) || '';
+        if (code2 === 'permission-denied' || code2 === 'not-found') throw err2;
+      }
+      return await new Promise((resolve, reject) => {
+        let done = false;
+        let unsub = () => {};
+        const finish = (fn, val) => { if (done) return; done = true; try { unsub(); } catch(e){} fn(val); };
+        unsub = onSnapshot(
+          ref,
+          (snap) => finish(resolve, snap),
+          (err) => finish(reject, err)
+        );
+        setTimeout(() => finish(reject, { code: 'timeout', message: 'profile listener read timed out' }), 8000);
+      });
+    },
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
     updateUser: (uid, data) => updateDoc(doc(db, 'users', uid), data),
@@ -5279,26 +5297,26 @@ function handleAuthState(fbUser) {
   }
   if (_authHandling || _profileLoaded) { return; }
   _authHandling = true;
-  // Clear any stale error banner the moment we start a fresh load
-  const _e0 = document.getElementById('loginError'); if (_e0) _e0.style.display = 'none';
+  const errEl = document.getElementById('loginError');
+  if (errEl) errEl.style.display = 'none';
 
-  // Read the profile via a one-time realtime-listener snapshot. The streaming
-  // transport is proven working here (channel requests returned 200), whereas
-  // one-shot getDoc/getDocFromServer stall on this network.
-  const withTimeout = (p, ms) => Promise.race([
-    p,
-    new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout', message: 'profile read timed out' }), ms))
-  ]);
   const readProfile = (uid, tries) => window.fb.getUserOnce(uid).catch(err => {
     const code = (err && err.code) || '';
-    if (tries > 0 && (code === 'timeout' || code === 'unavailable')) {
-      return new Promise(res => setTimeout(res, 1000)).then(() => readProfile(uid, tries - 1));
+    if (tries > 0 && (code === 'timeout' || code === 'unavailable' || code === 'deadline-exceeded')) {
+      return new Promise(res => setTimeout(res, 800)).then(() => readProfile(uid, tries - 1));
     }
     throw err;
   });
-  readProfile(fbUser.uid, 2).then(snap => {
+
+  readProfile(fbUser.uid, 1).then(snap => {
     if (!snap.exists()) {
-      // First-time Google sign-in (or missing doc): create a pending member profile
+      const isGoogleUser = !!fbUser.providerData?.some(p => p.providerId === 'google.com');
+      if (!isGoogleUser) {
+        const missing = new Error('Profile document not found for this account.');
+        missing.code = 'profile-not-found';
+        throw missing;
+      }
+      // First-time Google sign-in: create a pending member profile.
       const parts = (fbUser.displayName || '').split(' ');
       const profile = {
         email: fbUser.email || '',
@@ -5311,22 +5329,30 @@ function handleAuthState(fbUser) {
       };
       return window.fb.setUser(fbUser.uid, profile).then(() => mapUserDoc(fbUser.uid, profile));
     }
-    return mapUserDoc(fbUser.uid, snap.data());
+    const raw = snap.data() || {};
+    const user = mapUserDoc(fbUser.uid, raw);
+    if (!raw.role && user.role === 'user' && fbUser.email) {
+      console.warn('Profile loaded without explicit role; defaulting to user for', fbUser.email);
+    }
+    return user;
   }).then(user => {
     _profileLoaded = true;
     _authHandling = false;
     currentUser = user;
-    const errEl = document.getElementById('loginError'); if (errEl) errEl.style.display = 'none';
+    if (errEl) errEl.style.display = 'none';
     routeUser(user);
   }).catch(e => {
     _authHandling = false;
     _routingAfterLogin = false;
-    if (_profileLoaded) return;  // a concurrent attempt already succeeded — ignore
-    const errEl = document.getElementById('loginError');
+    if (_profileLoaded) return;
     const code = (e && e.code) || '';
     let msg;
     if (code === 'permission-denied') {
       msg = 'Access denied loading your profile. Please contact an administrator.';
+    } else if (code === 'profile-not-found') {
+      msg = 'Your account signed in, but no matching profile document was found for this Firebase Auth user. Verify that the Firestore document ID matches the Auth UID.';
+    } else if (code === 'timeout' || code === 'deadline-exceeded') {
+      msg = 'Your sign-in succeeded, but the profile read timed out. Please disable blockers/proxy interference and try again.';
     } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
       msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
     } else {
