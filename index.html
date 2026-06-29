@@ -2924,19 +2924,22 @@ body.editing .report-delete-btn { display: block; }
   // block Firestore's default WebChannel streaming transport (the cause of
   // misleading "could not reach the server" / "client is offline" errors).
   let db;
+  let firestoreTransportMode = 'standard';
   try {
-    // Prefer the standard Firestore client in production. The previous build
-    // forced long-polling, which can trigger unstable Write/channel behavior
-    // in some browser/network combinations and cause post-login profile reads
-    // to time out.
-    db = getFirestore(app);
+    // Let the SDK detect when long-polling is required instead of forcing a
+    // single transport mode up front. This is the recommended compromise when
+    // WebChannel behavior varies across production environments.
+    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
+    firestoreTransportMode = 'auto-detect-long-poll';
   } catch (e) {
-    db = initializeFirestore(app, { experimentalForceLongPolling: true });
+    db = getFirestore(app);
+    firestoreTransportMode = 'standard-fallback';
   }
 
   // Expose a single bridge object for the (non-module) app code.
   window.fb = {
     auth, db,
+    transportMode: () => firestoreTransportMode,
     onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
     signInEmail: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
     signUpEmail: (email, pw) => createUserWithEmailAndPassword(auth, email, pw),
@@ -2956,12 +2959,19 @@ body.editing .report-delete-btn { display: block; }
         new Promise((_, reject) => setTimeout(() => reject({ code, message }), ms))
       ]);
       try {
-        return await withTimeout(getDocFromServer(ref), 8000, 'timeout', 'profile server read timed out');
+        return await withTimeout(getDocFromServer(ref), 10000, 'timeout', 'profile server read timed out');
       } catch (err1) {
         const code1 = (err1 && err1.code) || '';
+        console.warn('Firestore server read failed', { mode: firestoreTransportMode, code: code1, err: err1 });
         if (code1 === 'permission-denied' || code1 === 'not-found') throw err1;
       }
-      return await withTimeout(getDoc(ref), 6000, 'timeout', 'profile cache read timed out');
+      try {
+        return await withTimeout(getDoc(ref), 8000, 'timeout', 'profile cache/default read timed out');
+      } catch (err2) {
+        const code2 = (err2 && err2.code) || '';
+        console.warn('Firestore default read failed', { mode: firestoreTransportMode, code: code2, err: err2 });
+        throw err2;
+      }
     },
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
@@ -5284,12 +5294,18 @@ function handleAuthState(fbUser) {
   const readProfile = (uid, tries) => window.fb.getUserOnce(uid).catch(err => {
     const code = (err && err.code) || '';
     if (tries > 0 && (code === 'timeout' || code === 'unavailable' || code === 'deadline-exceeded')) {
-      return new Promise(res => setTimeout(res, 800)).then(() => readProfile(uid, tries - 1));
+      return new Promise(res => setTimeout(res, 1200)).then(() => readProfile(uid, tries - 1));
     }
     throw err;
   });
 
-  readProfile(fbUser.uid, 1).then(snap => {
+  console.warn('Starting auth profile load', {
+    uid: fbUser.uid,
+    email: fbUser.email,
+    transportMode: window.fb.transportMode ? window.fb.transportMode() : 'unknown'
+  });
+
+  readProfile(fbUser.uid, 2).then(snap => {
     if (!snap.exists()) {
       if (!isGoogleUser) {
         const missing = new Error('Profile document not found for this account.');
@@ -5326,14 +5342,20 @@ function handleAuthState(fbUser) {
     } else if (code === 'profile-not-found') {
       msg = 'Sign-in succeeded, but no Firestore profile document exists at users/<auth uid> for this account.';
     } else if (code === 'timeout' || code === 'deadline-exceeded') {
-      msg = 'Sign-in succeeded, but the initial Firestore profile read timed out. This now points to Firestore connectivity rather than popup-window handling.';
+      msg = 'Sign-in succeeded, but Firestore still timed out even with auto-detect long polling. This strongly suggests a Firestore transport issue in production for this web client.';
     } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
       msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
     } else {
       msg = 'Could not load your profile: ' + (e.message || e);
     }
     if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
-    console.error('Profile load error:', code, e);
+    console.error('Profile load error:', {
+      transportMode: window.fb.transportMode ? window.fb.transportMode() : 'unknown',
+      code,
+      error: e,
+      uid: fbUser && fbUser.uid,
+      email: fbUser && fbUser.email
+    });
   });
 }
 
