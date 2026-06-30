@@ -2926,9 +2926,6 @@ body.editing .report-delete-btn { display: block; }
   let db;
   let firestoreTransportMode = 'standard';
   try {
-    // Let the SDK detect when long-polling is required instead of forcing a
-    // single transport mode up front. This is the recommended compromise when
-    // WebChannel behavior varies across production environments.
     db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
     firestoreTransportMode = 'auto-detect-long-poll';
   } catch (e) {
@@ -2948,7 +2945,6 @@ body.editing .report-delete-btn { display: block; }
     googleSignIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
     googleSignInRedirect: () => signInWithRedirect(auth, new GoogleAuthProvider()),
     getRedirectResult: () => getRedirectResult(auth),
-    // Firestore helpers
     userDoc: (uid) => doc(db, 'users', uid),
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
@@ -2961,17 +2957,9 @@ body.editing .report-delete-btn { display: block; }
       try {
         return await withTimeout(getDocFromServer(ref), 10000, 'timeout', 'profile server read timed out');
       } catch (err1) {
-        const code1 = (err1 && err1.code) || '';
-        console.warn('Firestore server read failed', { mode: firestoreTransportMode, code: code1, err: err1 });
-        if (code1 === 'permission-denied' || code1 === 'not-found') throw err1;
+        console.warn('Firestore server read failed', { mode: firestoreTransportMode, code: (err1 && err1.code) || '', err: err1 });
       }
-      try {
-        return await withTimeout(getDoc(ref), 8000, 'timeout', 'profile cache/default read timed out');
-      } catch (err2) {
-        const code2 = (err2 && err2.code) || '';
-        console.warn('Firestore default read failed', { mode: firestoreTransportMode, code: code2, err: err2 });
-        throw err2;
-      }
+      return await withTimeout(getDoc(ref), 8000, 'timeout', 'profile default read timed out');
     },
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
@@ -5207,6 +5195,9 @@ let pendingAction = null;
 
 let _authReady = false;
 let _routingAfterLogin = false;
+let _profileLoadPending = false;
+let _lastFbUser = null;
+let _profileShellShown = false;
 
 // Map a Firestore user doc into the in-memory shape the app expects
 function mapUserDoc(uid, d) {
@@ -5275,20 +5266,92 @@ function friendlyAuthError(e) {
   return map[code] || (e && e.message) || 'Authentication failed. Please try again.';
 }
 
+
+function showProfileLoadingShell(fbUser) {
+  currentUser = {
+    id: fbUser.uid,
+    uid: fbUser.uid,
+    email: fbUser.email || '',
+    firstName: fbUser.displayName ? fbUser.displayName.split(' ')[0] : ((fbUser.email||'').split('@')[0] || 'User'),
+    lastName: fbUser.displayName ? fbUser.displayName.split(' ').slice(1).join(' ') : '',
+    role: 'loading',
+    company: '', designation: '', title: '', dept: '', location: '', industry: '', phone: '', bio: '',
+    status: 'loading', approved: false, joined: '', downloadLimit: 0, downloadsUsed: 0, myReports: [], calcs: 0,
+    experience: '', specialisations: ''
+  };
+  showView('dashView');
+  _profileShellShown = true;
+  const top = document.getElementById('topbarName');
+  if (top) top.textContent = (fbUser.email || 'Signed in') + ' · Loading profile…';
+  const hero = document.getElementById('heroName');
+  if (hero) hero.textContent = currentUser.firstName || 'Loading profile…';
+  const sub = document.getElementById('heroDesignation');
+  if (sub) sub.textContent = 'Loading profile from Firestore…';
+  const company = document.getElementById('heroCompany');
+  if (company) company.textContent = 'AUTH OK · PROFILE PENDING';
+  const adminBtn = document.getElementById('adminNavBtn');
+  if (adminBtn) adminBtn.style.display = 'none';
+  let banner = document.getElementById('profileLoadBanner');
+  if (!banner) {
+    banner = document.createElement('div');
+    banner.id = 'profileLoadBanner';
+    banner.style.cssText = 'margin:0 0 18px 0;padding:14px 16px;border:1px solid rgba(201,168,76,0.28);background:rgba(201,168,76,0.08);border-radius:10px;color:var(--text-bright);font-size:0.82rem;line-height:1.55;';
+    const host = document.getElementById('profilePage');
+    if (host) host.insertBefore(banner, host.firstChild);
+  }
+  banner.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">Signed in. Profile is still loading.</div><div id="profileLoadBannerText">Firebase Auth succeeded, but Firestore has not returned your profile yet. The app shell is open so you can retry profile loading without signing in again.</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;"><button onclick="retryProfileLoad()" style="padding:9px 14px;border-radius:8px;border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.12);color:var(--gold);cursor:pointer;">Retry profile load</button><button onclick="doLogout()" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;">Sign out</button></div>';
+}
+
+function setProfileBannerMessage(msg, tone) {
+  const el = document.getElementById('profileLoadBannerText');
+  const wrap = document.getElementById('profileLoadBanner');
+  if (el) el.textContent = msg;
+  if (wrap && tone === 'error') {
+    wrap.style.borderColor = 'rgba(239,68,68,0.35)';
+    wrap.style.background = 'rgba(239,68,68,0.08)';
+  }
+  if (wrap && tone === 'ok') {
+    wrap.style.borderColor = 'rgba(45,212,160,0.28)';
+    wrap.style.background = 'rgba(45,212,160,0.08)';
+  }
+}
+
+async function retryProfileLoad() {
+  if (!_lastFbUser || _profileLoadPending) return;
+  const top = document.getElementById('topbarName');
+  if (top) top.textContent = (_lastFbUser.email || 'Signed in') + ' · Retrying profile…';
+  setProfileBannerMessage('Retrying Firestore profile load…', 'ok');
+  handleAuthState(_lastFbUser, { forceProfileRetry: true, shellAlreadyVisible: true });
+}
+
 // Central auth-state handler — runs on login, signup, refresh, logout
 let _profileLoaded = false;       // becomes true once a profile loads successfully
 let _authHandling = false;        // de-dupe concurrent onAuthStateChanged fires
-function handleAuthState(fbUser) {
+function handleAuthState(fbUser, opts = {}) {
   if (!fbUser) {
     currentUser = null;
     _profileLoaded = false;
+    _profileLoadPending = false;
+    _lastFbUser = null;
+    _profileShellShown = false;
+    const banner = document.getElementById('profileLoadBanner');
+    if (banner) banner.remove();
     if (!_routingAfterLogin) showView('loginView');
     return;
   }
-  if (_authHandling || _profileLoaded) { return; }
+  _lastFbUser = fbUser;
+  const forceRetry = opts.forceProfileRetry === true;
+  if ((_authHandling || _profileLoaded || _profileLoadPending) && !forceRetry) { return; }
   _authHandling = true;
+  _profileLoadPending = true;
   const errEl = document.getElementById('loginError');
   if (errEl) errEl.style.display = 'none';
+
+  if (!_profileShellShown) {
+    showProfileLoadingShell(fbUser);
+  } else {
+    setProfileBannerMessage('Profile load in progress…', 'ok');
+  }
 
   const isGoogleUser = !!fbUser.providerData?.some(p => p.providerId === 'google.com');
   const readProfile = (uid, tries) => window.fb.getUserOnce(uid).catch(err => {
@@ -5327,27 +5390,31 @@ function handleAuthState(fbUser) {
     return mapUserDoc(fbUser.uid, snap.data());
   }).then(user => {
     _profileLoaded = true;
+    _profileLoadPending = false;
     _authHandling = false;
     currentUser = user;
-    if (errEl) errEl.style.display = 'none';
+    setProfileBannerMessage('Profile loaded successfully.', 'ok');
+    const top = document.getElementById('topbarName'); if (top) top.textContent = user.email || '';
+    const banner = document.getElementById('profileLoadBanner'); if (banner) banner.remove();
     routeUser(user);
   }).catch(e => {
     _authHandling = false;
+    _profileLoadPending = false;
     _routingAfterLogin = false;
-    if (_profileLoaded) return;
     const code = (e && e.code) || '';
     let msg;
     if (code === 'permission-denied') {
-      msg = 'Access denied loading your profile. Please contact an administrator.';
+      msg = 'Access denied loading your profile. You are signed in, but the Firestore profile could not be read.';
     } else if (code === 'profile-not-found') {
       msg = 'Sign-in succeeded, but no Firestore profile document exists at users/<auth uid> for this account.';
     } else if (code === 'timeout' || code === 'deadline-exceeded') {
-      msg = 'Sign-in succeeded, but Firestore still timed out even with auto-detect long polling. This strongly suggests a Firestore transport issue in production for this web client.';
+      msg = 'You are signed in, but Firestore profile loading timed out. Use Retry profile load below without signing in again.';
     } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
-      msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
+      msg = 'You are signed in, but the app could not reach Firestore. Retry profile load from inside the app shell.';
     } else {
-      msg = 'Could not load your profile: ' + (e.message || e);
+      msg = 'You are signed in, but the profile could not be loaded: ' + (e.message || e);
     }
+    setProfileBannerMessage(msg, 'error');
     if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
     console.error('Profile load error:', {
       transportMode: window.fb.transportMode ? window.fb.transportMode() : 'unknown',
