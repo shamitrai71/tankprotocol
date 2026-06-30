@@ -5309,11 +5309,9 @@ function handleAuthState(fbUser) {
         phone: '', bio: '', downloadsUsed: 0,
         createdAt: window.fb.serverTimestamp()
       };
-      return window.fb.setUser(fbUser.uid, profile).then(() => { const mapped = mapUserDoc(fbUser.uid, profile); syncProfileToCache(mapped); return mapped; });
+      return window.fb.setUser(fbUser.uid, profile).then(() => mapUserDoc(fbUser.uid, profile));
     }
-    const mapped = mapUserDoc(fbUser.uid, snap.data());
-    syncProfileToCache(mapped);
-    return mapped;
+    return mapUserDoc(fbUser.uid, snap.data());
   }).then(user => {
     _profileLoaded = true;
     _authHandling = false;
@@ -5334,7 +5332,7 @@ function handleAuthState(fbUser) {
     } else {
       msg = 'Could not load your profile: ' + (e.message || e);
     }
-    if (errEl) { errEl.textContent = msg + ' A cached profile will be used if available.'; errEl.style.display = 'block'; }
+    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
     console.error('Profile load error:', code, e);
   });
 }
