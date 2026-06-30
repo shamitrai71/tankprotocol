@@ -2924,19 +2924,20 @@ body.editing .report-delete-btn { display: block; }
   // block Firestore's default WebChannel streaming transport (the cause of
   // misleading "could not reach the server" / "client is offline" errors).
   let db;
-  let firestoreTransportMode = 'standard';
   try {
-    db = initializeFirestore(app, { experimentalAutoDetectLongPolling: true });
-    firestoreTransportMode = 'auto-detect-long-poll';
+    // Force long-polling instead of auto-DETECT. Auto-detect probes the
+    // connection by repeatedly opening channels; on this network that probe
+    // never converges and loops forever (dozens of channel? requests over 50s),
+    // so the snapshot listener never settles and reads time out. Forcing it
+    // uses one stable long-poll connection.
+    db = initializeFirestore(app, { experimentalForceLongPolling: true });
   } catch (e) {
     db = getFirestore(app);
-    firestoreTransportMode = 'standard-fallback';
   }
 
   // Expose a single bridge object for the (non-module) app code.
   window.fb = {
     auth, db,
-    transportMode: () => firestoreTransportMode,
     onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
     signInEmail: (email, pw) => signInWithEmailAndPassword(auth, email, pw),
     signUpEmail: (email, pw) => createUserWithEmailAndPassword(auth, email, pw),
@@ -2945,22 +2946,25 @@ body.editing .report-delete-btn { display: block; }
     googleSignIn: () => signInWithPopup(auth, new GoogleAuthProvider()),
     googleSignInRedirect: () => signInWithRedirect(auth, new GoogleAuthProvider()),
     getRedirectResult: () => getRedirectResult(auth),
+    // Firestore helpers
     userDoc: (uid) => doc(db, 'users', uid),
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
-    getUserOnce: async (uid) => {
-      const ref = doc(db, 'users', uid);
-      const withTimeout = (p, ms, code='timeout', message='profile read timed out') => Promise.race([
-        p,
-        new Promise((_, reject) => setTimeout(() => reject({ code, message }), ms))
-      ]);
-      try {
-        return await withTimeout(getDocFromServer(ref), 10000, 'timeout', 'profile server read timed out');
-      } catch (err1) {
-        console.warn('Firestore server read failed', { mode: firestoreTransportMode, code: (err1 && err1.code) || '', err: err1 });
-      }
-      return await withTimeout(getDoc(ref), 8000, 'timeout', 'profile default read timed out');
-    },
+    // One-time read via realtime listener — uses the streaming transport that
+    // works on networks where one-shot getDoc stalls. Resolves on first snapshot.
+    getUserOnce: (uid) => new Promise((resolve, reject) => {
+      let done = false;
+      const finish = (fn, val) => { if (done) return; done = true; try { unsub(); } catch(e){} fn(val); };
+      // Accept the FIRST snapshot that arrives — cache or server, doesn't matter,
+      // the data is correct either way. (The earlier "wait for server snapshot"
+      // logic could hang when the server-confirm metadata never flipped.)
+      const unsub = onSnapshot(
+        doc(db, 'users', uid),
+        (snap) => finish(resolve, snap),
+        (err) => finish(reject, err)
+      );
+      setTimeout(() => finish(reject, { code: 'timeout', message: 'profile read timed out' }), 15000);
+    }),
     setUser: (uid, data) => setDoc(doc(db, 'users', uid), data),
     setUserMerge: (uid, data) => setDoc(doc(db, 'users', uid), data, { merge: true }),
     updateUser: (uid, data) => updateDoc(doc(db, 'users', uid), data),
@@ -5195,9 +5199,6 @@ let pendingAction = null;
 
 let _authReady = false;
 let _routingAfterLogin = false;
-let _profileLoadPending = false;
-let _lastFbUser = null;
-let _profileShellShown = false;
 
 // Map a Firestore user doc into the in-memory shape the app expects
 function mapUserDoc(uid, d) {
@@ -5266,115 +5267,38 @@ function friendlyAuthError(e) {
   return map[code] || (e && e.message) || 'Authentication failed. Please try again.';
 }
 
-
-function showProfileLoadingShell(fbUser) {
-  currentUser = {
-    id: fbUser.uid,
-    uid: fbUser.uid,
-    email: fbUser.email || '',
-    firstName: fbUser.displayName ? fbUser.displayName.split(' ')[0] : ((fbUser.email||'').split('@')[0] || 'User'),
-    lastName: fbUser.displayName ? fbUser.displayName.split(' ').slice(1).join(' ') : '',
-    role: 'loading',
-    company: '', designation: '', title: '', dept: '', location: '', industry: '', phone: '', bio: '',
-    status: 'loading', approved: false, joined: '', downloadLimit: 0, downloadsUsed: 0, myReports: [], calcs: 0,
-    experience: '', specialisations: ''
-  };
-  showView('dashView');
-  _profileShellShown = true;
-  const top = document.getElementById('topbarName');
-  if (top) top.textContent = (fbUser.email || 'Signed in') + ' · Loading profile…';
-  const hero = document.getElementById('heroName');
-  if (hero) hero.textContent = currentUser.firstName || 'Loading profile…';
-  const sub = document.getElementById('heroDesignation');
-  if (sub) sub.textContent = 'Loading profile from Firestore…';
-  const company = document.getElementById('heroCompany');
-  if (company) company.textContent = 'AUTH OK · PROFILE PENDING';
-  const adminBtn = document.getElementById('adminNavBtn');
-  if (adminBtn) adminBtn.style.display = 'none';
-  let banner = document.getElementById('profileLoadBanner');
-  if (!banner) {
-    banner = document.createElement('div');
-    banner.id = 'profileLoadBanner';
-    banner.style.cssText = 'margin:0 0 18px 0;padding:14px 16px;border:1px solid rgba(201,168,76,0.28);background:rgba(201,168,76,0.08);border-radius:10px;color:var(--text-bright);font-size:0.82rem;line-height:1.55;';
-    const host = document.getElementById('profilePage');
-    if (host) host.insertBefore(banner, host.firstChild);
-  }
-  banner.innerHTML = '<div style="font-weight:700;margin-bottom:6px;">Signed in. Profile is still loading.</div><div id="profileLoadBannerText">Firebase Auth succeeded, but Firestore has not returned your profile yet. The app shell is open so you can retry profile loading without signing in again.</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;"><button onclick="retryProfileLoad()" style="padding:9px 14px;border-radius:8px;border:1px solid rgba(201,168,76,0.35);background:rgba(201,168,76,0.12);color:var(--gold);cursor:pointer;">Retry profile load</button><button onclick="doLogout()" style="padding:9px 14px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-dim);cursor:pointer;">Sign out</button></div>';
-}
-
-function setProfileBannerMessage(msg, tone) {
-  const el = document.getElementById('profileLoadBannerText');
-  const wrap = document.getElementById('profileLoadBanner');
-  if (el) el.textContent = msg;
-  if (wrap && tone === 'error') {
-    wrap.style.borderColor = 'rgba(239,68,68,0.35)';
-    wrap.style.background = 'rgba(239,68,68,0.08)';
-  }
-  if (wrap && tone === 'ok') {
-    wrap.style.borderColor = 'rgba(45,212,160,0.28)';
-    wrap.style.background = 'rgba(45,212,160,0.08)';
-  }
-}
-
-async function retryProfileLoad() {
-  if (!_lastFbUser || _profileLoadPending) return;
-  const top = document.getElementById('topbarName');
-  if (top) top.textContent = (_lastFbUser.email || 'Signed in') + ' · Retrying profile…';
-  setProfileBannerMessage('Retrying Firestore profile load…', 'ok');
-  handleAuthState(_lastFbUser, { forceProfileRetry: true, shellAlreadyVisible: true });
-}
-
 // Central auth-state handler — runs on login, signup, refresh, logout
 let _profileLoaded = false;       // becomes true once a profile loads successfully
 let _authHandling = false;        // de-dupe concurrent onAuthStateChanged fires
-function handleAuthState(fbUser, opts = {}) {
+function handleAuthState(fbUser) {
   if (!fbUser) {
     currentUser = null;
     _profileLoaded = false;
-    _profileLoadPending = false;
-    _lastFbUser = null;
-    _profileShellShown = false;
-    const banner = document.getElementById('profileLoadBanner');
-    if (banner) banner.remove();
     if (!_routingAfterLogin) showView('loginView');
     return;
   }
-  _lastFbUser = fbUser;
-  const forceRetry = opts.forceProfileRetry === true;
-  if ((_authHandling || _profileLoaded || _profileLoadPending) && !forceRetry) { return; }
+  if (_authHandling || _profileLoaded) { return; }
   _authHandling = true;
-  _profileLoadPending = true;
-  const errEl = document.getElementById('loginError');
-  if (errEl) errEl.style.display = 'none';
+  // Clear any stale error banner the moment we start a fresh load
+  const _e0 = document.getElementById('loginError'); if (_e0) _e0.style.display = 'none';
 
-  if (!_profileShellShown) {
-    showProfileLoadingShell(fbUser);
-  } else {
-    setProfileBannerMessage('Profile load in progress…', 'ok');
-  }
-
-  const isGoogleUser = !!fbUser.providerData?.some(p => p.providerId === 'google.com');
+  // Read the profile via a one-time realtime-listener snapshot. The streaming
+  // transport is proven working here (channel requests returned 200), whereas
+  // one-shot getDoc/getDocFromServer stall on this network.
+  const withTimeout = (p, ms) => Promise.race([
+    p,
+    new Promise((_, rej) => setTimeout(() => rej({ code: 'timeout', message: 'profile read timed out' }), ms))
+  ]);
   const readProfile = (uid, tries) => window.fb.getUserOnce(uid).catch(err => {
     const code = (err && err.code) || '';
-    if (tries > 0 && (code === 'timeout' || code === 'unavailable' || code === 'deadline-exceeded')) {
-      return new Promise(res => setTimeout(res, 1200)).then(() => readProfile(uid, tries - 1));
+    if (tries > 0 && (code === 'timeout' || code === 'unavailable')) {
+      return new Promise(res => setTimeout(res, 1000)).then(() => readProfile(uid, tries - 1));
     }
     throw err;
   });
-
-  console.warn('Starting auth profile load', {
-    uid: fbUser.uid,
-    email: fbUser.email,
-    transportMode: window.fb.transportMode ? window.fb.transportMode() : 'unknown'
-  });
-
   readProfile(fbUser.uid, 2).then(snap => {
     if (!snap.exists()) {
-      if (!isGoogleUser) {
-        const missing = new Error('Profile document not found for this account.');
-        missing.code = 'profile-not-found';
-        throw missing;
-      }
+      // First-time Google sign-in (or missing doc): create a pending member profile
       const parts = (fbUser.displayName || '').split(' ');
       const profile = {
         email: fbUser.email || '',
@@ -5385,44 +5309,33 @@ function handleAuthState(fbUser, opts = {}) {
         phone: '', bio: '', downloadsUsed: 0,
         createdAt: window.fb.serverTimestamp()
       };
-      return window.fb.setUser(fbUser.uid, profile).then(() => mapUserDoc(fbUser.uid, profile));
+      return window.fb.setUser(fbUser.uid, profile).then(() => { const mapped = mapUserDoc(fbUser.uid, profile); syncProfileToCache(mapped); return mapped; });
     }
-    return mapUserDoc(fbUser.uid, snap.data());
+    const mapped = mapUserDoc(fbUser.uid, snap.data());
+    syncProfileToCache(mapped);
+    return mapped;
   }).then(user => {
     _profileLoaded = true;
-    _profileLoadPending = false;
     _authHandling = false;
     currentUser = user;
-    setProfileBannerMessage('Profile loaded successfully.', 'ok');
-    const top = document.getElementById('topbarName'); if (top) top.textContent = user.email || '';
-    const banner = document.getElementById('profileLoadBanner'); if (banner) banner.remove();
+    const errEl = document.getElementById('loginError'); if (errEl) errEl.style.display = 'none';
     routeUser(user);
   }).catch(e => {
     _authHandling = false;
-    _profileLoadPending = false;
     _routingAfterLogin = false;
+    if (_profileLoaded) return;  // a concurrent attempt already succeeded — ignore
+    const errEl = document.getElementById('loginError');
     const code = (e && e.code) || '';
     let msg;
     if (code === 'permission-denied') {
-      msg = 'Access denied loading your profile. You are signed in, but the Firestore profile could not be read.';
-    } else if (code === 'profile-not-found') {
-      msg = 'Sign-in succeeded, but no Firestore profile document exists at users/<auth uid> for this account.';
-    } else if (code === 'timeout' || code === 'deadline-exceeded') {
-      msg = 'You are signed in, but Firestore profile loading timed out. Use Retry profile load below without signing in again.';
+      msg = 'Access denied loading your profile. Please contact an administrator.';
     } else if (code === 'unavailable' || /offline/i.test(e.message||'')) {
-      msg = 'You are signed in, but the app could not reach Firestore. Retry profile load from inside the app shell.';
+      msg = 'Could not reach the server. Check your connection (or any ad/tracker blocker) and try again.';
     } else {
-      msg = 'You are signed in, but the profile could not be loaded: ' + (e.message || e);
+      msg = 'Could not load your profile: ' + (e.message || e);
     }
-    setProfileBannerMessage(msg, 'error');
-    if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
-    console.error('Profile load error:', {
-      transportMode: window.fb.transportMode ? window.fb.transportMode() : 'unknown',
-      code,
-      error: e,
-      uid: fbUser && fbUser.uid,
-      email: fbUser && fbUser.email
-    });
+    if (errEl) { errEl.textContent = msg + ' A cached profile will be used if available.'; errEl.style.display = 'block'; }
+    console.error('Profile load error:', code, e);
   });
 }
 
