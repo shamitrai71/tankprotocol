@@ -2923,16 +2923,15 @@ body.editing .report-delete-btn { display: block; }
   // Auto-detect long-polling: works through proxies/networks/extensions that
   // block Firestore's default WebChannel streaming transport (the cause of
   // misleading "could not reach the server" / "client is offline" errors).
+  // IMPORTANT: this project's Firestore database is named "tankprotocol",
+  // NOT the usual "(default)". The SDK/REST must target that database ID or
+  // every read fails (the SDK hangs; REST returns 404 "database does not exist").
+  const DB_ID = 'tankprotocol';
   let db;
   try {
-    // Force long-polling instead of auto-DETECT. Auto-detect probes the
-    // connection by repeatedly opening channels; on this network that probe
-    // never converges and loops forever (dozens of channel? requests over 50s),
-    // so the snapshot listener never settles and reads time out. Forcing it
-    // uses one stable long-poll connection.
-    db = initializeFirestore(app, { experimentalForceLongPolling: true });
+    db = initializeFirestore(app, { experimentalForceLongPolling: true }, DB_ID);
   } catch (e) {
-    db = getFirestore(app);
+    db = getFirestore(app, DB_ID);
   }
 
   // Expose a single bridge object for the (non-module) app code.
@@ -2952,7 +2951,7 @@ body.editing .report-delete-btn { display: block; }
     //    which is blocked/unreliable on some networks). Used for the login
     //    profile read/write so auth works even when WebChannel/long-polling fails.
     _projectId: firebaseConfig.projectId,
-    _restBase: `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents`,
+    _restBase: `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/tankprotocol/documents`,
     _decodeFields: (fields) => {
       // Convert Firestore REST "fields" format to a plain JS object.
       const out = {};
