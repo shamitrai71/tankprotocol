@@ -6108,8 +6108,8 @@ function initProfile() {
   const params = new URLSearchParams(window.location.search);
   const viewId = params.get('view');
 
-  if (viewId && isSuperAdmin) {
-    viewingUser = USERS.find(u => u.uid === viewId || u.id === viewId) || USERS.find(u => u.id === sessionUser.id);
+  if (viewId && isSuperAdmin && USERS.find(u => u.uid === viewId || u.id === viewId)) {
+    viewingUser = USERS.find(u => u.uid === viewId || u.id === viewId);
     if (viewingUser && viewingUser.id !== sessionUser.id) {
       document.getElementById('adminViewBanner').classList.add('show');
       document.getElementById('adminViewName').textContent = viewingUser.firstName + ' ' + viewingUser.lastName;
@@ -6117,7 +6117,9 @@ function initProfile() {
       document.getElementById('viewingName').textContent = viewingUser.firstName + ' ' + viewingUser.lastName;
     }
   } else {
-    viewingUser = USERS.find(u => u.id === sessionUser.id) || DEMO_USERS[0];
+    // Own profile — use the live currentUser (loaded via REST at login), which
+    // always has email/role/etc. Do NOT fall back to demo data.
+    viewingUser = currentUser;
   }
 
   // Can edit if own profile OR super admin
@@ -6340,10 +6342,39 @@ function saveProfile() {
   u.specialisations = document.getElementById('e_specialisations').value.trim();
   u.title           = u.designation;
 
+  // Persist to Firestore via REST (the SDK write path is unreliable on this
+  // network, same as reads were — REST is the proven-working transport).
+  const uid = u.uid || (currentUser && currentUser.uid);
+  if (window.fb && uid) {
+    const payload = {
+      firstName: u.firstName || '', lastName: u.lastName || '',
+      phone: u.phone || '', location: u.location || '', linkedin: u.linkedin || '',
+      bio: u.bio || '', company: u.company || '', designation: u.designation || '',
+      dept: u.dept || '', industry: u.industry || '', website: u.website || '',
+      experience: u.experience || '', specialisations: u.specialisations || '',
+      title: u.designation || ''
+    };
+    window.fb.setUserREST(uid, payload).then(() => {
+      showToast('Profile saved successfully ✓');
+    }).catch(err => {
+      // Fall back to SDK write if REST fails for any reason
+      if (window.fb.updateUser) {
+        window.fb.updateUser(uid, payload)
+          .then(() => showToast('Profile saved ✓'))
+          .catch(e => showToast('Could not save: ' + (e.message||e), true));
+      } else {
+        showToast('Could not save: ' + (err.message||err), true);
+      }
+    });
+    // Keep the in-memory currentUser in sync so the UI is consistent
+    if (currentUser && currentUser.uid === uid) Object.assign(currentUser, payload);
+  } else {
+    showToast('Profile saved locally ✓');
+  }
+
   editingActive = false;
   applyEditMode();
   renderProfile();
-  showToast('Profile saved successfully ✓');
 }
 
 // ── AVATAR & LOGO UPLOAD ──────────────────────────────────────
