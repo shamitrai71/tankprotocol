@@ -3029,6 +3029,39 @@ body.editing .report-delete-btn { display: block; }
     watchReports: (cb) => onSnapshot(query(collection(db, 'reports'), orderBy('createdAt','desc')), (snap) => {
       cb(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     }),
+    // ── REST collection reads (SDK listeners fail on this network) ──────────
+    listUsersREST: async () => {
+      const token = await auth.currentUser.getIdToken();
+      let docs = [], pageToken = '';
+      do {
+        const url = `${window.fb._restBase}/users?pageSize=300` + (pageToken ? `&pageToken=${pageToken}` : '');
+        const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) throw { code: 'rest-' + res.status, message: 'listUsers ' + res.status };
+        const j = await res.json();
+        (j.documents || []).forEach(d => {
+          const uid = d.name.split('/').pop();
+          docs.push({ uid, id: uid, ...window.fb._decodeFields(d.fields) });
+        });
+        pageToken = j.nextPageToken || '';
+      } while (pageToken);
+      return docs;
+    },
+    listReportsREST: async () => {
+      const token = await auth.currentUser.getIdToken();
+      let docs = [], pageToken = '';
+      do {
+        const url = `${window.fb._restBase}/reports?pageSize=300` + (pageToken ? `&pageToken=${pageToken}` : '');
+        const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+        if (!res.ok) throw { code: 'rest-' + res.status, message: 'listReports ' + res.status };
+        const j = await res.json();
+        (j.documents || []).forEach(d => {
+          const id = d.name.split('/').pop();
+          docs.push({ id, ...window.fb._decodeFields(d.fields) });
+        });
+        pageToken = j.nextPageToken || '';
+      } while (pageToken);
+      return docs;
+    },
     bumpDownloads: (uid) => updateDoc(doc(db, 'users', uid), { downloadsUsed: increment(1) }),
     serverTimestamp,
   };
@@ -3741,18 +3774,18 @@ body.editing .report-delete-btn { display: block; }
       </div>
       <div class="stat-card emerald">
         <div class="stat-card-icon">✅</div>
-        <div class="stat-card-num">2</div>
-        <div class="stat-card-label">Active Sessions</div>
+        <div class="stat-card-num" id="adminApprovedCount">0</div>
+        <div class="stat-card-label">Approved</div>
       </div>
       <div class="stat-card blue">
         <div class="stat-card-icon">🛡️</div>
-        <div class="stat-card-num">1</div>
+        <div class="stat-card-num" id="adminAdminCount">0</div>
         <div class="stat-card-label">Admins</div>
       </div>
       <div class="stat-card red">
-        <div class="stat-card-icon">⚠️</div>
-        <div class="stat-card-num">0</div>
-        <div class="stat-card-label">Alerts</div>
+        <div class="stat-card-icon">⏳</div>
+        <div class="stat-card-num" id="adminPendingCount">0</div>
+        <div class="stat-card-label">Pending</div>
       </div>
     </div>
 
@@ -4440,10 +4473,16 @@ body.editing .report-delete-btn { display: block; }
 
   <!-- ══ SUPER ADMIN: CALCULATIONS ══ -->
   <div class="page" id="sa-calcs" style="display:none;">
-    <div class="page-heading">Calculations Log</div>
-    <div class="page-sub">All reports generated across all members</div>
+    <div class="page-heading">Calculations Log &amp; Analytics</div>
+    <div class="page-sub">All reports generated across all members — live data</div>
     <div class="sa-section">
       <div id="calcsStatsRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;"></div>
+      <div id="calcBreakdowns" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;"></div>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
+        <input type="text" id="calcSearch" class="email-input" style="max-width:340px;margin:0;" placeholder="Search member, company, tank, chemical, location…" oninput="renderCalcsTable()">
+        <button class="btn-add" onclick="loadReportsREST()" style="margin:0;">↻ Refresh</button>
+        <button class="btn-add" onclick="exportReportsCSV()" style="margin:0;">⬇ Export CSV</button>
+      </div>
       <div style="overflow-x:auto;">
         <table class="sa-table">
           <thead><tr>
@@ -4849,7 +4888,7 @@ function saNav(el, pageId) {
   if (el) { el.style.background = 'rgba(232,201,122,0.12)'; el.style.color = '#e8c97a'; }
   // Render content
   if (pageId === 'sa-members')   renderMembersTable();
-  if (pageId === 'sa-calcs')     renderCalcsTable();
+  if (pageId === 'sa-calcs')     { renderCalcsTable(); if (typeof loadReportsREST==='function') loadReportsREST(); }
   if (pageId === 'sa-approvals') renderApprovals();
   if (pageId === 'sa-email')     populateEmailRecipients();
 }
@@ -5022,24 +5061,18 @@ function renderCalcsTable() {
   const statsRow = document.getElementById('calcsStatsRow');
   if (!tbody) return;
 
-  // Aggregate all reports from all users
-  const allReports = [];
-  USERS.forEach(u => {
-    if (u.myReports && u.myReports.length) {
-      u.myReports.forEach(r => {
-        allReports.push({ ...r, userName: u.firstName + ' ' + u.lastName, userEmail: u.email });
-      });
-    }
-  });
+  const reports = (window._REPORTS || []).slice();
 
-  // Stats
+  // ── Summary stats ──
   if (statsRow) {
-    const totalDL = USERS.reduce((s, u) => s + (u.downloadsUsed || 0), 0);
+    const totalDL = reports.filter(r => r.downloaded).length;
+    const companies = new Set(reports.map(r => r.company).filter(Boolean)).size;
+    const activeUsers = new Set(reports.map(r => r.uid).filter(Boolean)).size;
     statsRow.innerHTML = [
-      { icon: '📁', num: allReports.length, label: 'Total Reports' },
-      { icon: '↓',  num: totalDL,           label: 'Total Downloads' },
-      { icon: '🏭', num: new Set(allReports.map(r => r.company).filter(Boolean)).size, label: 'Companies' },
-      { icon: '👥', num: USERS.filter(u => u.myReports && u.myReports.length).length, label: 'Active Users' },
+      { icon: '📁', num: reports.length, label: 'Total Reports' },
+      { icon: '↓',  num: totalDL,        label: 'Downloaded' },
+      { icon: '🏭', num: companies,      label: 'Companies' },
+      { icon: '👥', num: activeUsers,    label: 'Active Users' },
     ].map(s => `
       <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
         <div style="font-size:1.2rem;margin-bottom:6px;">${s.icon}</div>
@@ -5048,30 +5081,85 @@ function renderCalcsTable() {
       </div>`).join('');
   }
 
-  if (!allReports.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:20px;">No reports generated yet</td></tr>';
+  // ── Breakdown panels (by tank type, chemical, location) ──
+  renderBreakdowns(reports);
+
+  // ── Search filter ──
+  const q = (document.getElementById('calcSearch')?.value || '').toLowerCase().trim();
+  const filtered = q ? reports.filter(r =>
+    [r.userName, r.userEmail, r.company, r.tankId, r.location, r.chemical, r.tankType]
+      .some(v => (v||'').toString().toLowerCase().includes(q))
+  ) : reports;
+
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:20px;">' +
+      (reports.length ? 'No reports match your search' : 'No reports generated yet') + '</td></tr>';
     return;
   }
 
-  tbody.innerHTML = allReports.map((r, i) => `
+  const fmtDate = iso => { try { return new Date(iso).toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}); } catch(e){ return iso||'—'; } };
+
+  tbody.innerHTML = filtered.map(r => `
     <tr>
       <td>
-        <div style="font-weight:500;color:var(--text-bright);font-size:0.82rem;">${r.userName}</div>
-        <div style="font-size:0.68rem;color:var(--text-dim);font-family:var(--mono);">${r.userEmail}</div>
+        <div style="font-weight:500;color:var(--text-bright);font-size:0.82rem;">${r.userName || '—'}</div>
+        <div style="font-size:0.68rem;color:var(--text-dim);font-family:var(--mono);">${r.userEmail || ''}</div>
       </td>
       <td style="font-size:0.8rem;">${r.company || '—'}</td>
-      <td style="font-family:var(--mono);font-size:0.78rem;">${r.tank || '—'}</td>
+      <td style="font-family:var(--mono);font-size:0.78rem;">${r.tankId || '—'}</td>
       <td style="font-size:0.78rem;color:var(--text-dim);">${r.location || '—'}</td>
-      <td style="font-size:0.78rem;">${r.liquid || '—'}</td>
-      <td><span class="sa-badge ${r.type === 'EFRT' ? 'gold' : 'user'}" style="padding:2px 7px;">${r.type || '—'}</span></td>
-      <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${r.date || '—'}</td>
-      <td>
-        <button class="sa-btn gold-btn" onclick="showAdminToast('Downloading '+${JSON.stringify(r.name)})">
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"><path d="M5 1v6M2 5l3 3 3-3M1 9h8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Download
-        </button>
-      </td>
+      <td style="font-size:0.78rem;">${r.chemical || '—'}</td>
+      <td><span class="sa-badge ${r.tankClass === 'floating' ? 'gold' : 'user'}" style="padding:2px 7px;">${r.tankType || r.tankClass || '—'}</span></td>
+      <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${fmtDate(r.createdAt)}</td>
+      <td>${r.downloaded
+        ? '<span style="color:var(--green,#06d6a0);font-size:0.75rem;">✓ Downloaded</span>'
+        : '<span style="color:var(--text-dim);font-size:0.75rem;">—</span>'}</td>
     </tr>`).join('');
+}
+
+// Alias so the REST reports loader can trigger a re-render
+function renderAnalytics() { try { renderCalcsTable(); } catch(e){} }
+
+function renderBreakdowns(reports) {
+  const host = document.getElementById('calcBreakdowns');
+  if (!host) return;
+  const tally = (key) => {
+    const m = {};
+    reports.forEach(r => { const v = (r[key]||'—').toString().trim() || '—'; m[v] = (m[v]||0)+1; });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  };
+  const bar = (rows, title) => {
+    const max = rows.length ? rows[0][1] : 1;
+    return `<div style="flex:1;min-width:220px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;">
+      <div style="font-family:var(--display);font-weight:700;font-size:0.82rem;color:var(--text-bright);margin-bottom:10px;">${title}</div>
+      ${rows.length ? rows.map(([label,n]) => `
+        <div style="margin-bottom:7px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;">
+            <span style="color:var(--text);">${label}</span><span style="color:var(--text-dim);font-family:var(--mono);">${n}</span>
+          </div>
+          <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+            <div style="height:100%;width:${Math.round(n/max*100)}%;background:var(--gold,#c9a84c);"></div>
+          </div>
+        </div>`).join('') : '<div style="color:var(--text-dim);font-size:0.75rem;">No data</div>'}
+    </div>`;
+  };
+  host.innerHTML =
+    bar(tally('tankType'), 'By Tank Type') +
+    bar(tally('chemical'), 'By Chemical') +
+    bar(tally('location'), 'By Location');
+}
+
+function exportReportsCSV() {
+  const reports = window._REPORTS || [];
+  if (!reports.length) { showAdminToast('No reports to export'); return; }
+  const cols = ['createdAt','userName','userEmail','company','tankId','tankClass','tankType','location','chemical','downloaded','units'];
+  const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
+  const rows = [cols.join(',')].concat(reports.map(r => cols.map(k => esc(r[k])).join(',')));
+  const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'tankprotocol-reports.csv'; a.click();
+  URL.revokeObjectURL(url);
 }
 
 // ── Email Functions ─────────────────────────────────────────
@@ -5446,6 +5534,7 @@ function routeUser(user) {
     window.location.href = 'floating-roof-tank-calculator.html';
   } else {
     startUsersWatcher();
+    loadReportsREST();
     loadDashboard();
     showView('dashView');
   }
@@ -5849,22 +5938,49 @@ let _usersWatcherStarted = false;
 function startUsersWatcher() {
   if (_usersWatcherStarted || !window.fb) return;
   _usersWatcherStarted = true;
-  try {
-    window.fb.watchUsers((users) => {
-      USERS.length = 0;
-      users.forEach(u => USERS.push(mapUserDoc(u.uid, u)));
-      if (typeof renderMembersTable === 'function' && document.getElementById('membersTableBody')) {
-        try { renderMembersTable(); } catch(e){}
-      }
-      if (typeof renderApprovals === 'function' && document.getElementById('approvalsList')) {
-        try { renderApprovals(); } catch(e){}
-      }
-      if (currentUser) {
-        const me = USERS.find(u => u.uid === currentUser.uid);
-        if (me) currentUser = me;
-      }
-    });
-  } catch(e) { console.warn('watchUsers failed:', e); }
+  loadUsersREST();
+  // Refresh every 60s (no live listener — SDK streaming fails on some networks).
+  setInterval(loadUsersREST, 60000);
+}
+
+function updateDashboardCounts() {
+  const _s = id => document.getElementById(id);
+  if (_s('adminUserCount'))     _s('adminUserCount').textContent     = USERS.length;
+  if (_s('adminApprovedCount')) _s('adminApprovedCount').textContent = USERS.filter(u => u.approved).length;
+  if (_s('adminAdminCount'))    _s('adminAdminCount').textContent    = USERS.filter(u => u.role==='admin'||u.role==='super_admin').length;
+  if (_s('adminPendingCount'))  _s('adminPendingCount').textContent  = USERS.filter(u => !u.approved).length;
+}
+
+function loadUsersREST() {
+  if (!window.fb || !window.fb.listUsersREST) return Promise.resolve();
+  return window.fb.listUsersREST().then((users) => {
+    USERS.length = 0;
+    users.forEach(u => USERS.push(mapUserDoc(u.uid, u)));
+    if (typeof renderMembersTable === 'function' && document.getElementById('membersTableBody')) {
+      try { renderMembersTable(); } catch(e){}
+    }
+    if (typeof renderApprovals === 'function' && document.getElementById('approvalsList')) {
+      try { renderApprovals(); } catch(e){}
+    }
+    if (typeof updateDashboardCounts === 'function') { try { updateDashboardCounts(); } catch(e){} }
+    if (currentUser) {
+      const me = USERS.find(u => u.uid === currentUser.uid);
+      if (me) currentUser = me;
+    }
+  }).catch(e => console.warn('loadUsersREST failed:', e));
+}
+
+// Reports cache for analytics
+window._REPORTS = [];
+function loadReportsREST() {
+  if (!window.fb || !window.fb.listReportsREST) return Promise.resolve([]);
+  return window.fb.listReportsREST().then((reports) => {
+    // Sort newest first by createdAt ISO string
+    reports.sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+    window._REPORTS = reports;
+    if (typeof renderAnalytics === 'function') { try { renderAnalytics(); } catch(e){} }
+    return reports;
+  }).catch(e => { console.warn('loadReportsREST failed:', e); return []; });
 }
 
 function initFirebaseAuth() {

@@ -113,6 +113,125 @@ a { color: var(--accent); }
 .disclaimer-lead { color:var(--text); }
 .footer { text-align:center; color:var(--text-dim); font-size:0.72rem; margin-top:40px; padding-top:20px; border-top:1px solid var(--border); }
 </style>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
+  import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCP0GxYSHveuD6DuFye27a90on0OnmOkqs",
+    authDomain: "tankprotocol-d903b.firebaseapp.com",
+    projectId: "tankprotocol-d903b",
+    storageBucket: "tankprotocol-d903b.firebasestorage.app",
+    messagingSenderId: "873305711680",
+    appId: "1:873305711680:web:dccd32c48d5bbc30db6ba5"
+  };
+  const DB_ID = 'tankprotocol';  // named database (NOT "(default)")
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const REST = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${DB_ID}/documents`;
+
+  // Encode a JS value to Firestore REST field format
+  function enc(val) {
+    if (val === null || val === undefined) return { nullValue: null };
+    if (typeof val === 'boolean') return { booleanValue: val };
+    if (typeof val === 'number') return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
+    if (Array.isArray(val)) return { arrayValue: { values: val.map(enc) } };
+    if (typeof val === 'object') { const f={}; for(const[k,v]of Object.entries(val))f[k]=enc(v); return { mapValue:{ fields:f } }; }
+    return { stringValue: String(val) };
+  }
+  function decodeFields(fields) {
+    const out = {};
+    for (const [k, v] of Object.entries(fields || {})) {
+      const t = Object.keys(v)[0]; let val = v[t];
+      if (t === 'integerValue') val = parseInt(val,10);
+      else if (t === 'doubleValue') val = Number(val);
+      else if (t === 'booleanValue') val = !!val;
+      else if (t === 'nullValue') val = null;
+      else if (t === 'mapValue') val = decodeFields(val.fields);
+      else if (t === 'arrayValue') val = (val.values||[]).map(x=>{const tt=Object.keys(x)[0];return x[tt];});
+      out[k] = val;
+    }
+    return out;
+  }
+
+  window.fbCalc = {
+    auth,
+    signOut: () => signOut(auth),
+    onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
+    // Read own user doc via REST
+    getUser: async (uid) => {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${REST}/users/${uid}`, { headers: { Authorization: 'Bearer '+token } });
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error('getUser '+res.status);
+      const j = await res.json();
+      return decodeFields(j.fields);
+    },
+    // Create a report doc via REST (auto-id). Returns the new doc's REST name/id.
+    addReport: async (data) => {
+      const token = await auth.currentUser.getIdToken();
+      const fields = {}; for (const [k,v] of Object.entries(data)) fields[k] = enc(v);
+      const res = await fetch(`${REST}/reports`, {
+        method: 'POST',
+        headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw new Error('addReport '+res.status);
+      const j = await res.json();
+      const id = j.name.split('/').pop();
+      return id;
+    },
+    // Patch a report (e.g. mark downloaded:true)
+    updateReport: async (id, data) => {
+      const token = await auth.currentUser.getIdToken();
+      const fields = {}; const mask = [];
+      for (const [k,v] of Object.entries(data)) { fields[k]=enc(v); mask.push(k); }
+      const params = mask.map(f=>'updateMask.fieldPaths='+encodeURIComponent(f)).join('&');
+      const res = await fetch(`${REST}/reports/${id}?${params}`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw new Error('updateReport '+res.status);
+      return true;
+    },
+    // Bump downloadsUsed on the user doc
+    bumpDownloads: async (uid, n) => {
+      const token = await auth.currentUser.getIdToken();
+      const params = 'updateMask.fieldPaths=downloadsUsed';
+      const res = await fetch(`${REST}/users/${uid}?${params}`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
+        body: JSON.stringify({ fields: { downloadsUsed: { integerValue: String(n) } } })
+      });
+      return res.ok;
+    }
+  };
+
+  // ── AUTH GUARD ──────────────────────────────────────────────────────────
+  // Only signed-in, approved users may use the calculator. Others -> portal.
+  const LOGIN_URL = 'index.html';
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.href = LOGIN_URL; return; }
+    try {
+      const profile = await window.fbCalc.getUser(user.uid);
+      if (!profile || profile.approved !== true) {
+        window.location.href = LOGIN_URL; return;
+      }
+      window._tpUser = {
+        uid: user.uid, email: profile.email || user.email || '',
+        firstName: profile.firstName || '', lastName: profile.lastName || '',
+        company: profile.company || '', role: profile.role || 'user',
+        downloadsUsed: profile.downloadsUsed || 0
+      };
+      window.dispatchEvent(new Event('tp-user-ready'));
+    } catch (e) {
+      // On REST error, don't hard-lock the user out of a tool they may be mid-use on;
+      // but without a verified profile we send them to login.
+      window.location.href = LOGIN_URL;
+    }
+  });
+</script>
 </head>
 <body>
 <div class="topbar">
@@ -1295,6 +1414,52 @@ function renderFittingRows() {
 function refreshFittingOptions() { renderFittingRows(); }
 
 // ── MAIN CALCULATION ─────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// REPORT LOGGING (Firestore via REST) — logs every calculation, marks downloads
+// ══════════════════════════════════════════════════════════════════════════
+window._currentReportId = null;
+
+function _gatherReportMeta(d) {
+  const g = id => (document.getElementById(id) ? document.getElementById(id).value : '') || '';
+  const cls = document.getElementById('tankClass') ? document.getElementById('tankClass').value : 'floating';
+  // Loss summary (varies by type) — pull the headline numbers if present.
+  const losses = {};
+  if (d) {
+    if (typeof d.LR === 'number') losses.rimSeal = Math.round(d.LR*100)/100;
+    if (typeof d.LF === 'number') losses.fitting = Math.round(d.LF*100)/100;
+    if (typeof d.LD === 'number') losses.deckSeam = Math.round(d.LD*100)/100;
+    if (typeof d.LS === 'number') losses.standing = Math.round(d.LS*100)/100;
+    if (typeof d.LW === 'number') losses.working = Math.round(d.LW*100)/100;
+    if (typeof d.LT === 'number') losses.total = Math.round(d.LT*100)/100;
+    if (d.total && Array.isArray(d.total)) losses.total = Math.round((d.total[1]||0)*100)/100;
+  }
+  const u = window._tpUser || {};
+  return {
+    uid: u.uid || '', userEmail: u.email || '', userName: ((u.firstName||'')+' '+(u.lastName||'')).trim(),
+    company: g('companyName') || u.company || '',
+    tankClass: cls,
+    tankType: g('roofType') || (document.getElementById('fixedShape') ? document.getElementById('fixedShape').value : '') || '',
+    tankId: g('tankId'), location: g('tankLocation') || g('metLocation') || '',
+    chemical: (document.getElementById('chemical') && document.getElementById('chemical').options.length)
+              ? document.getElementById('chemical').options[document.getElementById('chemical').selectedIndex].text : '',
+    losses, units: (d && d.nonRoutine) ? 'lb/event' : 'lb/yr',
+    downloaded: false,
+    createdAt: new Date().toISOString()
+  };
+}
+
+function logReport(d) {
+  if (!window.fbCalc || !window._tpUser) { window._currentReportId = null; return; }
+  const meta = _gatherReportMeta(d);
+  window._lastReportMeta = meta;
+  window.fbCalc.addReport(meta).then(id => {
+    window._currentReportId = id;
+  }).catch(err => {
+    console.warn('Report logging failed:', err);
+    window._currentReportId = null;
+  });
+}
+
 function calculate() {
   const errEl = document.getElementById('errorMsg');
   const err = (m) => { errEl.textContent = m; errEl.classList.add('show'); };
@@ -1447,6 +1612,7 @@ function renderResults(d) {
     <button class="btn-dl" onclick='downloadReport(${JSON.stringify(JSON.stringify(d))})'>⬇ Download Report</button>
   `;
   window._lastResult = d;
+  logReport(d);
 }
 
 // ── NON-ROUTINE REPORT ───────────────────────────────────────────────────────
@@ -1526,9 +1692,33 @@ th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th
 }
 
 // ── REPORT DOWNLOAD ───────────────────────────────────────────────────────────
+// Download limits by role, and mark the logged report as downloaded.
+const DL_LIMITS = { user: 2, gold: 10, admin: Infinity, super_admin: Infinity };
+function _checkAndMarkDownload() {
+  const u = window._tpUser;
+  if (!u) return true; // not signed in via calc guard (shouldn't happen) — allow
+  const limit = DL_LIMITS[u.role] ?? 2;
+  const used = u.downloadsUsed || 0;
+  if (used >= limit) {
+    alert(`Download limit reached (${used}/${limit === Infinity ? '∞' : limit}). Contact an administrator to increase your limit.`);
+    return false;
+  }
+  // Mark the current report as downloaded + bump the user's counter (best-effort).
+  if (window.fbCalc && window._currentReportId) {
+    window.fbCalc.updateReport(window._currentReportId, { downloaded: true }).catch(()=>{});
+  }
+  if (window.fbCalc && u.uid) {
+    const next = used + 1;
+    window.fbCalc.bumpDownloads(u.uid, next).then(ok => { if (ok) u.downloadsUsed = next; }).catch(()=>{});
+  }
+  return true;
+}
+
 function downloadReport() {
   const d = window._lastResult;
   if (!d) return;
+  // Enforce download limits & mark this report as downloaded (analytics).
+  if (!_checkAndMarkDownload()) return;
   if (d.nonRoutine) { downloadNonRoutineReport(d); return; }
   if (d.fixedRoof) { downloadFixedReport(d); return; }
   const g = id => document.getElementById(id)?.value || '—';
@@ -1827,6 +2017,7 @@ function renderFixedResults(d) {
     <button class="btn-dl" onclick="downloadReport()">⬇ Download Report</button>
   `;
   window._lastResult = { ...d, fixedRoof:true };
+  logReport(window._lastResult);
 }
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -2017,6 +2208,7 @@ function renderNonRoutine(o) {
     <div class="note">Non-routine losses are per-event (per landing or per cleaning), not annual. ${o.kind==='landing'?'Standing idle loss is capped at the available stock liquid (AP-42 Eq. 3-4/3-14).':'Vapor concentration is capped at saturation P<sub>VA</sub>/P<sub>a</sub> (Eq. 4-11).'}</div>
   `;
   window._lastResult = { nonRoutine:true, ...o };
+  logReport(window._lastResult);
 }
 
 // Route calculate() based on tank class
