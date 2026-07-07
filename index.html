@@ -3001,6 +3001,14 @@ body.editing .report-delete-btn { display: block; }
       if (!res.ok) throw { code: 'rest-' + res.status, message: 'REST write failed: ' + res.status };
       return true;
     },
+    deleteUserREST: async (uid) => {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${window.fb._restBase}/users/${uid}`, {
+        method: 'DELETE', headers: { Authorization: 'Bearer ' + token }
+      });
+      if (!res.ok) throw { code: 'rest-' + res.status, message: 'REST delete failed: ' + res.status };
+      return true;
+    },
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
     // One-time read via realtime listener — uses the streaming transport that
@@ -4971,7 +4979,7 @@ function toggleGoldMember(id) {
   const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u || u.role === 'super_admin') return;
   const nextRole = u.role === 'gold' ? 'user' : 'gold';
-  if (window.fb && u.uid) window.fb.updateUser(u.uid, { role: nextRole }).catch(e=>showAdminToast('Error: '+e.message));
+  if (window.fb && u.uid) window.fb.setUserREST(u.uid, { role: nextRole }).then(()=>loadUsersREST()).catch(e=>showAdminToast('Error: '+e.message));
   u.role = nextRole;
   u.downloadLimit = getDownloadLimit(u);
   renderMembersTable();
@@ -4986,7 +4994,7 @@ function toggleGoldMember(id) {
 function resetDownloads(id) {
   const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u) return;
-  if (window.fb && u.uid) window.fb.updateUser(u.uid, { downloadsUsed: 0 }).catch(e=>showAdminToast('Error: '+e.message));
+  if (window.fb && u.uid) window.fb.setUserREST(u.uid, { downloadsUsed: 0 }).then(()=>loadUsersREST()).catch(e=>showAdminToast('Error: '+e.message));
   u.downloadsUsed = 0;
   renderMembersTable();
   showAdminToast(`Downloads reset for ${u.firstName} ${u.lastName}`);
@@ -4996,7 +5004,7 @@ function removeMember(id) {
   const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u || u.role === 'super_admin') return;
   if (!confirm(`Remove ${u.firstName} ${u.lastName}? This cannot be undone.`)) return;
-  if (window.fb && u.uid) window.fb.deleteUser(u.uid).catch(e=>showAdminToast('Error: '+e.message));
+  if (window.fb && u.uid) window.fb.deleteUserREST(u.uid).then(()=>loadUsersREST()).catch(e=>showAdminToast('Error: '+e.message));
   renderMembersTable();
   showAdminToast(`${u.firstName} ${u.lastName} removed`);
 }
@@ -5032,7 +5040,7 @@ function renderApprovals() {
 function approveAndWelcome(id) {
   const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u) return;
-  if (window.fb && u.uid) window.fb.updateUser(u.uid, { approved: true }).catch(e=>showAdminToast('Error: '+e.message));
+  if (window.fb && u.uid) window.fb.setUserREST(u.uid, { approved: true }).then(()=>loadUsersREST()).catch(e=>showAdminToast('Error: '+e.message));
   u.approved = true;
   u.status   = 'active';
   const welcome = `Dear ${u.firstName},\n\nWelcome to Tank Protocol! Your account has been approved.\n\nYou can now log in and access the Floating Roof Tank Emissions Calculator.\n\nAs a Member you have 2 report downloads included. Upgrade to Gold for 10 downloads.\n\nBest regards,\nTank Protocol Team`;
@@ -5049,7 +5057,7 @@ function rejectMember(id) {
   const u = USERS.find(x => x.id === id || x.uid === id);
   if (!u) return;
   if (!confirm(`Reject and remove ${u.firstName} ${u.lastName}'s application?`)) return;
-  if (window.fb && u.uid) window.fb.deleteUser(u.uid).catch(e=>showAdminToast('Error: '+e.message));
+  if (window.fb && u.uid) window.fb.deleteUserREST(u.uid).then(()=>loadUsersREST()).catch(e=>showAdminToast('Error: '+e.message));
   showAdminToast(`Application rejected and removed`);
   renderApprovals();
   renderMembersTable();
@@ -5842,10 +5850,14 @@ function confirmDelete(id) {
   document.getElementById('modalTitle').textContent = 'Delete User';
   document.getElementById('modalBody').textContent  = `Are you sure you want to permanently delete ${u.firstName} ${u.lastName}? This action cannot be undone.`;
   document.getElementById('modalConfirmBtn').onclick = () => {
-    USERS.splice(USERS.findIndex(x => x.id === id), 1);
-    renderUserTable();
+    const target = USERS.find(x => x.id === id);
+    if (target && target.role === 'super_admin') { toast('Cannot delete a super admin'); closeModal(); return; }
+    if (window.fb && target && target.uid) {
+      window.fb.deleteUserREST(target.uid)
+        .then(() => { loadUsersREST(); toast('User deleted'); })
+        .catch(e => toast('Delete failed: ' + (e.message||e), true));
+    }
     closeModal();
-    toast('User deleted');
   };
   document.getElementById('confirmModal').classList.add('show');
 }
@@ -5887,7 +5899,7 @@ function changeUserRole(id, newRole) {
     return;
   }
   const oldRole = u.role;
-  if (window.fb && u.uid) window.fb.updateUser(u.uid, { role: newRole }).catch(e=>toast('Error: '+e.message));
+  if (window.fb && u.uid) window.fb.setUserREST(u.uid, { role: newRole }).then(()=>loadUsersREST()).catch(e=>toast('Error: '+e.message));
   u.role = newRole;
   renderUserTable();
   const msg = newRole === 'admin'
