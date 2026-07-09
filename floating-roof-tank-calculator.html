@@ -1415,6 +1415,27 @@ function refreshFittingOptions() { renderFittingRows(); }
 
 // ── MAIN CALCULATION ─────────────────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════
+// STANDARD DISCLAIMER — embedded into every downloaded report document
+// ══════════════════════════════════════════════════════════════════════════
+function fullDisclaimerHTML() {
+  return `
+<div style="margin-top:28px;padding:16px 18px;border:1px solid #c9a84c;border-radius:8px;background:#faf7ef;font-size:11px;line-height:1.55;color:#3a3320;page-break-inside:avoid;">
+  <div style="font-weight:bold;font-size:12px;color:#8a6d1a;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">⚠ Disclaimer — Indicative &amp; Comparative Use Only</div>
+  <p style="margin:0 0 8px;">This report provides <strong>indicative, comparative estimates</strong> of routine and non-routine vapor losses from organic liquid storage tanks, implementing the emission estimation equations published in <strong>US EPA AP-42, Chapter 7 — Organic Liquid Storage Tanks (September 2025)</strong>, based on correlations developed and copyrighted by the <strong>American Petroleum Institute (API MPMS Chapter 19.2)</strong>.</p>
+  <p style="margin:0 0 8px;">Results are intended only to help <strong>compare relative emission magnitudes</strong> between tanks, configurations, products, and operating scenarios. They are <strong>not</strong> a substitute for the official EPA TANKS software, a certified emissions calculation, or professional engineering judgment.</p>
+  <p style="margin:0 0 6px;">Estimates are subject to important limitations:</p>
+  <ul style="margin:0 0 8px;padding-left:18px;">
+    <li style="margin-bottom:4px;">The AP-42 equations are themselves <strong>approximations</strong>, derived from empirical data and simplifying assumptions. Emission factors are averages and may not represent any specific tank; actual emissions can differ substantially.</li>
+    <li style="margin-bottom:4px;">Accuracy depends entirely on the <strong>quality and completeness of the inputs</strong>. Default values, estimated meteorological data, simplified geometry, and assumed liquid properties all introduce uncertainty.</li>
+    <li style="margin-bottom:4px;">The equations do <strong>not</strong> apply to certain scenarios, including unstable or boiling stocks, deteriorated or permeated seals/fittings, heated or pressurized tanks outside the documented range, flashing service, or mixtures whose vapor pressure cannot be reliably predicted.</li>
+    <li style="margin-bottom:4px;">Some parameters use <strong>simplified or default treatments</strong> (saturation/wind correction factors, single-component vapor pressure in place of true mixture behaviour under Raoult's Law, and screening-level non-routine assumptions). Speciated, mixture, and partial-year results may differ from a full TANKS analysis.</li>
+  </ul>
+  <p style="margin:0 0 8px;"><strong>This report does not constitute regulatory compliance, permitting, or reporting.</strong> Any emissions used for regulatory submissions, permit applications, fee calculations, or compliance demonstrations must be verified using the official EPA TANKS application and applicable regulatory methods, and reviewed by a qualified professional. The developers make no warranty as to accuracy, fitness for any purpose, or regulatory acceptability, and accept no liability for decisions made on the basis of these estimates.</p>
+  <p style="margin:0;">API retains copyright to the underlying emission estimation equations; this tool is provided for non-commercial, indicative use consistent with AP-42's public availability.</p>
+</div>`;
+}
+
+// ══════════════════════════════════════════════════════════════════════════
 // REPORT LOGGING (Firestore via REST) — logs every calculation, marks downloads
 // ══════════════════════════════════════════════════════════════════════════
 window._currentReportId = null;
@@ -1640,6 +1661,7 @@ ${rows}
 <tr class="total"><td>${d.total[0]}</td><td>${fmt(d.total[1])} lb</td></tr>
 </table>
 <div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
+${fullDisclaimerHTML()}
 </body></html>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`nonroutine_${g('tankId')}.html`;a.click();
@@ -1685,6 +1707,7 @@ th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th
 <tr class="total"><td>TOTAL</td><td>${fmt(d.LT/2000)} ton/yr</td></tr>
 </table>
 <div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
+${fullDisclaimerHTML()}
 </body></html>`;
   const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=`fixed_roof_report_${g('tankId')}.html`;a.click();
@@ -1757,6 +1780,7 @@ ${d.LD>0?`<tr><td>Deck Seam Loss (L_D)</td><td>${fmt(d.LD)}</td></tr>`:''}
 <tr class="total"><td>TOTAL</td><td>${fmt(d.LT/2000)} ton/yr</td></tr>
 </table>
 <div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
+${fullDisclaimerHTML()}
 </body></html>`;
   const blob = new Blob([html], {type:'text/html'});
   const url = URL.createObjectURL(blob);
