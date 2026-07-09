@@ -3009,6 +3009,26 @@ body.editing .report-delete-btn { display: block; }
       if (!res.ok) throw { code: 'rest-' + res.status, message: 'REST delete failed: ' + res.status };
       return true;
     },
+    getVocabREST: async () => {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${window.fb._restBase}/config/vocabularies`, { headers: { Authorization: 'Bearer '+token } });
+      if (res.status === 404) return { companies:[], cities:[], countries:[], departments:[] };
+      if (!res.ok) throw { code:'rest-'+res.status, message:'getVocab '+res.status };
+      const j = await res.json();
+      const d = window.fb._decodeFields(j.fields);
+      return { companies:d.companies||[], cities:d.cities||[], countries:d.countries||[], departments:d.departments||[] };
+    },
+    setVocabREST: async (vocab) => {
+      const token = await auth.currentUser.getIdToken();
+      const arr = (a) => ({ arrayValue: { values: (a||[]).map(s => ({ stringValue: String(s) })) } });
+      const fields = { companies:arr(vocab.companies), cities:arr(vocab.cities), countries:arr(vocab.countries), departments:arr(vocab.departments) };
+      const res = await fetch(`${window.fb._restBase}/config/vocabularies`, {
+        method:'PATCH', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw { code:'rest-'+res.status, message:'setVocab '+res.status };
+      return true;
+    },
     getUser: (uid) => getDoc(doc(db, 'users', uid)),
     getUserServer: (uid) => getDocFromServer(doc(db, 'users', uid)),
     // One-time read via realtime listener — uses the streaming transport that
@@ -3876,6 +3896,9 @@ body.editing .report-delete-btn { display: block; }
         <div class="nav-item" onclick="saNav(this,'sa-approvals')" id="saNavApprovals" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
           <span class="nav-icon">✅</span> Approvals <span id="approvalBadge" class="nav-badge" style="display:none;">0</span>
         </div>
+        <div class="nav-item" onclick="saNav(this,'sa-vocab')" style="color:var(--gold-light);border-color:rgba(232,201,122,0.15);background:rgba(232,201,122,0.04);">
+          <span class="nav-icon">🏷️</span> Vocabularies
+        </div>
       </div>
     </div>
   </div>
@@ -4055,6 +4078,22 @@ body.editing .report-delete-btn { display: block; }
     <div class="sa-section">
       <div id="approvalsContainer">
         <div style="color:var(--text-dim);font-size:0.82rem;font-style:italic;padding:20px 0;">No pending approvals.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="sa-vocab" style="display:none;">
+    <div class="page-heading">Controlled Vocabularies</div>
+    <div class="page-sub">Manage the dropdown options members choose from — keeps analytics clean</div>
+    <div class="sa-section">
+      <div style="color:var(--text-dim);font-size:0.8rem;margin-bottom:16px;">
+        These lists populate the Company, City, Country, and Department dropdowns in the calculator.
+        Members can still type a custom value, but encouraging selection keeps your data consistent.
+      </div>
+      <div id="vocabPanels" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;"></div>
+      <div style="margin-top:18px;">
+        <button class="btn-add" onclick="saveVocab()" id="vocabSaveBtn">💾 Save All Vocabularies</button>
+        <span id="vocabStatus" style="margin-left:12px;font-size:0.8rem;color:var(--text-dim);"></span>
       </div>
     </div>
   </div>
@@ -4426,7 +4465,7 @@ const emailLogs = [];
 // ── Navigation ─────────────────────────────────────────────
 function saNav(el, pageId) {
   // Hide all SA pages
-  ['sa-members','sa-email','sa-calcs','sa-approvals'].forEach(id => {
+  ['sa-members','sa-email','sa-calcs','sa-approvals','sa-vocab'].forEach(id => {
     const p = document.getElementById(id);
     if (p) p.style.display = 'none';
   });
@@ -4443,7 +4482,83 @@ function saNav(el, pageId) {
   if (pageId === 'sa-members')   renderMembersTable();
   if (pageId === 'sa-calcs')     { renderCalcsTable(); if (typeof loadReportsREST==='function') loadReportsREST(); }
   if (pageId === 'sa-approvals') renderApprovals();
+  if (pageId === 'sa-vocab')     loadVocab();
   if (pageId === 'sa-email')     populateEmailRecipients();
+}
+
+// ── CONTROLLED VOCABULARY MANAGEMENT ────────────────────────────────────────
+window._VOCAB = { companies:[], cities:[], countries:[], departments:[] };
+
+function loadVocab() {
+  if (!window.fb || !window.fb.getVocabREST) return;
+  const status = document.getElementById('vocabStatus');
+  if (status) status.textContent = 'Loading…';
+  window.fb.getVocabREST().then(v => {
+    window._VOCAB = v;
+    renderVocab();
+    if (status) status.textContent = '';
+  }).catch(e => { if (status) status.textContent = 'Load failed: ' + (e.message||e); });
+}
+
+function renderVocab() {
+  const host = document.getElementById('vocabPanels');
+  if (!host) return;
+  const groups = [
+    { key:'companies',   label:'Companies',   icon:'🏢' },
+    { key:'cities',      label:'Cities',      icon:'🌆' },
+    { key:'countries',   label:'Countries',   icon:'🌍' },
+    { key:'departments', label:'Departments', icon:'🗂️' },
+  ];
+  host.innerHTML = groups.map(g => {
+    const items = (window._VOCAB[g.key] || []);
+    return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;">
+      <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);margin-bottom:10px;">${g.icon} ${g.label} <span style="color:var(--text-dim);font-weight:400;">(${items.length})</span></div>
+      <div id="vocabList_${g.key}" style="max-height:220px;overflow-y:auto;margin-bottom:10px;">
+        ${items.length ? items.map((it,i) => `
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
+            <span style="flex:1;font-size:0.8rem;color:var(--text);">${String(it).replace(/</g,'&lt;')}</span>
+            <button onclick="removeVocabItem('${g.key}',${i})" style="background:rgba(232,80,80,0.12);color:#e85050;border:none;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:0.72rem;">✕</button>
+          </div>`).join('') : '<div style="color:var(--text-dim);font-size:0.76rem;font-style:italic;">No entries yet</div>'}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <input type="text" id="vocabAdd_${g.key}" class="email-input" style="margin:0;flex:1;font-size:0.8rem;" placeholder="Add ${g.label.slice(0,-1).toLowerCase()}…" onkeydown="if(event.key==='Enter')addVocabItem('${g.key}')">
+        <button class="btn-add" style="margin:0;padding:6px 12px;" onclick="addVocabItem('${g.key}')">+</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addVocabItem(key) {
+  const input = document.getElementById('vocabAdd_' + key);
+  if (!input) return;
+  const val = input.value.trim();
+  if (!val) return;
+  if (!window._VOCAB[key]) window._VOCAB[key] = [];
+  // Avoid duplicates (case-insensitive)
+  if (window._VOCAB[key].some(x => x.toLowerCase() === val.toLowerCase())) { input.value=''; return; }
+  window._VOCAB[key].push(val);
+  window._VOCAB[key].sort((a,b)=>a.localeCompare(b));
+  input.value = '';
+  renderVocab();
+}
+
+function removeVocabItem(key, idx) {
+  if (!window._VOCAB[key]) return;
+  window._VOCAB[key].splice(idx, 1);
+  renderVocab();
+}
+
+function saveVocab() {
+  const status = document.getElementById('vocabStatus');
+  const btn = document.getElementById('vocabSaveBtn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+  window.fb.setVocabREST(window._VOCAB).then(() => {
+    if (status) { status.textContent = '✓ Saved'; status.style.color = 'var(--green,#06d6a0)'; }
+  }).catch(e => {
+    if (status) { status.textContent = 'Save failed: ' + (e.message||e); status.style.color = '#e85050'; }
+  }).finally(() => {
+    if (btn) { btn.disabled = false; btn.textContent = '💾 Save All Vocabularies'; }
+  });
 }
 
 // ── Download limit helper ───────────────────────────────────

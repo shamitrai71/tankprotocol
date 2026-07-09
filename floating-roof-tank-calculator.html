@@ -195,6 +195,16 @@ a { color: var(--accent); }
       if (!res.ok) throw new Error('updateReport '+res.status);
       return true;
     },
+    // Read the shared controlled-vocabulary lists (config/vocabularies doc)
+    getVocab: async () => {
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch(`${REST}/config/vocabularies`, { headers: { Authorization: 'Bearer '+token } });
+        if (!res.ok) return null;
+        const j = await res.json();
+        return decodeFields(j.fields);
+      } catch(e) { return null; }
+    },
     // Bump downloadsUsed on the user doc
     bumpDownloads: async (uid, n) => {
       const token = await auth.currentUser.getIdToken();
@@ -225,6 +235,19 @@ a { color: var(--accent); }
         downloadsUsed: profile.downloadsUsed || 0
       };
       window.dispatchEvent(new Event('tp-user-ready'));
+      // Load controlled vocabularies into the dropdown datalists.
+      window.fbCalc.getVocab().then(v => {
+        if (!v) return;
+        const fill = (dlId, arr) => {
+          const dl = document.getElementById(dlId);
+          if (!dl || !Array.isArray(arr)) return;
+          dl.innerHTML = arr.map(x => `<option value="${String(x).replace(/"/g,'&quot;')}"></option>`).join('');
+        };
+        fill('dl_company', v.companies);
+        fill('dl_city', v.cities);
+        fill('dl_country', v.countries);
+        fill('dl_department', v.departments);
+      });
     } catch (e) {
       // On REST error, don't hard-lock the user out of a tool they may be mid-use on;
       // but without a verified profile we send them to login.
@@ -303,9 +326,26 @@ a { color: var(--accent); }
       <div class="card">
         <div class="card-title">Tank Identification</div>
         <div class="grid3">
-          <div class="field"><label>Company</label><input id="companyName" placeholder="Company name"></div>
+          <div class="field"><label>Company</label>
+            <input id="companyName" list="dl_company" placeholder="Select or type company" autocomplete="off">
+            <datalist id="dl_company"></datalist>
+          </div>
           <div class="field"><label>Tank ID</label><input id="tankId" placeholder="e.g. TK-101"></div>
-          <div class="field"><label>Location</label><input id="tankLocation" placeholder="City, State"></div>
+          <div class="field"><label>Department</label>
+            <input id="department" list="dl_department" placeholder="Select or type dept" autocomplete="off">
+            <datalist id="dl_department"></datalist>
+          </div>
+        </div>
+        <div class="grid3">
+          <div class="field"><label>City</label>
+            <input id="city" list="dl_city" placeholder="Select or type city" autocomplete="off">
+            <datalist id="dl_city"></datalist>
+          </div>
+          <div class="field"><label>Country</label>
+            <input id="country" list="dl_country" placeholder="Select or type country" autocomplete="off">
+            <datalist id="dl_country"></datalist>
+          </div>
+          <div class="field"><label>Location (Tank site)</label><input id="tankLocation" placeholder="City, State"></div>
         </div>
       </div>
 
@@ -1417,6 +1457,34 @@ function refreshFittingOptions() { renderFittingRows(); }
 // ══════════════════════════════════════════════════════════════════════════
 // STANDARD DISCLAIMER — embedded into every downloaded report document
 // ══════════════════════════════════════════════════════════════════════════
+// Open the report in a print window and trigger the browser's print dialog
+// (user selects "Save as PDF"). Keeps text crisp/selectable — no rasterization.
+function printReport(html, title) {
+  // Inject print CSS so it paginates cleanly and auto-opens the print dialog.
+  const printCSS = `<style>@media print{@page{margin:14mm;}body{margin:0;}}
+    @media screen{body{background:#eee;}.report-wrap{max-width:800px;margin:20px auto;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:28px;}}
+    .print-bar{position:fixed;top:0;left:0;right:0;background:#0a0e14;color:#c9a84c;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;display:flex;gap:12px;align-items:center;justify-content:center;z-index:9999;}
+    .print-bar button{background:#c9a84c;color:#0a0e14;border:none;padding:7px 16px;border-radius:6px;font-weight:bold;cursor:pointer;font-size:13px;}
+    .print-bar button.sec{background:transparent;color:#c9a84c;border:1px solid #c9a84c;}
+    @media print{.print-bar{display:none;}}</style>`;
+  const bar = `<div class="print-bar">
+      <span>📄 Your report is ready — use <strong>Save as PDF</strong> in the print dialog.</span>
+      <button onclick="window.print()">Save as PDF</button>
+      <button class="sec" onclick="window.close()">Close</button>
+    </div>`;
+  // Wrap the report body content for on-screen framing
+  const wrapped = html.replace('</head>', printCSS + '</head>')
+                      .replace('<body>', '<body>' + bar + '<div class="report-wrap">')
+                      .replace('</body>', '</div></body>');
+  const w = window.open('', '_blank');
+  if (!w) { alert('Please allow pop-ups to download the PDF report.'); return; }
+  w.document.open();
+  w.document.write(wrapped);
+  w.document.close();
+  // Auto-open the print dialog once content has rendered.
+  w.onload = () => { setTimeout(() => { try { w.focus(); w.print(); } catch(e){} }, 400); };
+}
+
 function fullDisclaimerHTML() {
   return `
 <div style="margin-top:28px;padding:16px 18px;border:1px solid #c9a84c;border-radius:8px;background:#faf7ef;font-size:11px;line-height:1.55;color:#3a3320;page-break-inside:avoid;">
@@ -1458,6 +1526,7 @@ function _gatherReportMeta(d) {
   return {
     uid: u.uid || '', userEmail: u.email || '', userName: ((u.firstName||'')+' '+(u.lastName||'')).trim(),
     company: g('companyName') || u.company || '',
+    city: g('city'), country: g('country'), department: g('department'),
     tankClass: cls,
     tankType: g('roofType') || (document.getElementById('fixedShape') ? document.getElementById('fixedShape').value : '') || '',
     tankId: g('tankId'), location: g('tankLocation') || g('metLocation') || '',
@@ -1663,8 +1732,7 @@ ${rows}
 <div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
 ${fullDisclaimerHTML()}
 </body></html>`;
-  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`nonroutine_${g('tankId')}.html`;a.click();
+  printReport(html, `nonroutine_${g('tankId')}`);
   URL.revokeObjectURL(url);
 }
 
@@ -1709,8 +1777,7 @@ th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th
 <div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
 ${fullDisclaimerHTML()}
 </body></html>`;
-  const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download=`fixed_roof_report_${g('tankId')}.html`;a.click();
+  printReport(html, `fixed_roof_report_${g('tankId')}`);
   URL.revokeObjectURL(url);
 }
 
@@ -1782,10 +1849,7 @@ ${d.LD>0?`<tr><td>Deck Seam Loss (L_D)</td><td>${fmt(d.LD)}</td></tr>`:''}
 <div class="foot">Indicative comparative estimate per US EPA AP-42 Chapter 7 (Sept 2025) / API MPMS Ch. 19.2. NOT for regulatory compliance, permitting, or reporting \u2014 verify using official EPA TANKS software and a qualified professional. Provided without warranty.</div>
 ${fullDisclaimerHTML()}
 </body></html>`;
-  const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = `emission_report_${g('tankId')}.html`; a.click();
+  printReport(html, `emission_report_${g('tankId')}`);
   URL.revokeObjectURL(url);
 }
 
