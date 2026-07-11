@@ -4054,6 +4054,9 @@ body.editing .report-delete-btn { display: block; }
     <div class="sa-section">
       <div id="calcsStatsRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;"></div>
       <div id="calcBreakdowns" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;"></div>
+      <div id="calcTrend" style="margin-bottom:20px;"></div>
+      <div id="calcTopEmitters" style="margin-bottom:20px;"></div>
+      <div id="calcUserActivity" style="margin-bottom:20px;"></div>
       <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;">
         <input type="text" id="calcSearch" class="email-input" style="max-width:340px;margin:0;" placeholder="Search member, company, tank, chemical, location…" oninput="renderCalcsTable()">
         <button class="btn-add" onclick="loadReportsREST()" style="margin:0;">↻ Refresh</button>
@@ -4749,8 +4752,11 @@ function renderCalcsTable() {
       </div>`).join('');
   }
 
-  // ── Breakdown panels (by tank type, chemical, location) ──
+  // ── Breakdown panels + advanced views ──
   renderBreakdowns(reports);
+  renderTrend(reports);
+  renderTopEmitters(reports);
+  renderUserActivity(reports);
 
   // ── Search filter ──
   const q = (document.getElementById('calcSearch')?.value || '').toLowerCase().trim();
@@ -4791,36 +4797,187 @@ function renderAnalytics() { try { renderCalcsTable(); } catch(e){} }
 function renderBreakdowns(reports) {
   const host = document.getElementById('calcBreakdowns');
   if (!host) return;
-  const tally = (key) => {
+
+  const tally = (key, topN) => {
     const m = {};
     reports.forEach(r => { const v = (r[key]||'—').toString().trim() || '—'; m[v] = (m[v]||0)+1; });
-    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0, topN || 8);
   };
-  const bar = (rows, title) => {
+  const distinct = (key) => new Set(reports.map(r => (r[key]||'').toString().trim()).filter(Boolean)).size;
+
+  const COLORS = { gold:'var(--gold,#c9a84c)', blue:'#5b9bd5', green:'#06d6a0', purple:'#a78bfa', orange:'#f0955a' };
+  const bar = (rows, title, color) => {
     const max = rows.length ? rows[0][1] : 1;
-    return `<div style="flex:1;min-width:220px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;">
+    const total = reports.length || 1;
+    return `<div style="flex:1;min-width:230px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;">
       <div style="font-family:var(--display);font-weight:700;font-size:0.82rem;color:var(--text-bright);margin-bottom:10px;">${title}</div>
       ${rows.length ? rows.map(([label,n]) => `
         <div style="margin-bottom:7px;">
           <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:2px;">
-            <span style="color:var(--text);">${label}</span><span style="color:var(--text-dim);font-family:var(--mono);">${n}</span>
+            <span style="color:var(--text);">${String(label).replace(/</g,'&lt;')}</span>
+            <span style="color:var(--text-dim);font-family:var(--mono);">${n} · ${Math.round(n/total*100)}%</span>
           </div>
           <div style="height:5px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
-            <div style="height:100%;width:${Math.round(n/max*100)}%;background:var(--gold,#c9a84c);"></div>
+            <div style="height:100%;width:${Math.round(n/max*100)}%;background:${color||COLORS.gold};"></div>
           </div>
         </div>`).join('') : '<div style="color:var(--text-dim);font-size:0.75rem;">No data</div>'}
     </div>`;
   };
+
+  // ── Insight strip: distinct counts + download conversion ──
+  const dl = reports.filter(r => r.downloaded).length;
+  const conv = reports.length ? Math.round(dl/reports.length*100) : 0;
+  const insight = `
+    <div style="width:100%;display:flex;gap:14px;flex-wrap:wrap;margin-bottom:4px;">
+      ${[
+        ['Countries', distinct('country'), '🌍'],
+        ['Cities', distinct('city'), '🌆'],
+        ['Departments', distinct('department'), '🗂️'],
+        ['Companies', distinct('company'), '🏢'],
+        ['Download rate', conv + '%', '↓'],
+      ].map(([lbl,val,ic]) => `
+        <div style="flex:1;min-width:120px;background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.18);border-radius:9px;padding:11px 14px;">
+          <div style="font-size:0.9rem;">${ic}</div>
+          <div style="font-family:var(--display);font-weight:800;font-size:1.25rem;color:var(--text-bright);">${val}</div>
+          <div style="font-size:0.66rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;">${lbl}</div>
+        </div>`).join('')}
+    </div>`;
+
+  // Geography + department + existing dimensions
   host.innerHTML =
-    bar(tally('tankType'), 'By Tank Type') +
-    bar(tally('chemical'), 'By Chemical') +
-    bar(tally('location'), 'By Location');
+    insight +
+    bar(tally('country'),    'By Country',    COLORS.blue) +
+    bar(tally('city'),       'By City',       COLORS.green) +
+    bar(tally('department'), 'By Department', COLORS.purple) +
+    bar(tally('company'),    'Top Companies', COLORS.orange) +
+    bar(tally('tankType'),   'By Tank Type',  COLORS.gold) +
+    bar(tally('chemical'),   'By Chemical',   COLORS.gold) +
+    bar(tally('location'),   'By Tank Site',  COLORS.gold);
+}
+
+// ── TIME TREND (reports per day, last 30 days) ──────────────────────────────
+function renderTrend(reports) {
+  const host = document.getElementById('calcTrend');
+  if (!host) return;
+  // Group by day (YYYY-MM-DD) for the last 30 days
+  const byDay = {};
+  reports.forEach(r => {
+    const d = (r.createdAt||'').slice(0,10);
+    if (d) byDay[d] = (byDay[d]||0) + 1;
+  });
+  const days = [];
+  const today = new Date();
+  for (let i = 29; i >= 0; i--) {
+    const dt = new Date(today); dt.setDate(today.getDate() - i);
+    const key = dt.toISOString().slice(0,10);
+    days.push([key, byDay[key] || 0]);
+  }
+  const max = Math.max(1, ...days.map(d => d[1]));
+  const totalWindow = days.reduce((s,d)=>s+d[1],0);
+  host.innerHTML = `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">
+        <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);">📈 Reports Per Day — Last 30 Days</div>
+        <div style="font-size:0.72rem;color:var(--text-dim);">${totalWindow} in window</div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:110px;">
+        ${days.map(([day,n]) => {
+          const h = Math.round(n/max*100);
+          const label = day.slice(5); // MM-DD
+          return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;" title="${day}: ${n} report(s)">
+            <div style="font-size:0.6rem;color:var(--text-dim);margin-bottom:2px;">${n||''}</div>
+            <div style="width:100%;height:${h}%;min-height:${n?4:1}px;background:${n?'var(--gold,#c9a84c)':'rgba(255,255,255,0.06)'};border-radius:2px 2px 0 0;"></div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:var(--text-dim);margin-top:6px;">
+        <span>${days[0][0].slice(5)}</span><span>${days[14][0].slice(5)}</span><span>${days[29][0].slice(5)}</span>
+      </div>
+    </div>`;
+}
+
+// ── TOP EMITTERS (ranked by total calculated loss) ──────────────────────────
+function _reportLoss(r) {
+  const l = r.losses || {};
+  const v = (typeof l.total === 'number') ? l.total : parseFloat(l.total);
+  return isNaN(v) ? 0 : v;
+}
+function renderTopEmitters(reports) {
+  const host = document.getElementById('calcTopEmitters');
+  if (!host) return;
+  const ranked = reports
+    .map(r => ({ r, loss: _reportLoss(r) }))
+    .filter(x => x.loss > 0)
+    .sort((a,b) => b.loss - a.loss)
+    .slice(0, 10);
+  const max = ranked.length ? ranked[0].loss : 1;
+  const fmt = n => n >= 1000 ? (n/1000).toFixed(1)+'k' : n.toFixed(1);
+  host.innerHTML = `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);margin-bottom:12px;">🔥 Top Emitters — by Total Calculated Loss</div>
+      ${ranked.length ? ranked.map((x,i) => {
+        const r = x.r;
+        return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+          <div style="width:20px;text-align:center;font-family:var(--mono);font-size:0.75rem;color:var(--text-dim);">${i+1}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="display:flex;justify-content:space-between;font-size:0.76rem;margin-bottom:2px;">
+              <span style="color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+                <strong>${(r.tankId||'—')}</strong> · ${(r.company||'—')} ${r.chemical?('· '+r.chemical):''}
+              </span>
+              <span style="color:#f0955a;font-family:var(--mono);white-space:nowrap;margin-left:8px;">${fmt(x.loss)} ${r.units||'lb/yr'}</span>
+            </div>
+            <div style="height:6px;background:rgba(255,255,255,0.06);border-radius:3px;overflow:hidden;">
+              <div style="height:100%;width:${Math.round(x.loss/max*100)}%;background:linear-gradient(90deg,#f0955a,#e85050);"></div>
+            </div>
+          </div>
+        </div>`;
+      }).join('') : '<div style="color:var(--text-dim);font-size:0.78rem;">No loss data yet. Reports created after this update include loss totals.</div>'}
+    </div>`;
+}
+
+// ── PER-USER ACTIVITY DRILL-DOWN ────────────────────────────────────────────
+function renderUserActivity(reports) {
+  const host = document.getElementById('calcUserActivity');
+  if (!host) return;
+  const byUser = {};
+  reports.forEach(r => {
+    const key = r.uid || r.userEmail || 'unknown';
+    if (!byUser[key]) byUser[key] = { name: r.userName || r.userEmail || 'Unknown', email: r.userEmail||'', company: r.company||'', count: 0, downloads: 0, totalLoss: 0, last: '' };
+    const u = byUser[key];
+    u.count++;
+    if (r.downloaded) u.downloads++;
+    u.totalLoss += _reportLoss(r);
+    if ((r.createdAt||'') > u.last) u.last = r.createdAt||'';
+    if (!u.company && r.company) u.company = r.company;
+  });
+  const rows = Object.values(byUser).sort((a,b) => b.count - a.count);
+  const fmtDate = iso => { try { return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); } catch(e){ return '—'; } };
+  const fmtLoss = n => n >= 1000 ? (n/1000).toFixed(1)+'k' : n.toFixed(0);
+  host.innerHTML = `
+    <div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:16px;">
+      <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);margin-bottom:12px;">👤 Per-User Activity</div>
+      ${rows.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:0.76rem;">
+        <thead><tr style="color:var(--text-dim);text-align:left;border-bottom:1px solid var(--border);">
+          <th style="padding:6px 8px;">Member</th><th style="padding:6px 8px;">Company</th>
+          <th style="padding:6px 8px;text-align:right;">Reports</th><th style="padding:6px 8px;text-align:right;">Downloads</th>
+          <th style="padding:6px 8px;text-align:right;">Total Loss</th><th style="padding:6px 8px;text-align:right;">Last Active</th>
+        </tr></thead><tbody>
+        ${rows.map(u => `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);">
+          <td style="padding:6px 8px;"><div style="color:var(--text-bright);">${u.name}</div><div style="font-size:0.66rem;color:var(--text-dim);font-family:var(--mono);">${u.email}</div></td>
+          <td style="padding:6px 8px;color:var(--text);">${u.company||'—'}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--text-bright);">${u.count}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:var(--text-dim);">${u.downloads}</td>
+          <td style="padding:6px 8px;text-align:right;font-family:var(--mono);color:#f0955a;">${fmtLoss(u.totalLoss)}</td>
+          <td style="padding:6px 8px;text-align:right;color:var(--text-dim);">${fmtDate(u.last)}</td>
+        </tr>`).join('')}
+      </tbody></table></div>` : '<div style="color:var(--text-dim);font-size:0.78rem;">No activity yet</div>'}
+    </div>`;
 }
 
 function exportReportsCSV() {
   const reports = window._REPORTS || [];
   if (!reports.length) { showAdminToast('No reports to export'); return; }
-  const cols = ['createdAt','userName','userEmail','company','tankId','tankClass','tankType','location','chemical','downloaded','units'];
+  const cols = ['createdAt','userName','userEmail','company','department','city','country','tankId','tankClass','tankType','location','chemical','downloaded','units'];
   const esc = v => '"' + String(v==null?'':v).replace(/"/g,'""') + '"';
   const rows = [cols.join(',')].concat(reports.map(r => cols.map(k => esc(r[k])).join(',')));
   const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
