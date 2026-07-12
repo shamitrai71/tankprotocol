@@ -2898,6 +2898,53 @@ body.editing .report-delete-btn { display: block; }
 .auth-divider span { padding:0 12px; text-transform:uppercase; letter-spacing:1px; }
 .btn-google { width:100%; display:flex; align-items:center; justify-content:center; background:#fff; color:#1f2937; border:1px solid #dadce0; border-radius:9px; font-family:var(--sans,sans-serif); font-weight:500; font-size:0.9rem; padding:11px; cursor:pointer; transition:all .18s; }
 .btn-google:hover { background:#f7f8f9; box-shadow:0 1px 6px rgba(0,0,0,0.15); }
+
+/* ── DISCLAIMER ACCEPTANCE MODAL ─────────────────────────────────────────── */
+#disclaimerModal {
+  position: fixed; inset: 0; z-index: 100000;
+  background: rgba(4,7,12,0.92); backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center; padding: 20px;
+}
+#disclaimerModal.show { display: flex; }
+.dm-card {
+  background: var(--surface, #0f1520); border: 1px solid var(--gold, #c9a84c);
+  border-radius: 14px; max-width: 720px; width: 100%; max-height: 88vh;
+  display: flex; flex-direction: column; box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+}
+.dm-head { padding: 20px 24px 14px; border-bottom: 1px solid var(--border, #1e2d42); }
+.dm-title {
+  font-family: var(--display, sans-serif); font-weight: 800; font-size: 1.15rem;
+  color: var(--gold-light, #e8c97a); display: flex; align-items: center; gap: 9px;
+}
+.dm-sub { font-size: 0.76rem; color: var(--text-dim, #6b7a91); margin-top: 5px; }
+.dm-body {
+  padding: 18px 24px; overflow-y: auto; flex: 1;
+  font-size: 0.82rem; line-height: 1.65; color: var(--text, #d4dbe8);
+}
+.dm-body p { margin-bottom: 11px; }
+.dm-body strong { color: var(--text-bright, #f0f4ff); }
+.dm-body ul { margin: 0 0 11px 18px; }
+.dm-body li { margin-bottom: 6px; }
+.dm-foot {
+  padding: 16px 24px 20px; border-top: 1px solid var(--border, #1e2d42);
+  display: flex; flex-direction: column; gap: 12px;
+}
+.dm-check { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; }
+.dm-check input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--gold, #c9a84c); cursor: pointer; flex-shrink: 0; }
+.dm-check span { font-size: 0.8rem; color: var(--text, #d4dbe8); }
+.dm-actions { display: flex; gap: 10px; }
+.dm-btn {
+  flex: 1; padding: 11px; border-radius: 9px; font-weight: 700; font-size: 0.86rem;
+  cursor: pointer; border: none; font-family: var(--display, sans-serif);
+}
+.dm-accept { background: linear-gradient(135deg, var(--gold, #c9a84c), var(--gold-light, #e8c97a)); color: #080c14; }
+.dm-accept:disabled { opacity: 0.4; cursor: not-allowed; }
+.dm-decline { background: transparent; color: var(--text-dim, #6b7a91); border: 1px solid var(--border, #1e2d42); }
+@media (max-width: 600px) {
+  .dm-card { max-height: 92vh; }
+  .dm-body { padding: 14px 16px; font-size: 0.78rem; }
+  .dm-head, .dm-foot { padding-left: 16px; padding-right: 16px; }
+}
 </style>
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/11.1.0/firebase-app.js";
@@ -3999,7 +4046,7 @@ body.editing .report-delete-btn { display: block; }
         <table class="sa-table">
           <thead><tr>
             <th>Member</th><th>Email</th><th>Company</th><th>Location</th>
-            <th>Role</th><th>Downloads</th><th>Status</th><th>Joined</th><th>Actions</th>
+            <th>Role</th><th>Downloads</th><th>Status</th><th>Terms</th><th>Joined</th><th>Actions</th>
           </tr></thead>
           <tbody id="membersTableBody"></tbody>
         </table>
@@ -4632,10 +4679,15 @@ function renderMembersTable() {
       <td>${getRoleBadgeHTML(u.role)}</td>
       <td>${dlBar}</td>
       <td><span class="sa-badge ${u.approved !== false ? 'active' : 'pending'}">${u.approved !== false ? '● Active' : '⏳ Pending'}</span></td>
+      <td title="${u.disclaimerAccepted ? ('Accepted ' + (u.disclaimerAcceptedAt||'').slice(0,10) + ' · ' + (u.disclaimerVersion||'')) : 'Not yet accepted'}">
+        ${u.disclaimerAccepted
+          ? '<span style="color:var(--emerald,#2dd4a0);font-size:0.74rem;white-space:nowrap;">✓ Accepted</span>'
+          : '<span style="color:var(--text-dim);font-size:0.74rem;white-space:nowrap;">— Pending</span>'}
+      </td>
       <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${u.joined || '—'}</td>
       <td>${actions}</td>
     </tr>`;
-  }).join('') || `<tr><td colspan="9" style="text-align:center;color:var(--text-dim);padding:20px;">No members found</td></tr>`;
+  }).join('') || `<tr><td colspan="10" style="text-align:center;color:var(--text-dim);padding:20px;">No members found</td></tr>`;
 
   // Update approval badge count
   const pendingCount = USERS.filter(u => u.approved === false).length;
@@ -5189,7 +5241,10 @@ function mapUserDoc(uid, d) {
     downloadsUsed: d.downloadsUsed || 0,
     myReports: d.myReports || [],
     calcs: d.calcs || 0,
-    experience: d.experience || '', specialisations: d.specialisations || ''
+    experience: d.experience || '', specialisations: d.specialisations || '',
+    disclaimerAccepted: d.disclaimerAccepted === true,
+    disclaimerVersion: d.disclaimerVersion || '',
+    disclaimerAcceptedAt: d.disclaimerAcceptedAt || ''
   };
 }
 
@@ -5350,6 +5405,109 @@ function dismissSplash() {
     const cur = document.getElementById('cursor');
     if (cur) cur.style.display = 'none';
   }
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// DISCLAIMER ACCEPTANCE — required on first login, recorded in Firestore
+// ══════════════════════════════════════════════════════════════════════════
+const DISCLAIMER_VERSION = '2025-09-AP42-v1';  // bump to force re-acceptance
+let _pendingRouteUser = null;
+
+function needsDisclaimer(user) {
+  if (!user) return false;
+  // Accepted only if flag is true AND the accepted version matches the current one.
+  return !(user.disclaimerAccepted === true && user.disclaimerVersion === DISCLAIMER_VERSION);
+}
+
+function showDisclaimerModal(user) {
+  _pendingRouteUser = user;
+  const m = document.getElementById('disclaimerModal');
+  const cb = document.getElementById('dmAgree');
+  const btn = document.getElementById('dmAcceptBtn');
+  const st = document.getElementById('dmStatus');
+  if (cb) cb.checked = false;
+  if (btn) { btn.disabled = true; btn.textContent = 'Accept & Continue'; }
+  if (st) st.textContent = '';
+  const body = document.getElementById('dmBody');
+  if (body) body.scrollTop = 0;
+  if (m) m.classList.add('show');
+}
+
+function hideDisclaimerModal() {
+  const m = document.getElementById('disclaimerModal');
+  if (m) m.classList.remove('show');
+}
+
+function acceptDisclaimer() {
+  const user = _pendingRouteUser;
+  const btn = document.getElementById('dmAcceptBtn');
+  const st = document.getElementById('dmStatus');
+  if (!user || !window.fb) return;
+  if (btn) { btn.disabled = true; btn.textContent = 'Recording…'; }
+  if (st) st.textContent = '';
+
+  const record = {
+    disclaimerAccepted: true,
+    disclaimerVersion: DISCLAIMER_VERSION,
+    disclaimerAcceptedAt: new Date().toISOString()
+  };
+  window.fb.setUserREST(user.uid, record).then(() => {
+    // Keep local state in sync so we don't re-prompt this session
+    Object.assign(user, record);
+    if (currentUser && currentUser.uid === user.uid) Object.assign(currentUser, record);
+    hideDisclaimerModal();
+    proceedAfterDisclaimer(user);
+  }).catch(e => {
+    if (st) { st.textContent = 'Could not record acceptance: ' + (e.message || e) + ' — please try again.'; st.style.color = '#f05b5b'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Accept & Continue'; }
+  });
+}
+
+function declineDisclaimer() {
+  hideDisclaimerModal();
+  _pendingRouteUser = null;
+  if (window.fb) window.fb.signOut();
+  const errEl = document.getElementById('loginError');
+  if (errEl) {
+    errEl.textContent = 'You must accept the Terms of Use to access Tank Protocol.';
+    errEl.style.display = 'block';
+  }
+  showView('loginView');
+}
+
+// The actual routing, performed only once the disclaimer is satisfied.
+function proceedAfterDisclaimer(user) {
+  const wasFreshLogin = _routingAfterLogin;   // true only when they just signed in
+  _routingAfterLogin = false;
+  dismissSplash();
+
+  if (user.role === 'user' || user.role === 'gold') {
+    // Members: send them to the calculator ONLY on a fresh sign-in.
+    // If they came back to the portal deliberately (e.g. "← Back to Portal"),
+    // show their profile instead of bouncing them straight back out.
+    if (wasFreshLogin && !_cameFromCalculator()) {
+      window.location.href = 'floating-roof-tank-calculator.html';
+      return;
+    }
+    loadDashboard();
+    showView('dashView');
+    if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+    if (typeof initProfile === 'function') { try { initProfile(); } catch(e){} }
+  } else {
+    startUsersWatcher();
+    loadReportsREST();
+    loadDashboard();
+    showView('dashView');
+  }
+}
+
+// Detect arrival from the calculator (so we don't bounce members back to it)
+function _cameFromCalculator() {
+  try {
+    if (document.referrer && document.referrer.indexOf('floating-roof-tank-calculator') !== -1) return true;
+    if (window.location.hash === '#portal' || window.location.search.indexOf('portal') !== -1) return true;
+  } catch(e){}
+  return false;
 }
 
 function routeUser(user) {
@@ -6410,5 +6568,43 @@ function buildBarChart(id, data, color) {
     </div>`).join('');
 }
 </script>
+
+<!-- ── DISCLAIMER ACCEPTANCE MODAL (first login) ───────────────────────────── -->
+<div id="disclaimerModal">
+  <div class="dm-card">
+    <div class="dm-head">
+      <div class="dm-title">⚠ Terms of Use &amp; Disclaimer</div>
+      <div class="dm-sub">You must read and accept these terms before using Tank Protocol.</div>
+    </div>
+    <div class="dm-body" id="dmBody">
+      <p>Tank Protocol provides <strong>indicative, comparative estimates</strong> of routine and non-routine vapor losses from organic liquid storage tanks. It implements the emission estimation equations published in <strong>US EPA AP-42, Chapter 7 — Organic Liquid Storage Tanks (September 2025)</strong>, based on correlations developed and copyrighted by the <strong>American Petroleum Institute (API MPMS Chapter 19.2)</strong>.</p>
+
+      <p>Results are intended only to help <strong>compare relative emission magnitudes</strong> between tanks, configurations, products, and operating scenarios. They are <strong>not</strong> a substitute for the official EPA TANKS software, a certified emissions calculation, or professional engineering judgment.</p>
+
+      <p>You acknowledge the following limitations:</p>
+      <ul>
+        <li>The AP-42 equations are <strong>approximations</strong> derived from empirical data and simplifying assumptions. Emission factors are averages and may not represent any specific tank; actual emissions can differ substantially.</li>
+        <li>Accuracy depends entirely on the <strong>quality and completeness of your inputs</strong>. Default values, estimated meteorological data, simplified geometry, and assumed liquid properties all introduce uncertainty.</li>
+        <li>The equations do <strong>not</strong> apply to certain scenarios, including unstable or boiling stocks, deteriorated or permeated seals/fittings, heated or pressurized tanks outside the documented range, flashing service, or mixtures whose vapor pressure cannot be reliably predicted.</li>
+        <li>Some parameters use <strong>simplified or default treatments</strong> (saturation/wind correction factors, single-component vapor pressure in place of true mixture behaviour under Raoult's Law, and screening-level non-routine assumptions). Speciated, mixture, and partial-year results may differ from a full TANKS analysis.</li>
+      </ul>
+
+      <p><strong>This tool does not constitute regulatory compliance, permitting, or reporting.</strong> Any emissions used for regulatory submissions, permit applications, fee calculations, or compliance demonstrations must be verified using the official EPA TANKS application and applicable regulatory methods, and reviewed by a qualified professional.</p>
+
+      <p>The developers make <strong>no warranty</strong> as to accuracy, fitness for any purpose, or regulatory acceptability, and accept <strong>no liability</strong> for decisions made on the basis of these estimates. API retains copyright to the underlying emission estimation equations.</p>
+    </div>
+    <div class="dm-foot">
+      <label class="dm-check">
+        <input type="checkbox" id="dmAgree" onchange="document.getElementById('dmAcceptBtn').disabled = !this.checked;">
+        <span>I have read and understood the above. I accept these terms and acknowledge that results are indicative only and not valid for regulatory compliance.</span>
+      </label>
+      <div class="dm-actions">
+        <button class="dm-btn dm-decline" onclick="declineDisclaimer()">Decline &amp; Sign Out</button>
+        <button class="dm-btn dm-accept" id="dmAcceptBtn" disabled onclick="acceptDisclaimer()">Accept &amp; Continue</button>
+      </div>
+      <div id="dmStatus" style="font-size:0.74rem;color:var(--text-dim);text-align:center;"></div>
+    </div>
+  </div>
+</div>
 </body>
 </html>

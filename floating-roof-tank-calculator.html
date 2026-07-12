@@ -267,7 +267,7 @@ a { color: var(--accent); }
       <div class="brand-sub">EMISSIONS INTELLIGENCE</div>
     </div>
   </div>
-  <a href="index.html" class="back-link">← Back to Portal</a>
+  <a href="index.html?portal=1" class="back-link">← Back to Portal</a>
 </div>
 
 <div class="wrap">
@@ -275,26 +275,8 @@ a { color: var(--accent); }
   <div class="page-sub">Routine loss estimation for floating roof and fixed roof organic liquid storage tanks</div>
   <div class="std-badge">⬡ AP-42 CHAPTER 7 (9/2025) · API MPMS 19.2</div>
 
-  <div class="disclaimer open" id="disclaimerPanel">
-    <div class="disclaimer-head" onclick="document.getElementById('disclaimerPanel').classList.toggle('open')">
-      <span class="ico">⚠</span>
-      <span class="ttl">Disclaimer — Indicative &amp; Comparative Use Only</span>
-      <span class="chev">▼</span>
-    </div>
-    <div class="disclaimer-body">
-      <p class="disclaimer-lead">This calculator provides <strong>indicative, comparative estimates</strong> of routine and non-routine vapor losses from organic liquid storage tanks. It implements the emission estimation equations published in <strong>US EPA AP-42, Chapter 7 — Organic Liquid Storage Tanks (September 2025)</strong>, which are based on the correlations developed and copyrighted by the <strong>American Petroleum Institute (API MPMS Chapter 19.2)</strong>.</p>
-      <p>The results are intended only to help users <strong>compare relative emission magnitudes</strong> between tanks, configurations, products, and operating scenarios. They are <strong>not</strong> a substitute for the official EPA TANKS software, a certified emissions calculation, or professional engineering judgment.</p>
-      <p>Estimates are subject to important limitations:</p>
-      <ul>
-        <li>The AP-42 equations are themselves <strong>approximations</strong>, derived from empirical data and simplifying assumptions. AP-42 emission factors are averages and may not represent any specific tank; actual emissions can differ substantially from calculated values.</li>
-        <li>Accuracy depends entirely on the <strong>quality and completeness of the inputs</strong> provided. Default values, estimated meteorological data, simplified geometry, and assumed liquid properties all introduce uncertainty.</li>
-        <li>The equations do <strong>not</strong> apply to certain scenarios, including unstable or boiling stocks, tanks with deteriorated or permeated seals/fittings, heated or pressurized tanks outside the documented range, flashing service, or mixtures whose vapor pressure cannot be reliably predicted.</li>
-        <li>Some parameters use <strong>simplified or default treatments</strong> (for example, saturation and wind correction factors, single-component vapor pressure in place of true mixture behaviour under Raoult's Law, and screening-level non-routine assumptions). Speciated, mixture, and partial-year results may differ from a full TANKS analysis.</li>
-      </ul>
-      <p>Emission values are reported in pounds per year for routine losses and pounds per event for non-routine (landing and cleaning) losses.</p>
-      <p><strong>This tool does not constitute regulatory compliance, permitting, or reporting.</strong> Any emissions used for regulatory submissions, permit applications, fee calculations, or compliance demonstrations must be verified using the official EPA TANKS application and applicable regulatory methods, and reviewed by a qualified professional. The developers make no warranty as to accuracy, fitness for any purpose, or regulatory acceptability, and accept no liability for decisions made on the basis of these estimates.</p>
-      <p>API retains copyright to the underlying emission estimation equations; this tool is provided for non-commercial, indicative use consistent with AP-42's public availability.</p>
-    </div>
+  <div style="background:rgba(201,168,76,0.06);border:1px solid rgba(201,168,76,0.2);border-left:3px solid var(--accent);border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:0.74rem;color:var(--text-dim);line-height:1.5;">
+    ⚠ <strong style="color:var(--text);">Indicative estimates only</strong> — per US EPA AP-42 Ch. 7 / API MPMS 19.2. Not valid for regulatory compliance, permitting, or reporting. Full terms accepted at sign-in; the complete disclaimer is included in every downloaded report.
   </div>
 
   <div class="card" style="padding:16px 22px;">
