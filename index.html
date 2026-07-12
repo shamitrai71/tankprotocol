@@ -3574,13 +3574,13 @@ body.editing .report-delete-btn { display: block; }
       <button class="logout-btn topbar-desktop-only" onclick="doLogout()">Sign out</button>
 
       <div class="topbar-kebab-wrap">
-        <button class="topbar-kebab-btn" id="topbarKebabBtn" onclick="toggleTopbarMenu(event)" aria-label="Menu">⋮</button>
-        <div class="topbar-kebab-menu" id="topbarKebabMenu">
-          <button class="kebab-item" onclick="showPage('profilePage', document.querySelector('.nav-btn')); closeTopbarMenu();">Profile</button>
-          <a href="#" id="adminNavBtnMobile" class="kebab-item" style="display:none;" onclick="closeTopbarMenu(); openAdminOverlay(); return false;">⬡ Admin Panel</a>
-          <a href="floating-roof-tank-calculator.html" target="_blank" class="kebab-item" onclick="closeTopbarMenu();">← Main Site</a>
+        <button class="topbar-kebab-btn" type="button" aria-label="Menu" onclick="toggleKebabMenu(this)">⋮</button>
+        <div class="topbar-kebab-menu">
+          <button class="kebab-item" onclick="closeKebabMenu(this); showPage('profilePage', document.querySelector('.nav-btn'));">Profile</button>
+          <a href="#" id="adminNavBtnMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this); openAdminOverlay(); return false;">⬡ Admin Panel</a>
+          <a href="floating-roof-tank-calculator.html" target="_blank" class="kebab-item" onclick="closeKebabMenu(this);">← Main Site</a>
           <div class="kebab-divider"></div>
-          <button class="kebab-item kebab-danger" onclick="closeTopbarMenu(); doLogout();">Sign out</button>
+          <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); doLogout();">Sign out</button>
         </div>
       </div>
     </div>
@@ -4076,15 +4076,25 @@ body.editing .report-delete-btn { display: block; }
       <span id="topbarSub">Overview &amp; Key Metrics</span>
     </div>
     <div class="topbar-right" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;">
-      <div class="topbar-status">
+      <div class="topbar-status topbar-desktop-only">
         <div class="status-dot-live"></div>
         SYSTEMS ONLINE
       </div>
-      <span class="role-tag admin" id="roleTag">⭐ ADMIN</span>
-      <span id="adminUserName" style="font-size:0.78rem;color:var(--text-dim);"></span>
+      <span class="role-tag admin topbar-desktop-only" id="roleTag">⭐ ADMIN</span>
+      <span id="adminUserName" class="topbar-desktop-only" style="font-size:0.78rem;color:var(--text-dim);"></span>
       <div class="admin-avatar" id="adminAvatarInitials" title="Signed in user">AS</div>
-      <a href="floating-roof-tank-calculator.html" target="_blank" onclick="return true;" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
-      <button onclick="closeAdminOverlay()" style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;background:rgba(240,91,91,0.1);border:1px solid rgba(240,91,91,0.3);border-radius:6px;color:var(--red);font-family:var(--body);font-size:0.75rem;cursor:pointer;transition:all 0.18s;" onmouseover="this.style.background='rgba(240,91,91,0.18)'" onmouseout="this.style.background='rgba(240,91,91,0.1)'">✕ Close</button>
+      <a href="floating-roof-tank-calculator.html" target="_blank" onclick="return true;" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+      <button onclick="closeAdminOverlay()" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;background:rgba(240,91,91,0.1);border:1px solid rgba(240,91,91,0.3);border-radius:6px;color:var(--red);font-family:var(--body);font-size:0.75rem;cursor:pointer;transition:all 0.18s;" onmouseover="this.style.background='rgba(240,91,91,0.18)'" onmouseout="this.style.background='rgba(240,91,91,0.1)'">✕ Close</button>
+
+      <div class="topbar-kebab-wrap">
+        <button class="topbar-kebab-btn" type="button" aria-label="Menu" onclick="toggleKebabMenu(this)">⋮</button>
+        <div class="topbar-kebab-menu">
+          <div class="kebab-item" style="cursor:default;color:var(--text-dim);font-size:0.75rem;" id="adminKebabRoleLine">⭐ Admin</div>
+          <div class="kebab-divider"></div>
+          <a href="floating-roof-tank-calculator.html" target="_blank" class="kebab-item" onclick="closeKebabMenu(this);">← View Site</a>
+          <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); closeAdminOverlay();">✕ Close Panel</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -5243,7 +5253,9 @@ function openAdminOverlay() {
   const rt = document.getElementById('roleTag');
   if (ai) ai.textContent = initials;
   if (au) au.textContent = currentUser.firstName + ' ' + currentUser.lastName;
-  if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin'; }
+  if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin topbar-desktop-only'; }
+  const akr = document.getElementById('adminKebabRoleLine');
+  if (akr) akr.textContent = '👑 ' + currentUser.firstName + ' ' + currentUser.lastName + ' — Super Admin';
 
   // Show super admin section in sidebar
   const ss = document.getElementById('superAdminSection');
@@ -5635,25 +5647,48 @@ function showView(id) {
 }
 
 // ─── TOPBAR KEBAB MENU ────────────────────────────────────────
-function toggleTopbarMenu(e) {
-  if (e) e.stopPropagation();
-  const menu = document.getElementById('topbarKebabMenu');
-  const btn = document.getElementById('topbarKebabBtn');
-  if (!menu || !btn) return;
+// ─── TOPBAR KEBAB MENU (reusable across all topbars) ──────────
+function toggleKebabMenu(btn) {
+  const wrap = btn.closest('.topbar-kebab-wrap');
+  if (!wrap) return;
+  const menu = wrap.querySelector('.topbar-kebab-menu');
+  if (!menu) return;
+  // close any other open kebab menus first
+  document.querySelectorAll('.topbar-kebab-wrap').forEach(w => {
+    if (w !== wrap) {
+      const m = w.querySelector('.topbar-kebab-menu');
+      const b = w.querySelector('.topbar-kebab-btn');
+      if (m) m.classList.remove('open');
+      if (b) b.classList.remove('open');
+    }
+  });
   const isOpen = menu.classList.toggle('open');
   btn.classList.toggle('open', isOpen);
 }
 
-function closeTopbarMenu() {
-  const menu = document.getElementById('topbarKebabMenu');
-  const btn = document.getElementById('topbarKebabBtn');
-  if (menu) menu.classList.remove('open');
-  if (btn) btn.classList.remove('open');
+function closeKebabMenu(btnOrEl) {
+  const wrap = btnOrEl && btnOrEl.closest ? btnOrEl.closest('.topbar-kebab-wrap') : null;
+  if (wrap) {
+    const menu = wrap.querySelector('.topbar-kebab-menu');
+    const btn = wrap.querySelector('.topbar-kebab-btn');
+    if (menu) menu.classList.remove('open');
+    if (btn) btn.classList.remove('open');
+    return;
+  }
+  // no element given — close all
+  document.querySelectorAll('.topbar-kebab-menu.open').forEach(m => m.classList.remove('open'));
+  document.querySelectorAll('.topbar-kebab-btn.open').forEach(b => b.classList.remove('open'));
 }
 
 document.addEventListener('click', function (e) {
-  const wrap = document.querySelector('.topbar-kebab-wrap');
-  if (wrap && !wrap.contains(e.target)) closeTopbarMenu();
+  document.querySelectorAll('.topbar-kebab-wrap').forEach(wrap => {
+    if (!wrap.contains(e.target)) {
+      const menu = wrap.querySelector('.topbar-kebab-menu');
+      const btn = wrap.querySelector('.topbar-kebab-btn');
+      if (menu) menu.classList.remove('open');
+      if (btn) btn.classList.remove('open');
+    }
+  });
 });
 
 function showPage(id, btn) {
