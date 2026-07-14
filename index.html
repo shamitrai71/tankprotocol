@@ -5428,13 +5428,14 @@ function friendlyAuthError(e) {
 let _profileLoaded = false;       // becomes true once a profile loads successfully
 let _authHandling = false;        // de-dupe concurrent onAuthStateChanged fires
 function handleAuthState(fbUser) {
+  console.log('[TP] onAuthStateChanged fired. user =', fbUser ? (fbUser.email || fbUser.uid) : 'NULL');
   if (!fbUser) {
     currentUser = null;
     _profileLoaded = false;
     if (!_routingAfterLogin) showView('loginView');
     return;
   }
-  if (_authHandling || _profileLoaded) { return; }
+  if (_authHandling || _profileLoaded) { console.log('[TP] skipped (already handling/loaded)'); return; }
   _authHandling = true;
   // Clear any stale error banner the moment we start a fresh load
   const _e0 = document.getElementById('loginError'); if (_e0) _e0.style.display = 'none';
@@ -5638,6 +5639,8 @@ function _cameFromCalculator() {
 // proceedAfterDisclaimer() reads it to tell a fresh sign-in apart from a
 // "← Back to Portal" return, and the modal sits between the two.
 function routeUser(user) {
+  console.log('[TP] routeUser: role =', user.role, '| approved =', user.approved,
+              '| needsDisclaimer =', needsDisclaimer(user));
   if ((user.role === 'user' || user.role === 'gold') && !user.approved) {
     _routingAfterLogin = false;
     dismissSplash();
@@ -6751,6 +6754,8 @@ function buildBarChart(id, data, color) {
     </div>`).join('');
 }
 </script>
+
+</div><!-- /stray unclosed div (was swallowing the modal) -->
 
 <!-- ── DISCLAIMER ACCEPTANCE MODAL (first login) ───────────────────────────── -->
 <div id="disclaimerModal">
