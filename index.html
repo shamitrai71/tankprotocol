@@ -5478,7 +5478,21 @@ function handleAuthState(fbUser) {
     _authHandling = false;
     currentUser = user;
     const errEl = document.getElementById('loginError'); if (errEl) errEl.style.display = 'none';
-    routeUser(user);
+    // Route inside its own try/catch. Previously a throw here fell into the
+    // .catch() below, which returns early when _profileLoaded is true — so the
+    // user silently bounced back to the login screen with no error at all.
+    try {
+      routeUser(user);
+    } catch (routeErr) {
+      _routingAfterLogin = false;
+      dismissSplash();
+      console.error('routeUser failed:', routeErr);
+      const el = document.getElementById('loginError');
+      if (el) {
+        el.textContent = 'Signed in, but could not open the app: ' + (routeErr && (routeErr.message || routeErr));
+        el.style.display = 'block';
+      }
+    }
   }).catch(e => {
     _authHandling = false;
     _routingAfterLogin = false;
@@ -5635,6 +5649,14 @@ function routeUser(user) {
 
   if (needsDisclaimer(user)) {
     dismissSplash();
+    const modalEl = document.getElementById('disclaimerModal');
+    if (!modalEl) {
+      // Should never happen, but never strand the user on a blank login screen.
+      console.error('Disclaimer modal element missing — cannot gate.');
+      const el = document.getElementById('loginError');
+      if (el) { el.textContent = 'Could not display the Terms of Use. Please reload the page.'; el.style.display = 'block'; }
+      return;
+    }
     // acceptDisclaimer() records acceptance in Firestore, then calls
     // proceedAfterDisclaimer(user). declineDisclaimer() signs them out.
     showDisclaimerModal(user);
