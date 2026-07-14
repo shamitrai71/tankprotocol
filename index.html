@@ -29,6 +29,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html { overflow-x: hidden; }
+
 body {
   background: var(--bg);
   font-family: var(--body);
@@ -264,6 +266,7 @@ body::after {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 12px;
   padding: 16px 28px;
   background: var(--glass);
   border-bottom: 1px solid var(--glass-border);
@@ -275,6 +278,7 @@ body::after {
   display: flex;
   align-items: center;
   gap: 9px;
+  min-width: 0;
   font-family: var(--display);
   font-weight: 700;
   color: var(--text-bright);
@@ -305,6 +309,7 @@ body::after {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .avatar-btn {
@@ -394,7 +399,19 @@ body::after {
   .topbar { padding: 14px 16px; }
   .topbar-desktop-only { display: none !important; }
   .topbar-kebab-wrap { display: block; }
-  .topbar-right { gap: 8px; }
+  .topbar-right { gap: 10px; }
+
+  /* Bigger, easier-to-tap kebab (matches native browser menu button scale) */
+  .topbar-kebab-btn { width: 46px; height: 46px; font-size: 1.65rem; border-radius: 9px; }
+  .topbar-kebab-menu { min-width: 210px; }
+  .kebab-item { font-size: 0.92rem; padding: 12px 14px; }
+
+  /* Scale the brand logo + wordmark up to match */
+  .topbar-logo { font-size: 1.15rem; gap: 11px; }
+  .topbar-logo .logo-mark { width: 40px !important; height: 40px !important; }
+
+  /* Avatar grows slightly too, for visual balance next to the bigger kebab */
+  .avatar-btn { width: 42px; height: 42px; font-size: 0.92rem; }
 }
 
 /* ─── PAGE CONTENT ──────────────────────── */
@@ -3567,7 +3584,7 @@ body.editing .report-delete-btn { display: block; }
     </div>
 
     <div class="topbar-right">
-      <a href="floating-roof-tank-calculator.html" target="_blank" onclick="return true;" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Main Site</a>
+      <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" onclick="return true;" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Main Site</a>
       <div id="topbarName" class="topbar-desktop-only" style="font-size:0.8rem;color:var(--text-dim);"></div>
       <button class="avatar-btn" id="topbarAvatar" onclick="showPage('profilePage', document.querySelector('.nav-btn'))">?</button>
 
@@ -3578,7 +3595,7 @@ body.editing .report-delete-btn { display: block; }
         <div class="topbar-kebab-menu">
           <button class="kebab-item" onclick="closeKebabMenu(this); showPage('profilePage', document.querySelector('.nav-btn'));">Profile</button>
           <a href="#" id="adminNavBtnMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this); openAdminOverlay(); return false;">⬡ Admin Panel</a>
-          <a href="floating-roof-tank-calculator.html" target="_blank" class="kebab-item" onclick="closeKebabMenu(this);">← Main Site</a>
+          <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" class="kebab-item" onclick="closeKebabMenu(this);">← Main Site</a>
           <div class="kebab-divider"></div>
           <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); doLogout();">Sign out</button>
         </div>
@@ -3606,7 +3623,7 @@ body.editing .report-delete-btn { display: block; }
       <div style="font-family:var(--display);font-weight:700;color:var(--text-bright);font-size:0.9rem;">Emissions Calculator</div>
       <div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">Run floating roof tank VOC emission calculations using API MPMS Chapter 19.2.</div>
     </div>
-    <a href="floating-roof-tank-calculator.html" target="_blank" style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:linear-gradient(135deg,#2dd4a0,#43e8c0);border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.82rem;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+    <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:linear-gradient(135deg,#2dd4a0,#43e8c0);border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.82rem;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
       Open Calculator ↗
     </a>
   </div>
@@ -3900,7 +3917,7 @@ body.editing .report-delete-btn { display: block; }
 
     <!-- Quick Access Tools -->
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
-      <a href="floating-roof-tank-calculator.html" target="_blank" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
+      <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
         <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">⚗</div>
         <div>
           <div style="font-family:var(--display);font-weight:700;font-size:0.88rem;color:var(--text-bright);">Emissions Calculator</div>
@@ -5582,6 +5599,11 @@ function proceedAfterDisclaimer(user) {
     loadReportsREST();
     loadDashboard();
     showView('dashView');
+    // Super admins land in their actual working "portal" — the Admin Dashboard —
+    // rather than silently defaulting to the profile page underneath.
+    if (user.role === 'super_admin' && typeof openAdminOverlay === 'function') {
+      try { openAdminOverlay(); } catch(e){}
+    }
   }
 }
 
@@ -5594,23 +5616,32 @@ function _cameFromCalculator() {
   return false;
 }
 
+// Single entry point after auth. Applies the gates in order:
+//   1. Approval gate  — unapproved members never get in.
+//   2. Terms gate     — current disclaimer version must be accepted.
+//   3. Route          — handled by proceedAfterDisclaimer().
+// NOTE: _routingAfterLogin is deliberately NOT cleared before the modal —
+// proceedAfterDisclaimer() reads it to tell a fresh sign-in apart from a
+// "← Back to Portal" return, and the modal sits between the two.
 function routeUser(user) {
-  _routingAfterLogin = false;
-  dismissSplash();
-  if (user.role === 'user' || user.role === 'gold') {
-    if (!user.approved) {
-      const errEl = document.getElementById('loginError');
-      if (errEl) { errEl.textContent = 'Your account is pending approval. You will receive an email once approved.'; errEl.style.display='block'; }
-      window.fb.signOut();
-      return;
-    }
-    window.location.href = 'floating-roof-tank-calculator.html';
-  } else {
-    startUsersWatcher();
-    loadReportsREST();
-    loadDashboard();
-    showView('dashView');
+  if ((user.role === 'user' || user.role === 'gold') && !user.approved) {
+    _routingAfterLogin = false;
+    dismissSplash();
+    const errEl = document.getElementById('loginError');
+    if (errEl) { errEl.textContent = 'Your account is pending approval. You will receive an email once approved.'; errEl.style.display='block'; }
+    window.fb.signOut();
+    return;
   }
+
+  if (needsDisclaimer(user)) {
+    dismissSplash();
+    // acceptDisclaimer() records acceptance in Firestore, then calls
+    // proceedAfterDisclaimer(user). declineDisclaimer() signs them out.
+    showDisclaimerModal(user);
+    return;
+  }
+
+  proceedAfterDisclaimer(user);
 }
 
 function doLogout() {
