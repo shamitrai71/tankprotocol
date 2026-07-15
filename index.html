@@ -399,6 +399,11 @@ body::after {
   .topbar { padding: 14px 16px; }
   .topbar-desktop-only { display: none !important; }
   .topbar-kebab-wrap { display: block; }
+
+  /* Admin panel topbar: keep the logo mark, drop the wordmark, let the page
+     title shrink — otherwise brand + title + controls overflow the viewport. */
+  #adminOverlay .admin-brand-name { display: none; }
+  #adminOverlay .admin-title-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .topbar-right { gap: 10px; }
 
   /* Bigger, easier-to-tap kebab (matches native browser menu button scale) */
@@ -2912,9 +2917,37 @@ body.editing .report-delete-btn { display: block; }
   .two-col   { grid-template-columns: 1fr; }
   .three-col { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 768px) {
-  .sidebar { width: 200px; }
-  .main    { margin-left: 200px; }
+@media (max-width: 900px) {
+  /* Admin sidebar becomes an off-canvas drawer; main content goes full-width */
+  #adminOverlay .sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+  }
+  #adminOverlay .sidebar.open { transform: translateX(0); }
+  #adminOverlay .main { margin-left: 0; }
+
+  /* Backdrop shown behind the open drawer */
+  #adminSidebarBackdrop {
+    position: fixed; inset: 0; background: rgba(4,7,12,0.6);
+    z-index: 95; display: none;
+  }
+  #adminSidebarBackdrop.show { display: block; }
+
+  /* Hamburger that opens the drawer — hidden on desktop */
+  #adminSidebarToggle { display: inline-flex !important; }
+
+  /* Stack the multi-column admin grids on narrow screens */
+  #adminOverlay .two-col,
+  #adminOverlay .three-col,
+  #adminOverlay .form-grid,
+  #adminOverlay .form-grid.three { grid-template-columns: 1fr; }
+
+  /* Tables scroll horizontally instead of forcing the page wide */
+  #adminOverlay .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  #adminOverlay .topbar { padding: 0 16px; }
 }
 
   /* Access denied overlay */
@@ -3584,7 +3617,7 @@ body.editing .report-delete-btn { display: block; }
     </div>
 
     <div class="topbar-right">
-      <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" onclick="return true;" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Main Site</a>
+      <a href="floating-roof-tank-calculator.html" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:6px;padding:6px 14px;background:transparent;border:1px solid var(--glass-border);border-radius:7px;color:var(--text-dim);font-family:var(--body);font-size:0.78rem;text-decoration:none;transition:all 0.18s;cursor:pointer;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--glass-border)';this.style.color='var(--text-dim)'">← Calculator</a>
       <div id="topbarName" class="topbar-desktop-only" style="font-size:0.8rem;color:var(--text-dim);"></div>
       <button class="avatar-btn" id="topbarAvatar" onclick="showPage('profilePage', document.querySelector('.nav-btn'))">?</button>
 
@@ -3595,7 +3628,7 @@ body.editing .report-delete-btn { display: block; }
         <div class="topbar-kebab-menu">
           <button class="kebab-item" onclick="closeKebabMenu(this); showPage('profilePage', document.querySelector('.nav-btn'));">Profile</button>
           <a href="#" id="adminNavBtnMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this); openAdminOverlay(); return false;">⬡ Admin Panel</a>
-          <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" class="kebab-item" onclick="closeKebabMenu(this);">← Main Site</a>
+          <a href="floating-roof-tank-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">← Calculator</a>
           <div class="kebab-divider"></div>
           <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); doLogout();">Sign out</button>
         </div>
@@ -3623,7 +3656,7 @@ body.editing .report-delete-btn { display: block; }
       <div style="font-family:var(--display);font-weight:700;color:var(--text-bright);font-size:0.9rem;">Emissions Calculator</div>
       <div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">Run floating roof tank VOC emission calculations using API MPMS Chapter 19.2.</div>
     </div>
-    <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:linear-gradient(135deg,#2dd4a0,#43e8c0);border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.82rem;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
+    <a href="floating-roof-tank-calculator.html" style="display:inline-flex;align-items:center;gap:7px;padding:9px 20px;background:linear-gradient(135deg,#2dd4a0,#43e8c0);border:none;border-radius:8px;color:#080c14;font-family:var(--display);font-weight:700;font-size:0.82rem;text-decoration:none;transition:all 0.2s;white-space:nowrap;" onmouseover="this.style.transform='translateY(-1px)'" onmouseout="this.style.transform=''">
       Open Calculator ↗
     </a>
   </div>
@@ -3917,7 +3950,7 @@ body.editing .report-delete-btn { display: block; }
 
     <!-- Quick Access Tools -->
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px;">
-      <a href="floating-roof-tank-calculator.html" target="_blank" rel="opener" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
+      <a href="floating-roof-tank-calculator.html" style="display:inline-flex;align-items:center;gap:9px;padding:12px 20px;background:var(--glass);border:1px solid rgba(201,168,76,0.3);border-radius:9px;text-decoration:none;transition:all 0.2s;flex:1;min-width:200px;" onmouseover="this.style.background='var(--gold-dim)';this.style.borderColor='rgba(201,168,76,0.5)'" onmouseout="this.style.background='var(--glass)';this.style.borderColor='rgba(201,168,76,0.3)'">
         <div style="width:36px;height:36px;background:linear-gradient(135deg,var(--gold),var(--gold-light));border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">⚗</div>
         <div>
           <div style="font-family:var(--display);font-weight:700;font-size:0.88rem;color:var(--text-bright);">Emissions Calculator</div>
@@ -4005,7 +4038,7 @@ body.editing .report-delete-btn { display: block; }
   <div class="denied-icon">🔒</div>
   <div class="denied-title">Access Restricted</div>
   <div class="denied-msg">This panel requires Admin or Super Admin privileges.<br>Please sign in with an authorised account.</div>
-  <button class="denied-btn" onclick="window.open('floating-roof-tank-calculator.html','_blank')">← View Site</button>
+  <button class="denied-btn" onclick="window.location.href='floating-roof-tank-calculator.html'">← Calculator</button>
 </div>
 
 <!-- ═══════════════ SIDEBAR ═══════════════ -->
@@ -4083,14 +4116,24 @@ body.editing .report-delete-btn { display: block; }
   </div>
 </nav>
 
+<!-- Backdrop for the mobile admin sidebar drawer -->
+<div id="adminSidebarBackdrop" onclick="closeAdminSidebar()"></div>
+
 <!-- ═══════════════ MAIN ═══════════════ -->
 <div class="main">
 
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="topbar-left" id="topbarTitle">
-      Dashboard
-      <span id="topbarSub">Overview &amp; Key Metrics</span>
+    <div class="topbar-left" id="topbarTitle" style="display:flex;align-items:center;gap:11px;min-width:0;">
+      <button id="adminSidebarToggle" type="button" aria-label="Menu" onclick="toggleAdminSidebar()" style="display:none;background:transparent;border:1px solid var(--border2);border-radius:8px;color:var(--text-bright);font-size:1.3rem;line-height:1;width:42px;height:42px;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;">☰</button>
+      <a href="floating-roof-tank-calculator.html" title="Back to the calculator" style="display:flex;align-items:center;gap:9px;text-decoration:none;color:inherit;flex-shrink:0;">
+        <div class="logo-mark" style="width:32px;height:32px;"></div>
+        <span class="admin-brand-name" style="font-family:var(--display);font-weight:700;color:var(--text-bright);font-size:0.95rem;white-space:nowrap;">Tank Protocol</span>
+      </a>
+      <span class="admin-title-text" style="min-width:0;">
+        <span id="topbarTitleText">Dashboard</span>
+        <span id="topbarSub">Overview &amp; Key Metrics</span>
+      </span>
     </div>
     <div class="topbar-right" style="display:flex;align-items:center;gap:10px;flex-wrap:nowrap;">
       <div class="topbar-status topbar-desktop-only">
@@ -4100,7 +4143,7 @@ body.editing .report-delete-btn { display: block; }
       <span class="role-tag admin topbar-desktop-only" id="roleTag">⭐ ADMIN</span>
       <span id="adminUserName" class="topbar-desktop-only" style="font-size:0.78rem;color:var(--text-dim);"></span>
       <div class="admin-avatar" id="adminAvatarInitials" title="Signed in user">AS</div>
-      <a href="floating-roof-tank-calculator.html" target="_blank" onclick="return true;" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← View Site</a>
+      <a href="floating-roof-tank-calculator.html" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:5px 12px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text-dim);font-family:var(--body);font-size:0.75rem;text-decoration:none;transition:all 0.18s;" onmouseover="this.style.borderColor='rgba(201,168,76,0.4)';this.style.color='var(--gold)'" onmouseout="this.style.borderColor='var(--border2)';this.style.color='var(--text-dim)'">← Calculator</a>
       <button onclick="closeAdminOverlay()" class="topbar-desktop-only" style="display:inline-flex;align-items:center;gap:5px;padding:5px 14px;background:rgba(240,91,91,0.1);border:1px solid rgba(240,91,91,0.3);border-radius:6px;color:var(--red);font-family:var(--body);font-size:0.75rem;cursor:pointer;transition:all 0.18s;" onmouseover="this.style.background='rgba(240,91,91,0.18)'" onmouseout="this.style.background='rgba(240,91,91,0.1)'">✕ Close</button>
 
       <div class="topbar-kebab-wrap">
@@ -4108,7 +4151,7 @@ body.editing .report-delete-btn { display: block; }
         <div class="topbar-kebab-menu">
           <div class="kebab-item" style="cursor:default;color:var(--text-dim);font-size:0.75rem;" id="adminKebabRoleLine">⭐ Admin</div>
           <div class="kebab-divider"></div>
-          <a href="floating-roof-tank-calculator.html" target="_blank" class="kebab-item" onclick="closeKebabMenu(this);">← View Site</a>
+          <a href="floating-roof-tank-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">← Calculator</a>
           <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); closeAdminOverlay();">✕ Close Panel</button>
         </div>
       </div>
@@ -4619,6 +4662,7 @@ const emailLogs = [];
 
 // ── Navigation ─────────────────────────────────────────────
 function saNav(el, pageId) {
+  if (typeof closeAdminSidebar === 'function') closeAdminSidebar();
   // Hide all SA pages
   ['sa-members','sa-email','sa-calcs','sa-approvals','sa-vocab'].forEach(id => {
     const p = document.getElementById(id);
@@ -5249,6 +5293,33 @@ function showAdminToast(msg) {
 // ── Open overlay with SA section ───────────────────────────
 // Extend openAdminOverlay to refresh approval badge
 const _origOpenAdmin = typeof openAdminOverlay === 'function' ? openAdminOverlay : null;
+// ─── ADMIN SIDEBAR DRAWER (mobile) ────────────────────────────
+function toggleAdminSidebar() {
+  const sb = document.querySelector('#adminOverlay .sidebar');
+  const bd = document.getElementById('adminSidebarBackdrop');
+  if (!sb) return;
+  const open = sb.classList.toggle('open');
+  if (bd) bd.classList.toggle('show', open);
+}
+function closeAdminSidebar() {
+  const sb = document.querySelector('#adminOverlay .sidebar');
+  const bd = document.getElementById('adminSidebarBackdrop');
+  if (sb) sb.classList.remove('open');
+  if (bd) bd.classList.remove('show');
+}
+
+// Counterpart to openAdminOverlay(). This was previously MISSING, which is why
+// the "✕ Close" button silently did nothing.
+function closeAdminOverlay() {
+  const overlay = document.getElementById('adminOverlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';   // undo the scroll lock set on open
+  closeKebabMenu();                    // don't leave a kebab hanging open
+  closeAdminSidebar();                 // don't leave the drawer open underneath
+  showView('dashView');
+  if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+}
+
 function openAdminOverlay() {
   // Guard: only super_admin can open the admin panel
   if (!currentUser || currentUser.role !== 'super_admin') {
@@ -5428,14 +5499,13 @@ function friendlyAuthError(e) {
 let _profileLoaded = false;       // becomes true once a profile loads successfully
 let _authHandling = false;        // de-dupe concurrent onAuthStateChanged fires
 function handleAuthState(fbUser) {
-  console.log('[TP] onAuthStateChanged fired. user =', fbUser ? (fbUser.email || fbUser.uid) : 'NULL');
   if (!fbUser) {
     currentUser = null;
     _profileLoaded = false;
     if (!_routingAfterLogin) showView('loginView');
     return;
   }
-  if (_authHandling || _profileLoaded) { console.log('[TP] skipped (already handling/loaded)'); return; }
+  if (_authHandling || _profileLoaded) { return; }
   _authHandling = true;
   // Clear any stale error banner the moment we start a fresh load
   const _e0 = document.getElementById('loginError'); if (_e0) _e0.style.display = 'none';
@@ -5592,41 +5662,46 @@ function declineDisclaimer() {
 }
 
 // The actual routing, performed only once the disclaimer is satisfied.
+// The CALCULATOR is the portal/home for every role. index.html hosts the
+// profile + admin panel, which are destinations you navigate TO from there.
 function proceedAfterDisclaimer(user) {
   const wasFreshLogin = _routingAfterLogin;   // true only when they just signed in
   _routingAfterLogin = false;
   dismissSplash();
 
-  if (user.role === 'user' || user.role === 'gold') {
-    // Members: send them to the calculator ONLY on a fresh sign-in.
-    // If they came back to the portal deliberately (e.g. "← Back to Portal"),
-    // show their profile instead of bouncing them straight back out.
-    if (wasFreshLogin && !_cameFromCalculator()) {
-      window.location.href = 'floating-roof-tank-calculator.html';
-      return;
-    }
-    loadDashboard();
-    showView('dashView');
-    if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
-    if (typeof initProfile === 'function') { try { initProfile(); } catch(e){} }
-  } else {
+  const isAdmin = (user.role === 'super_admin' || user.role === 'admin');
+
+  // A fresh sign-in always lands on the calculator — the main portal.
+  if (wasFreshLogin && !_cameFromCalculator()) {
+    window.location.href = 'floating-roof-tank-calculator.html';
+    return;
+  }
+
+  // Otherwise they arrived here deliberately (Profile / Admin Panel / reload).
+  if (isAdmin) {
     startUsersWatcher();
     loadReportsREST();
-    loadDashboard();
-    showView('dashView');
-    // Super admins land in their actual working "portal" — the Admin Dashboard —
-    // rather than silently defaulting to the profile page underneath.
-    if (user.role === 'super_admin' && typeof openAdminOverlay === 'function') {
-      try { openAdminOverlay(); } catch(e){}
-    }
   }
+  loadDashboard();
+  showView('dashView');
+
+  // ?admin=1 → open the Admin Panel; anything else → the profile page.
+  const wantsAdmin = window.location.search.indexOf('admin=1') !== -1;
+  if (wantsAdmin && user.role === 'super_admin' && typeof openAdminOverlay === 'function') {
+    try { openAdminOverlay(); } catch(e){}
+    return;
+  }
+  if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+  if (typeof initProfile === 'function') { try { initProfile(); } catch(e){} }
 }
 
-// Detect arrival from the calculator (so we don't bounce members back to it)
+// Detect a deliberate arrival at index.html (Profile / Admin Panel / Back),
+// so we don't bounce the user straight back out to the calculator.
 function _cameFromCalculator() {
   try {
     if (document.referrer && document.referrer.indexOf('floating-roof-tank-calculator') !== -1) return true;
     if (window.location.hash === '#portal' || window.location.search.indexOf('portal') !== -1) return true;
+    if (window.location.search.indexOf('admin=1') !== -1) return true;
   } catch(e){}
   return false;
 }
@@ -5639,8 +5714,6 @@ function _cameFromCalculator() {
 // proceedAfterDisclaimer() reads it to tell a fresh sign-in apart from a
 // "← Back to Portal" return, and the modal sits between the two.
 function routeUser(user) {
-  console.log('[TP] routeUser: role =', user.role, '| approved =', user.approved,
-              '| needsDisclaimer =', needsDisclaimer(user));
   if ((user.role === 'user' || user.role === 'gold') && !user.approved) {
     _routingAfterLogin = false;
     dismissSplash();
@@ -6733,11 +6806,13 @@ const PAGES = { dashboard:'Dashboard', statistics:'Site Statistics', demographic
 const SUBS  = { dashboard:'Overview & Key Metrics', statistics:'Usage analytics and performance', demographics:'Audience breakdown and geography', reports:'Generated emission reports', settings:'Platform configuration', users:'Accounts, roles and access', notifications:'Alerts and system events' };
 
 function nav(el, pageId) {
+  if (typeof closeAdminSidebar === 'function') closeAdminSidebar();
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + pageId).classList.add('active');
-  document.getElementById('topbarTitle').childNodes[0].textContent = PAGES[pageId];
+  const _tt = document.getElementById('topbarTitleText');
+  if (_tt) _tt.textContent = PAGES[pageId];
   document.getElementById('topbarSub').textContent = SUBS[pageId];
 }
 

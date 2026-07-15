@@ -72,44 +72,55 @@ a { color: var(--accent); }
   .brand-mark { width: 40px !important; height: 40px !important; }
   .brand-name { font-size: 1.3rem; }
   .brand-sub { font-size: 0.66rem; }
-
-  /* Match the topbar's tighter gutter so content lines up edge to edge */
-  .wrap { padding: 20px 16px 60px; }
 }
 
+/* Base (desktop) rules */
 .wrap { max-width:1180px; margin:0 auto; padding:28px 24px 80px; }
 .page-title { font-family:var(--cond); font-weight:700; font-size:2rem; color:var(--text-bright); letter-spacing:0.5px; }
 .page-sub { color:var(--text-dim); font-size:0.9rem; margin-top:2px; margin-bottom:8px; }
 .std-badge { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:0.62rem; color:var(--accent); background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.25); border-radius:20px; padding:3px 12px; margin-bottom:24px; }
 
-.layout { display:grid; grid-template-columns: 1fr 400px; gap:24px; align-items:start; }
+.layout { display:grid; grid-template-columns: 1fr 400px; gap:24px; align-items:start; min-width:0; }
+.layout > * { min-width: 0; }
 @media (max-width: 920px) { .layout { grid-template-columns:1fr; } }
 
 .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:20px; }
 .card-title { font-family:var(--cond); font-weight:600; font-size:1.05rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; display:flex; align-items:center; gap:8px; }
 .card-hint { font-size:0.76rem; color:var(--text-dim); margin-bottom:16px; }
 
-.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; min-width:0; }
+.grid2 > *, .grid3 > * { min-width: 0; }
+.grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; min-width:0; }
 @media (max-width:600px) { .grid2, .grid3 { grid-template-columns:1fr; } }
 
 .field { display:flex; flex-direction:column; gap:5px; margin-bottom:2px; }
 .field label { font-size:0.74rem; color:var(--text-dim); font-weight:500; }
 .field label .req { color:var(--red); }
 .field .unit { font-family:var(--mono); font-size:0.6rem; color:var(--text-dim); }
-.field input, .field select { background:var(--surface2); border:1px solid var(--border); border-radius:7px; color:var(--text-bright); font-family:var(--sans); font-size:0.88rem; padding:9px 11px; outline:none; transition:border-color .18s; width:100%; }
+.field { min-width: 0; }
+.field input, .field select { background:var(--surface2); border:1px solid var(--border); border-radius:7px; color:var(--text-bright); font-family:var(--sans); font-size:0.88rem; padding:9px 11px; outline:none; transition:border-color .18s; width:100%; min-width:0; max-width:100%; box-sizing:border-box; }
 .field input:focus, .field select:focus { border-color:rgba(201,168,76,0.5); }
 .field input::placeholder { color:#3a4a5e; }
 
-.fitting-row { display:grid; grid-template-columns: 1fr 70px 32px; gap:8px; align-items:end; margin-bottom:9px; }
-.fitting-row select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:0.8rem; padding:7px 9px; outline:none; }
-.fitting-row input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-bright); font-family:var(--mono); font-size:0.82rem; padding:7px 9px; outline:none; text-align:center; }
+.fitting-row { display:grid; grid-template-columns: 1fr 70px 32px; gap:8px; align-items:end; margin-bottom:9px; min-width:0; }
+.fitting-row select { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text); font-family:var(--sans); font-size:0.8rem; padding:7px 9px; outline:none; min-width:0; max-width:100%; box-sizing:border-box; }
+.fitting-row input { background:var(--surface2); border:1px solid var(--border); border-radius:6px; color:var(--text-bright); font-family:var(--mono); font-size:0.82rem; padding:7px 9px; outline:none; text-align:center; min-width:0; box-sizing:border-box; }
 .fitting-row .rm { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--red); cursor:pointer; height:34px; transition:all .15s; }
 .fitting-row .rm:hover { background:rgba(240,91,91,0.1); }
 .add-fitting { display:inline-flex; align-items:center; gap:6px; background:transparent; border:1px dashed var(--border); border-radius:7px; color:var(--accent); font-family:var(--sans); font-size:0.8rem; padding:8px 16px; cursor:pointer; transition:all .15s; margin-top:6px; }
 .add-fitting:hover { border-color:var(--accent); background:rgba(201,168,76,0.05); }
 
-.btn-calc { width:100%; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:9px; color:#080c14; font-family:var(--cond); font-weight:700; font-size:1.05rem; letter-spacing:1px; padding:15px; cursor:pointer; text-transform:uppercase; transition:all .2s; }
+/* ─── Consolidated mobile layout rules (placed AFTER base rules so they win
+       over the desktop .wrap/.card padding without needing !important) ─── */
+@media (max-width: 768px) {
+  /* Gutter matches the topbar (16px) so header, form, and footer align */
+  .wrap { padding: 20px 16px 60px; }
+  /* Cards get a tighter inner padding so their content fits the narrower gutter */
+  .card { padding: 18px 16px; }
+  .page-title { font-size: 1.6rem; }
+}
+
+.btn-calc { width:100%; box-sizing:border-box; background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; border-radius:9px; color:#080c14; font-family:var(--cond); font-weight:700; font-size:1.05rem; letter-spacing:1px; padding:15px; cursor:pointer; text-transform:uppercase; transition:all .2s; }
 .btn-calc:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(201,168,76,0.3); }
 
 .err { background:rgba(240,91,91,0.08); border:1px solid rgba(240,91,91,0.3); border-radius:8px; color:var(--red); font-size:0.82rem; padding:11px 14px; margin-bottom:16px; display:none; }
@@ -325,14 +336,17 @@ a { color: var(--accent); }
       <div class="brand-sub">EMISSIONS INTELLIGENCE</div>
     </div>
   </div>
-  <a href="index.html?portal=1" class="back-link topbar-desktop-only">← Back to Portal</a>
+  <a href="index.html?portal=1" class="back-link topbar-desktop-only">👤 Profile</a>
+  <a href="index.html?admin=1" id="calcAdminLink" class="back-link topbar-desktop-only" style="display:none;">⬡ Admin Panel</a>
+  <button class="back-link topbar-desktop-only" type="button" style="background:transparent;cursor:pointer;font-family:var(--sans);" onclick="calcSignOut()">Sign out</button>
 
   <div class="topbar-kebab-wrap">
     <button class="topbar-kebab-btn" type="button" aria-label="Menu" onclick="toggleKebabMenu(this)">⋮</button>
     <div class="topbar-kebab-menu">
-      <a href="index.html?portal=1" class="kebab-item" onclick="closeKebabMenu(this);">← Back to Portal</a>
+      <a href="index.html?portal=1" class="kebab-item" onclick="closeKebabMenu(this);">👤 Profile</a>
+      <a href="index.html?admin=1" id="calcAdminLinkMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this);">⬡ Admin Panel</a>
       <div class="kebab-divider"></div>
-      <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); if(window.fbCalc && window.fbCalc.signOut){window.fbCalc.signOut();} window.location.href='index.html';">Sign out</button>
+      <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); calcSignOut();">Sign out</button>
     </div>
   </div>
 </div>
@@ -756,6 +770,24 @@ function closeKebabMenu(btnOrEl) {
   document.querySelectorAll('.topbar-kebab-menu.open').forEach(m => m.classList.remove('open'));
   document.querySelectorAll('.topbar-kebab-btn.open').forEach(b => b.classList.remove('open'));
 }
+
+function calcSignOut() {
+  if (window.fbCalc && window.fbCalc.signOut) {
+    Promise.resolve(window.fbCalc.signOut()).finally(() => { window.location.href = 'index.html'; });
+  } else {
+    window.location.href = 'index.html';
+  }
+}
+
+// Reveal the Admin Panel link only once we know the signed-in user is a super admin.
+window.addEventListener('tp-user-ready', function () {
+  const isSuper = window._tpUser && window._tpUser.role === 'super_admin';
+  if (!isSuper) return;
+  ['calcAdminLink', 'calcAdminLinkMobile'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = '';
+  });
+});
 document.addEventListener('click', function (e) {
   document.querySelectorAll('.topbar-kebab-wrap').forEach(wrap => {
     if (!wrap.contains(e.target)) {
