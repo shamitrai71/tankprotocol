@@ -29,14 +29,12 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { overflow-x: hidden; }
-
 body {
   background: var(--bg);
   font-family: var(--body);
   color: var(--text);
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   position: relative;
 }
 
@@ -66,6 +64,11 @@ body::after {
 /* ─── VIEWS ─────────────────────────────── */
 .view { display: none; min-height: 100vh; }
 .view.active { display: flex; }
+/* dashView is a column flex layout (topbar + page-content). Ensure it grows
+   with its content rather than being capped at the viewport, so long pages
+   (e.g. the full profile) scroll all the way to the bottom on mobile. */
+#dashView.active { min-height: 100vh; height: auto; }
+#dashView > .page-content { flex: 1 0 auto; }
 
 /* ─── LOGIN / FORGOT ─────────────────────── */
 #loginView, #forgotView {
@@ -277,21 +280,21 @@ body::after {
 .topbar-logo {
   display: flex;
   align-items: center;
-  gap: 13px;
+  gap: 16px;
   min-width: 0;
   font-family: var(--display);
   font-weight: 700;
   color: var(--text-bright);
-  font-size: 1.35rem;
+  font-size: 1.75rem;
   letter-spacing: 0.3px;
 }
 .topbar-logo .logo-mark {
-  width: 46px; height: 46px;
+  width: 60px; height: 60px;
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.4s ease;
 }
 .topbar-logo:hover .logo-mark {
   transform: rotate(-8deg) scale(1.06);
-  filter: drop-shadow(0 0 10px rgba(201,168,76,0.5));
+  filter: drop-shadow(0 0 12px rgba(201,168,76,0.55));
 }
 
 .topbar-nav {
@@ -3734,7 +3737,7 @@ body.editing .report-delete-btn { display: block; }
   <!-- TOPBAR -->
   <div class="topbar">
     <div class="topbar-logo">
-      <div class="logo-mark" style="width:30px;height:30px;"></div>
+      <div class="logo-mark"></div>
       Tank Protocol
     </div>
 
