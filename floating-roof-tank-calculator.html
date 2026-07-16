@@ -541,6 +541,55 @@ a { color: var(--accent); }
               <option value="user">User input</option>
             </select>
           </div>
+        </div>
+
+        <!-- CUSTOM MET ENTRY (international / any site not in the US table) -->
+        <div id="customMetPanel" style="display:none;margin-top:14px;padding:16px;border:1px solid rgba(201,168,76,0.28);border-radius:10px;background:rgba(201,168,76,0.04);">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+            <div style="font-family:var(--cond);font-weight:700;letter-spacing:0.5px;color:var(--accent);font-size:0.95rem;">🌐 CUSTOM SITE METEOROLOGY</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:0.72rem;color:var(--text-dim);">Enter values in:</span>
+              <select id="metUnitSystem" onchange="onMetUnitSystemChange()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text-bright);font-family:var(--sans);font-size:0.78rem;padding:5px 8px;">
+                <option value="us">US units (°F, mph, psia)</option>
+                <option value="metric">Metric (°C, m/s, kPa)</option>
+              </select>
+            </div>
+          </div>
+          <div style="font-size:0.72rem;color:var(--text-dim);line-height:1.6;margin-bottom:14px;">
+            Use 30-year climate <b>normals</b> for the tank site (to match AP-42's basis), not a single year or current weather.
+            Values are stored internally in US units — the calculation always runs per AP-42 / API MPMS 19.2.
+          </div>
+          <div class="grid3">
+            <div class="field">
+              <label>Avg. Daily Min Temp <span class="unit" id="u_tan">°F</span></label>
+              <input id="cm_tan" type="number" step="0.1" oninput="onCustomMetInput()" placeholder="e.g. 62">
+            </div>
+            <div class="field">
+              <label>Avg. Daily Max Temp <span class="unit" id="u_tax">°F</span></label>
+              <input id="cm_tax" type="number" step="0.1" oninput="onCustomMetInput()" placeholder="e.g. 88">
+            </div>
+            <div class="field">
+              <label>Avg. Wind Speed <span class="unit" id="u_v">mph</span></label>
+              <input id="cm_v" type="number" step="0.1" oninput="onCustomMetInput()" placeholder="e.g. 7.5">
+            </div>
+            <div class="field">
+              <label>Solar Insolation <span class="unit" id="u_i">Btu/ft²·day</span></label>
+              <input id="cm_i" type="number" step="1" oninput="onCustomMetInput()" placeholder="e.g. 1700">
+            </div>
+            <div class="field">
+              <label>Atmospheric Pressure <span class="unit" id="u_pa">psia</span></label>
+              <input id="cm_pa" type="number" step="0.01" oninput="onCustomMetInput()" placeholder="e.g. 14.3">
+            </div>
+            <div class="field">
+              <label>Site Label <span style="color:var(--text-dim);font-weight:400;">(for report)</span></label>
+              <input id="cm_label" type="text" oninput="onCustomMetInput()" placeholder="e.g. Mumbai, IN">
+            </div>
+          </div>
+          <div class="note" id="customMetEcho" style="margin-top:10px;">Enter the five values above. Metric entries are converted to US units automatically.</div>
+        </div>
+
+        <div style="margin-top:14px;"></div>
+        <div class="grid2">
           <div class="field" id="tbUserField" style="display:none;"><label>Liquid Bulk Temp <span class="unit">°F</span></label><input id="bulkTempF" type="number" step="0.1" placeholder="60"></div>
           <div class="field">
             <label>Roof Paint Color</label>
@@ -1405,6 +1454,7 @@ function initUI() {
   // met location dropdown
   const metSel = document.getElementById('metLocation');
   metSel.innerHTML = '<option value="">— Select location —</option>' +
+    '<option value="__custom__">🌐 Custom location (international / not listed)…</option>' +
     Object.keys(MET_DATA).map(c => `<option value="${c}">${c}</option>`).join('');
 
   // paint color dropdowns
@@ -1507,20 +1557,109 @@ function onTbMethodChange() {
 }
 function onMetChange() {
   const loc = document.getElementById('metLocation').value;
+  const panel = document.getElementById('customMetPanel');
+  if (loc === '__custom__') {
+    // Reserved slot in MET_DATA that the custom fields write into. Every existing
+    // consumer reads MET_DATA[metLocation.value], so once populated it "just works".
+    if (panel) panel.style.display = 'block';
+    if (!MET_DATA.__custom__) MET_DATA.__custom__ = { TAN: null, TAX: null, V: null, I: null, PA: null, __label: '' };
+    onCustomMetInput();   // sync whatever's already typed
+    return;
+  }
+  if (panel) panel.style.display = 'none';
   const m = MET_DATA[loc];
-  if (m && document.getElementById('roofType').value.startsWith('EFRT')) {
-    document.getElementById('windSpeed').value = m.V;
-  } else if (m) {
-    document.getElementById('windSpeed').value = m.V;
+  if (m) document.getElementById('windSpeed').value = m.V;
+  recomputeTVP();
+}
+
+// Unit conversions — all INTO US customary, which the engine requires.
+const _CONV = {
+  cToF:   c => (c * 9/5) + 32,
+  msToMph: v => v * 2.236936,
+  // Global horizontal solar: 1 kWh/m²·day = 317.1 Btu/ft²·day
+  kwhm2ToBtuft2: k => k * 317.1,
+  kpaToPsia: p => p * 0.1450377,
+};
+
+function _metUnitLabels(sys) {
+  const us = { tan:'°F', tax:'°F', v:'mph', i:'Btu/ft²·day', pa:'psia' };
+  const me = { tan:'°C', tax:'°C', v:'m/s', i:'kWh/m²·day', pa:'kPa' };
+  return sys === 'metric' ? me : us;
+}
+
+function onMetUnitSystemChange() {
+  const sys = document.getElementById('metUnitSystem').value;
+  const L = _metUnitLabels(sys);
+  document.getElementById('u_tan').textContent = L.tan;
+  document.getElementById('u_tax').textContent = L.tax;
+  document.getElementById('u_v').textContent   = L.v;
+  document.getElementById('u_i').textContent   = L.i;
+  document.getElementById('u_pa').textContent  = L.pa;
+  onCustomMetInput();   // re-interpret the current numbers under the new unit system
+}
+
+function onCustomMetInput() {
+  if (!MET_DATA.__custom__) MET_DATA.__custom__ = { TAN:null, TAX:null, V:null, I:null, PA:null, __label:'' };
+  const sys = (document.getElementById('metUnitSystem') || {}).value || 'us';
+  const num = id => {
+    const el = document.getElementById(id);
+    if (!el || el.value === '' || el.value == null) return null;
+    const n = parseFloat(el.value);
+    return isNaN(n) ? null : n;
+  };
+  let tan = num('cm_tan'), tax = num('cm_tax'), v = num('cm_v'), i = num('cm_i'), pa = num('cm_pa');
+
+  // Convert metric inputs into the US units the AP-42 engine expects.
+  if (sys === 'metric') {
+    if (tan != null) tan = _CONV.cToF(tan);
+    if (tax != null) tax = _CONV.cToF(tax);
+    if (v   != null) v   = _CONV.msToMph(v);
+    if (i   != null) i   = _CONV.kwhm2ToBtuft2(i);
+    if (pa  != null) pa  = _CONV.kpaToPsia(pa);
+  }
+
+  const label = (document.getElementById('cm_label') || {}).value || '';
+  MET_DATA.__custom__ = { TAN:tan, TAX:tax, V:v, I:i, PA:pa, __label:label };
+
+  // Mirror wind into the operation field, consistent with named locations.
+  if (v != null) document.getElementById('windSpeed').value = v.toFixed(1);
+
+  // Echo the US-unit values so the user can sanity-check the conversion.
+  const echo = document.getElementById('customMetEcho');
+  if (echo) {
+    const have = [tan,tax,v,i,pa].every(x => x != null);
+    if (have) {
+      echo.innerHTML = `Stored (US units): T<sub>AN</sub> ${tan.toFixed(1)} °F · T<sub>AX</sub> ${tax.toFixed(1)} °F · ` +
+        `wind ${v.toFixed(1)} mph · I ${i.toFixed(0)} Btu/ft²·d · P<sub>A</sub> ${pa.toFixed(2)} psia`;
+    } else {
+      echo.textContent = 'Enter all five values. Metric entries are converted to US units automatically.';
+    }
   }
   recomputeTVP();
 }
 
 // ── PHASE 2: Liquid surface temperature model (Eq 2-5 to 2-12, 1-32) ────────
+// A met record is usable only if all five AP-42 fields are present numbers.
+// (The __custom__ slot can exist with null fields while the user is still typing.)
+// Display name + provenance for the selected met location (for reports).
+function metLocationDisplay() {
+  const loc = document.getElementById('metLocation').value;
+  if (loc === '__custom__') {
+    const lbl = (MET_DATA.__custom__ && MET_DATA.__custom__.__label) || 'Custom site';
+    return { name: lbl, source: 'User-entered site meteorology' };
+  }
+  if (loc && MET_DATA[loc]) return { name: loc, source: 'AP-42 Table 7.1-7 (US)' };
+  return { name: loc || '—', source: '' };
+}
+
+function _metComplete(m) {
+  return !!m && ['TAN','TAX','V','I','PA'].every(k => typeof m[k] === 'number' && !isNaN(m[k]));
+}
+
 function computeLiquidSurfaceTemp() {
   const loc = document.getElementById('metLocation').value;
   const m = MET_DATA[loc];
-  if (!m) return null;
+  if (!_metComplete(m)) return null;
   const rt = document.getElementById('roofType').value;
   const D  = parseFloat(document.getElementById('diameter').value) || 1;
   const Hs = parseFloat(document.getElementById('shellHeight').value) || (0.5*D);
@@ -1688,7 +1827,8 @@ function _gatherReportMeta(d) {
     city: g('city'), country: g('country'), department: g('department'),
     tankClass: cls,
     tankType: g('roofType') || (document.getElementById('fixedShape') ? document.getElementById('fixedShape').value : '') || '',
-    tankId: g('tankId'), location: g('tankLocation') || g('metLocation') || '',
+    tankId: g('tankId'), location: g('tankLocation') || metLocationDisplay().name || '',
+    metLocationName: metLocationDisplay().name, metSource: metLocationDisplay().source,
     chemical: (document.getElementById('chemical') && document.getElementById('chemical').options.length)
               ? document.getElementById('chemical').options[document.getElementById('chemical').selectedIndex].text : '',
     losses, units: (d && d.nonRoutine) ? 'lb/event' : 'lb/yr',
@@ -1912,7 +2052,7 @@ th,td{border:1px solid #ccc;padding:8px 12px;text-align:left;font-size:.88rem}th
 <div class="meta">Generated ${now} \u00b7 Tank Protocol \u00b7 AP-42 Chapter 7 (9/2025)</div>
 <table>
 <tr><th>Company</th><td>${g('companyName')}</td><th>Tank ID</th><td>${g('tankId')}</td></tr>
-<tr><th>Configuration</th><td>${d.shape}</td><th>Location</th><td>${g('metLocation')}</td></tr>
+<tr><th>Configuration</th><td>${d.shape}</td><th>Location</th><td>${d.metLocationName || g('metLocation')}</td></tr>
 <tr><th>Diameter</th><td>${fmt(d.D,2)} ft</td><th>Shell Height</th><td>${fmt(d.Hs,2)} ft</td></tr>
 <tr><th>Vapor MW</th><td>${fmt(d.Mv,2)}</td><th>TVP</th><td>${fmt(d.Pva,3)} psia</td></tr>
 <tr><th>Liquid Surface Temp</th><td>${fmt(d.TLA_R-459.67,1)} \u00b0F</td><th>Throughput</th><td>${g('throughput')} bbl/yr</td></tr>
@@ -1991,7 +2131,8 @@ th{background:#f4f1e8}
 <tr><th>Diameter</th><td>${g('diameter')} ft</td><th>Shell Height</th><td>${g('shellHeight')} ft</td></tr>
 <tr><th>TVP</th><td>${g('vaporPressure')} psia</td><th>Vapor MW</th><td>${g('molWeight')} lb/lb-mol</td></tr>
 <tr><th>Throughput</th><td>${g('throughput')} bbl/yr</td><th>Wind</th><td>${d.v} mph</td></tr>
-${d.TLA_F!=null?`<tr><th>Location</th><td>${g('metLocation')}</td><th>Liquid Surface Temp</th><td>${d.TLA_F.toFixed(1)} °F</td></tr>`:''}
+${d.TLA_F!=null?`<tr><th>Location</th><td>${d.metLocationName || g('metLocation')}</td><th>Liquid Surface Temp</th><td>${d.TLA_F.toFixed(1)} °F</td></tr>`:''}
+${d.metSource?`<tr><th>Met Data Source</th><td colspan="3">${d.metSource}</td></tr>`:''}
 ${d.computedTVP!=null?`<tr><th>Computed TVP</th><td>${d.computedTVP.toFixed(3)} psia</td><th>—</th><td>—</td></tr>`:''}
 </table>
 <div class="sec">Emission Results (lb/yr)</div>
@@ -2049,7 +2190,7 @@ function onFixedShapeChange() {
 function fixedLiquidSurfaceTemp(D, Hs) {
   const loc = document.getElementById('metLocation').value;
   const m = MET_DATA[loc];
-  if (!m) return null;
+  if (!_metComplete(m)) return null;
   const aR = (SOLAR_ABSORPTANCE[document.getElementById('roofColor').value]||{})[document.getElementById('roofCond').value] ?? 0.25;
   const aS = (SOLAR_ABSORPTANCE[document.getElementById('shellColor').value]||{})[document.getElementById('shellCond').value] ?? 0.25;
   const I = m.I;
@@ -2297,7 +2438,7 @@ function getLiquidProps(tF) {
 function eventAmbientTempR() {
   const loc = document.getElementById('metLocation').value;
   const m = MET_DATA[loc];
-  if (m) return ((m.TAX + m.TAN)/2) + 459.67;
+  if (_metComplete(m)) return ((m.TAX + m.TAN)/2) + 459.67;
   const tb = parseFloat(document.getElementById('bulkTempF').value);
   return (isNaN(tb) ? 60 : tb) + 459.67;
 }
