@@ -455,6 +455,8 @@ body::after {
 @media (max-width: 768px) {
   .profile-layout { grid-template-columns: 1fr; }
   .topbar-nav { display: none; }
+  .page-content { padding: 24px 16px 64px; }
+  .card { padding: 18px 16px; }
 }
 
 .glass-card {
@@ -1910,7 +1912,9 @@ html, body {
   grid-template-columns: 1fr 320px;
   gap: 20px;
   align-items: start;
+  min-width: 0;
 }
+.content-grid > * { min-width: 0; }
 
 @media (max-width: 900px) {
   .content-grid { grid-template-columns: 1fr; }
@@ -1923,6 +1927,7 @@ html, body {
   border-radius: var(--r);
   padding: 24px;
   margin-bottom: 20px;
+  min-width: 0;
 }
 
 .card-header {
@@ -1943,9 +1948,14 @@ html, body {
 }
 
 /* ─ FORM FIELDS ─────────────────────── */
-.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+.field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; min-width: 0; }
+.field-grid > * { min-width: 0; }
 .field-grid.full { grid-template-columns: 1fr; }
 .field-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+
+@media (max-width: 600px) {
+  .field-grid, .field-grid.three { grid-template-columns: 1fr; }
+}
 
 .form-field label {
   display: block;
@@ -1962,12 +1972,16 @@ html, body {
   border-bottom: 1px solid rgba(30,45,66,0.4);
   min-height: 36px;
   line-height: 1.5;
+  overflow-wrap: anywhere;   /* long emails/URLs wrap instead of clipping */
 }
 .field-value.empty { color: var(--text-dim); font-style: italic; font-size: 0.8rem; }
 
 /* EDIT MODE: inputs */
 .field-input {
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   background: rgba(255,255,255,0.04);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -2962,6 +2976,70 @@ body.editing .report-delete-btn { display: block; }
     gap: 16px;
   }
 #adminOverlay .access-denied.show { display: flex; }
+
+/* ─── MOBILE ADMIN GATE (Tank Bazaar-style interstitial) ─────────────────── */
+#adminMobileGate {
+  position: fixed; inset: 0; z-index: 900;
+  background: #080c14;
+  display: none;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+}
+#adminMobileGate.show { display: flex; }
+#adminMobileGate .amg-top {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px; border-bottom: 1px solid var(--border, #1e2d42);
+}
+#adminMobileGate .amg-brand { display: flex; align-items: center; gap: 11px; }
+#adminMobileGate .amg-brand .logo-mark { width: 34px; height: 34px; }
+#adminMobileGate .amg-brand-name {
+  font-family: var(--display); font-weight: 700; letter-spacing: 1px;
+  color: var(--text-bright); font-size: 1.05rem;
+}
+#adminMobileGate .amg-close {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 16px; background: transparent;
+  border: 1px solid var(--border, #1e2d42); border-radius: 8px;
+  color: var(--text-dim); font-family: var(--body); font-size: 0.82rem; cursor: pointer;
+}
+#adminMobileGate .amg-body {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 40px 28px; gap: 8px;
+}
+#adminMobileGate .amg-icon { font-size: 3.4rem; margin-bottom: 8px; }
+#adminMobileGate .amg-title {
+  font-family: var(--display); font-weight: 800; font-size: 1.9rem;
+  color: var(--text-bright); line-height: 1.15; margin-bottom: 6px;
+}
+#adminMobileGate .amg-text {
+  font-family: var(--mono); font-size: 0.92rem; color: var(--text-dim);
+  line-height: 1.9; max-width: 440px;
+}
+#adminMobileGate .amg-domain {
+  margin: 26px 0; width: 100%; max-width: 440px;
+  background: rgba(201,168,76,0.05); border: 1px solid rgba(201,168,76,0.2);
+  border-radius: 12px; padding: 20px;
+}
+#adminMobileGate .amg-domain-label {
+  font-family: var(--mono); font-size: 0.72rem; letter-spacing: 2px;
+  color: var(--text-dim); text-transform: uppercase; margin-bottom: 8px;
+}
+#adminMobileGate .amg-domain-val {
+  font-family: var(--display); font-weight: 700; font-size: 1.35rem; color: var(--gold);
+}
+#adminMobileGate .amg-cta {
+  width: 100%; max-width: 440px; margin-top: 6px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 16px; border: none; border-radius: 10px;
+  background: linear-gradient(135deg, var(--gold, #c9a84c), var(--gold-light, #e8c97a));
+  color: #080c14; font-family: var(--display); font-weight: 700; font-size: 1rem;
+  cursor: pointer; text-decoration: none;
+}
+#adminMobileGate .amg-foot {
+  font-family: var(--mono); font-size: 0.78rem; color: var(--text-dim);
+  line-height: 1.7; max-width: 440px; margin-top: 26px;
+}
 #adminOverlay .denied-icon { font-size: 3rem; }
 #adminOverlay .denied-title { font-family: var(--display); font-weight: 800; font-size: 1.6rem; color: var(--red); }
 #adminOverlay .denied-msg { font-family: var(--mono); font-size: 0.75rem; color: var(--text-dim); letter-spacing: 0.5px; text-align: center; line-height: 1.8; }
@@ -4029,6 +4107,34 @@ body.editing .report-delete-btn { display: block; }
 
 <!-- Toast -->
 <div class="toast" id="toast"></div>
+
+<!-- ═══════════ MOBILE ADMIN GATE (shown instead of the panel on phones) ═══════════ -->
+<div id="adminMobileGate">
+  <div class="amg-top">
+    <div class="amg-brand">
+      <div class="logo-mark"></div>
+      <div class="amg-brand-name">TANK <span style="color:var(--gold);">PROTOCOL</span></div>
+    </div>
+    <button class="amg-close" onclick="closeAdminMobileGate()">✕ Close</button>
+  </div>
+  <div class="amg-body">
+    <div class="amg-icon">🖥️</div>
+    <div class="amg-title">Admin works best on desktop</div>
+    <div class="amg-text">
+      The admin console handles dense member tables, bulk actions, and
+      multi-column analytics — tools that need room to breathe. Rather than
+      cram them into a phone screen, we've kept them where they work properly.
+    </div>
+    <div class="amg-domain">
+      <div class="amg-domain-label">Open on a desktop or laptop</div>
+      <div class="amg-domain-val">tankprotocol.com</div>
+    </div>
+    <a class="amg-cta" href="floating-roof-tank-calculator.html">← Back to Calculator</a>
+    <div class="amg-foot">
+      Everything else — your profile and the emissions calculator — works fully on mobile.
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════════ ADMIN PANEL OVERLAY ═══════════════════════ -->
 <div id="adminOverlay" style="display:none;position:fixed;inset:0;z-index:800;background:#080c14;overflow:auto;">
@@ -5294,6 +5400,26 @@ function showAdminToast(msg) {
 // Extend openAdminOverlay to refresh approval badge
 const _origOpenAdmin = typeof openAdminOverlay === 'function' ? openAdminOverlay : null;
 // ─── ADMIN SIDEBAR DRAWER (mobile) ────────────────────────────
+function closeAdminMobileGate() {
+  const gate = document.getElementById('adminMobileGate');
+  if (gate) gate.classList.remove('show');
+  document.body.style.overflow = '';
+  closeKebabMenu();
+  showView('dashView');
+  if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+}
+
+// If the gate is showing and the viewport grows to desktop size, upgrade to the
+// real panel so a rotated/resized device isn't stuck on the interstitial.
+window.addEventListener('resize', function () {
+  const gate = document.getElementById('adminMobileGate');
+  if (gate && gate.classList.contains('show') &&
+      window.matchMedia && window.matchMedia('(min-width: 901px)').matches) {
+    gate.classList.remove('show');
+    if (typeof openAdminOverlay === 'function') openAdminOverlay();
+  }
+});
+
 function toggleAdminSidebar() {
   const sb = document.querySelector('#adminOverlay .sidebar');
   const bd = document.getElementById('adminSidebarBackdrop');
@@ -5325,6 +5451,17 @@ function openAdminOverlay() {
   if (!currentUser || currentUser.role !== 'super_admin') {
     console.warn('Admin panel: access denied');
     return;
+  }
+
+  // On phones, the dense desktop console isn't usable — show the gate instead.
+  // Matches the Tank Bazaar "Admin works best on desktop" pattern.
+  if (window.matchMedia && window.matchMedia('(max-width: 900px)').matches) {
+    const gate = document.getElementById('adminMobileGate');
+    if (gate) {
+      gate.classList.add('show');
+      document.body.style.overflow = 'hidden';
+      return;
+    }
   }
 
   const overlay = document.getElementById('adminOverlay');
