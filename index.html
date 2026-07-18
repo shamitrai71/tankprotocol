@@ -3849,9 +3849,14 @@ body.editing .report-delete-btn { display: block; }
             <input class="field-input" id="e_phone" type="tel" placeholder="+1 (555) 000-0000">
           </div>
           <div class="form-field">
-            <label>Location / City</label>
-            <div class="field-value" id="v_location"></div>
-            <input class="field-input" id="e_location" type="text" placeholder="e.g. Mumbai, India">
+            <label>Country</label>
+            <div class="field-value" id="v_country"></div>
+            <select class="field-input" id="e_country" onchange="onProfileCountryChange()"></select>
+          </div>
+          <div class="form-field">
+            <label>City / Location</label>
+            <div class="field-value" id="v_city"></div>
+            <select class="field-input" id="e_city"></select>
           </div>
           <div class="form-field">
             <label>LinkedIn</label>
@@ -5592,7 +5597,7 @@ function mapUserDoc(uid, d) {
     role: d.role || 'user',
     company: d.company || '', designation: d.designation || d.title || '',
     title: d.title || d.designation || '', dept: d.dept || '',
-    location: d.location || '', industry: d.industry || '',
+    location: d.location || '', country: d.country || '', city: d.city || '', industry: d.industry || '',
     phone: d.phone || '', bio: d.bio || '',
     status: d.approved ? 'active' : 'pending',
     approved: d.approved === true,
@@ -6640,10 +6645,15 @@ function initProfile() {
     document.getElementById('editToggleBtn').style.display = 'none';
   }
 
+  // Ensure the controlled vocabulary is available for the Country/City dropdowns.
+  // (Previously only fetched when an admin opened the vocab manager.)
+  if (window.fb && window.fb.getVocabREST &&
+      (!window._VOCAB || (!(window._VOCAB.countries||[]).length && !(window._VOCAB.cities||[]).length))) {
+    window.fb.getVocabREST().then(v => { window._VOCAB = v; renderProfile(); }).catch(()=>{});
+  }
+
   renderProfile();
 }
-
-// ── RENDER PROFILE ─────────────────────────────────────────────
 function renderProfile() {
   const u = viewingUser;
 
@@ -6678,7 +6688,10 @@ function renderProfile() {
   setField('lastName', u.lastName);
   setField('email', u.email);
   setField('phone', u.phone);
-  setField('location', u.location);
+  // Structured country + city (vocabulary-linked). location kept as derived string.
+  populateProfileGeoSelects();
+  setField('country', u.country);
+  setField('city', u.city);
   setField('linkedin', u.linkedin, true);
   setField('bio', u.bio);
   setField('company', u.company);
@@ -6718,6 +6731,33 @@ function renderProfile() {
 
   // Completion
   calcCompletion();
+}
+
+// Populate the profile Country + City dropdowns from the controlled vocabulary.
+// Falls back to the user's own stored value if it isn't in the vocab list yet,
+// so an existing value is never silently dropped.
+function populateProfileGeoSelects() {
+  const u = viewingUser || {};
+  const vocab = window._VOCAB || { countries: [], cities: [] };
+  const countrySel = document.getElementById('e_country');
+  const citySel = document.getElementById('e_city');
+  if (countrySel) {
+    const countries = (vocab.countries || []).slice();
+    if (u.country && !countries.some(c => c.toLowerCase() === u.country.toLowerCase())) countries.unshift(u.country);
+    countrySel.innerHTML = '<option value="">— Select country —</option>' +
+      countries.map(c => `<option value="${c}"${c === u.country ? ' selected' : ''}>${c}</option>`).join('');
+  }
+  if (citySel) {
+    const cities = (vocab.cities || []).slice();
+    if (u.city && !cities.some(c => c.toLowerCase() === u.city.toLowerCase())) cities.unshift(u.city);
+    citySel.innerHTML = '<option value="">— Select city —</option>' +
+      cities.map(c => `<option value="${c}"${c === u.city ? ' selected' : ''}>${c}</option>`).join('');
+  }
+}
+
+function onProfileCountryChange() {
+  // Cities aren't mapped to countries in the vocabulary, so the city list is
+  // independent. Hook retained for future country→city filtering.
 }
 
 function setField(id, val, isLink) {
@@ -6841,7 +6881,13 @@ function saveProfile() {
   u.firstName       = document.getElementById('e_firstName').value.trim()       || u.firstName;
   u.lastName        = document.getElementById('e_lastName').value.trim()         || u.lastName;
   u.phone           = document.getElementById('e_phone').value.trim();
-  u.location        = document.getElementById('e_location').value.trim();
+  // Structured country + city from vocabulary dropdowns.
+  const _cty = document.getElementById('e_country');
+  const _cit = document.getElementById('e_city');
+  u.country = _cty ? _cty.value.trim() : (u.country || '');
+  u.city    = _cit ? _cit.value.trim() : (u.city || '');
+  // Keep a human-readable location string (used by admin table, reports) in sync.
+  u.location = [u.city, u.country].filter(Boolean).join(', ');
   u.linkedin        = document.getElementById('e_linkedin').value.trim();
   u.bio             = document.getElementById('e_bio').value.trim();
   u.company         = document.getElementById('e_company').value.trim();
@@ -6859,7 +6905,8 @@ function saveProfile() {
   if (window.fb && uid) {
     const payload = {
       firstName: u.firstName || '', lastName: u.lastName || '',
-      phone: u.phone || '', location: u.location || '', linkedin: u.linkedin || '',
+      phone: u.phone || '', location: u.location || '',
+      country: u.country || '', city: u.city || '', linkedin: u.linkedin || '',
       bio: u.bio || '', company: u.company || '', designation: u.designation || '',
       dept: u.dept || '', industry: u.industry || '', website: u.website || '',
       experience: u.experience || '', specialisations: u.specialisations || '',

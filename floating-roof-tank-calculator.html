@@ -338,6 +338,8 @@ a { color: var(--accent); }
         uid: user.uid, email: profile.email || user.email || '',
         firstName: profile.firstName || '', lastName: profile.lastName || '',
         company: profile.company || '', role: profile.role || 'user',
+        country: profile.country || '', city: profile.city || '',
+        dept: profile.dept || '', location: profile.location || '',
         downloadsUsed: profile.downloadsUsed || 0
       };
       window.dispatchEvent(new Event('tp-user-ready'));
