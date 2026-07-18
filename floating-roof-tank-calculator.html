@@ -343,6 +343,17 @@ a { color: var(--accent); }
         downloadsUsed: profile.downloadsUsed || 0
       };
       window.dispatchEvent(new Event('tp-user-ready'));
+      // Record the calculator page view for Site Statistics.
+      try {
+        const tok = await user.getIdToken();
+        fetch(`${REST}/events`, { method:'POST',
+          headers:{ Authorization:'Bearer '+tok, 'Content-Type':'application/json' },
+          body: JSON.stringify({ fields: {
+            type:{stringValue:'pageview'}, uid:{stringValue:user.uid},
+            email:{stringValue:profile.email||user.email||''},
+            meta:{stringValue:'calculator'}, at:{stringValue:new Date().toISOString()} } })
+        }).catch(()=>{});
+      } catch(e){}
       // Load controlled vocabularies into the dropdown datalists.
       window.fbCalc.getVocab().then(v => {
         if (!v) return;

@@ -29,5 +29,20 @@ service cloud.firestore {
       allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
       allow update, delete: if false;
     }
+
+    // Site analytics: any signed-in user may append their own event.
+    // Only admins can read the log; events are immutable once written.
+    match /events/{id} {
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
+    // Controlled vocabularies: readable by any signed-in member (the calculator
+    // and profile need them), writable only by super_admin.
+    match /config/{doc} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && myRole() == 'super_admin';
+    }
   }
 }
