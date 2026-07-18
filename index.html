@@ -3028,6 +3028,57 @@ body.editing .report-delete-btn { display: block; }
   }
 #adminOverlay .access-denied.show { display: flex; }
 
+/* ─── CONTROLLED VOCABULARY — editable rows ─────────────────────────────── */
+.vocab-row {
+  display: flex; align-items: center; gap: 6px; margin-bottom: 6px;
+}
+.vocab-name {
+  flex: 1; min-width: 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text-bright);
+  font-family: var(--body); font-size: 0.8rem;
+  padding: 6px 8px;
+  transition: all 0.15s;
+}
+.vocab-name:hover { border-color: var(--border, #1e2d42); }
+.vocab-name:focus {
+  outline: none;
+  border-color: rgba(201,168,76,0.5);
+  background: rgba(201,168,76,0.06);
+}
+.vocab-country {
+  width: 132px; flex-shrink: 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border, #1e2d42);
+  border-radius: 6px;
+  color: var(--text); font-family: var(--body); font-size: 0.74rem;
+  padding: 5px 6px; cursor: pointer;
+}
+.vocab-country.unassigned {
+  border-color: rgba(232,80,80,0.4);
+  color: #e85050;
+}
+.vocab-del {
+  background: rgba(232,80,80,0.12); color: #e85050;
+  border: none; border-radius: 5px; padding: 4px 8px;
+  cursor: pointer; font-size: 0.72rem; flex-shrink: 0;
+}
+.vocab-del:hover { background: rgba(232,80,80,0.25); }
+.vocab-group-label {
+  font-family: var(--mono); font-size: 0.66rem; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gold);
+  margin: 10px 0 5px; padding-top: 6px;
+  border-top: 1px solid var(--border, #1e2d42);
+}
+.vocab-group-label:first-child { margin-top: 0; border-top: none; padding-top: 0; }
+.vocab-warn {
+  font-size: 0.72rem; color: #e85050;
+  background: rgba(232,80,80,0.08); border: 1px solid rgba(232,80,80,0.2);
+  border-radius: 6px; padding: 6px 9px; margin-bottom: 9px;
+}
+
 /* ─── MOBILE ADMIN GATE (Tank Bazaar-style interstitial) ─────────────────── */
 #adminMobileGate {
   position: fixed; inset: 0; z-index: 900;
@@ -3304,16 +3355,23 @@ body.editing .report-delete-btn { display: block; }
     getVocabREST: async () => {
       const token = await auth.currentUser.getIdToken();
       const res = await fetch(`${window.fb._restBase}/config/vocabularies`, { headers: { Authorization: 'Bearer '+token } });
-      if (res.status === 404) return { companies:[], cities:[], countries:[], departments:[] };
+      if (res.status === 404) return { companies:[], cities:[], countries:[], departments:[], cityCountry:{} };
       if (!res.ok) throw { code:'rest-'+res.status, message:'getVocab '+res.status };
       const j = await res.json();
       const d = window.fb._decodeFields(j.fields);
-      return { companies:d.companies||[], cities:d.cities||[], countries:d.countries||[], departments:d.departments||[] };
+      return { companies:d.companies||[], cities:d.cities||[], countries:d.countries||[], departments:d.departments||[], cityCountry:d.cityCountry||{} };
     },
     setVocabREST: async (vocab) => {
       const token = await auth.currentUser.getIdToken();
       const arr = (a) => ({ arrayValue: { values: (a||[]).map(s => ({ stringValue: String(s) })) } });
-      const fields = { companies:arr(vocab.companies), cities:arr(vocab.cities), countries:arr(vocab.countries), departments:arr(vocab.departments) };
+      // City → Country associations stored as a map so the cities array stays a
+      // plain string list (kept backward-compatible for existing consumers).
+      const map = (o) => {
+        const f = {};
+        for (const [k, v] of Object.entries(o || {})) { if (v) f[k] = { stringValue: String(v) }; }
+        return { mapValue: { fields: f } };
+      };
+      const fields = { companies:arr(vocab.companies), cities:arr(vocab.cities), countries:arr(vocab.countries), departments:arr(vocab.departments), cityCountry:map(vocab.cityCountry) };
       const res = await fetch(`${window.fb._restBase}/config/vocabularies`, {
         method:'PATCH', headers:{ Authorization:'Bearer '+token, 'Content-Type':'application/json' },
         body: JSON.stringify({ fields })
@@ -4825,11 +4883,13 @@ const emailLogs = [];
 // ── Navigation ─────────────────────────────────────────────
 function saNav(el, pageId) {
   if (typeof closeAdminSidebar === 'function') closeAdminSidebar();
-  // Hide all SA pages
-  ['sa-members','sa-email','sa-calcs','sa-approvals','sa-vocab'].forEach(id => {
+  // Hide all SA pages (and the unbuilt-section placeholder, if showing)
+  ['sa-members','sa-email','sa-calcs','sa-approvals','sa-vocab','page-__placeholder'].forEach(id => {
     const p = document.getElementById(id);
-    if (p) p.style.display = 'none';
+    if (p) { p.style.display = 'none'; p.classList.remove('active'); }
   });
+  // Clear highlight on the generic (non-super-admin) nav items too
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   // Show selected
   const target = document.getElementById(pageId);
   if (target) target.style.display = 'block';
@@ -4848,7 +4908,7 @@ function saNav(el, pageId) {
 }
 
 // ── CONTROLLED VOCABULARY MANAGEMENT ────────────────────────────────────────
-window._VOCAB = { companies:[], cities:[], countries:[], departments:[] };
+window._VOCAB = { companies:[], cities:[], countries:[], departments:[], cityCountry:{} };
 
 function loadVocab() {
   if (!window.fb || !window.fb.getVocabREST) return;
@@ -4861,32 +4921,138 @@ function loadVocab() {
   }).catch(e => { if (status) status.textContent = 'Load failed: ' + (e.message||e); });
 }
 
+function _vocabEsc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
 function renderVocab() {
   const host = document.getElementById('vocabPanels');
   if (!host) return;
-  const groups = [
-    { key:'companies',   label:'Companies',   icon:'🏢' },
-    { key:'cities',      label:'Cities',      icon:'🌆' },
-    { key:'countries',   label:'Countries',   icon:'🌍' },
-    { key:'departments', label:'Departments', icon:'🗂️' },
+  const V = window._VOCAB;
+  if (!V.cityCountry) V.cityCountry = {};
+  const countries = (V.countries || []).slice().sort((a,b)=>a.localeCompare(b));
+
+  // ── Simple lists (companies / countries / departments) ──
+  const simple = [
+    { key:'companies',   label:'Companies',   icon:'🏢', single:'company' },
+    { key:'countries',   label:'Countries',   icon:'🌍', single:'country' },
+    { key:'departments', label:'Departments', icon:'🗂️', single:'department' },
   ];
-  host.innerHTML = groups.map(g => {
-    const items = (window._VOCAB[g.key] || []);
+
+  const simplePanel = g => {
+    const items = (V[g.key] || []);
     return `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;">
-      <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);margin-bottom:10px;">${g.icon} ${g.label} <span style="color:var(--text-dim);font-weight:400;">(${items.length})</span></div>
-      <div id="vocabList_${g.key}" style="max-height:220px;overflow-y:auto;margin-bottom:10px;">
+      <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);margin-bottom:4px;">${g.icon} ${g.label} <span style="color:var(--text-dim);font-weight:400;">(${items.length})</span></div>
+      <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:9px;">Click a name to rename it.</div>
+      <div style="max-height:260px;overflow-y:auto;margin-bottom:10px;">
         ${items.length ? items.map((it,i) => `
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;">
-            <span style="flex:1;font-size:0.8rem;color:var(--text);">${String(it).replace(/</g,'&lt;')}</span>
-            <button onclick="removeVocabItem('${g.key}',${i})" style="background:rgba(232,80,80,0.12);color:#e85050;border:none;border-radius:5px;padding:2px 8px;cursor:pointer;font-size:0.72rem;">✕</button>
+          <div class="vocab-row">
+            <input class="vocab-name" value="${_vocabEsc(it)}"
+                   onchange="renameVocabItem('${g.key}',${i},this.value)"
+                   onkeydown="if(event.key==='Enter')this.blur()">
+            <button class="vocab-del" onclick="removeVocabItem('${g.key}',${i})" title="Delete">✕</button>
           </div>`).join('') : '<div style="color:var(--text-dim);font-size:0.76rem;font-style:italic;">No entries yet</div>'}
       </div>
       <div style="display:flex;gap:6px;">
-        <input type="text" id="vocabAdd_${g.key}" class="email-input" style="margin:0;flex:1;font-size:0.8rem;" placeholder="Add ${g.label.slice(0,-1).toLowerCase()}…" onkeydown="if(event.key==='Enter')addVocabItem('${g.key}')">
+        <input type="text" id="vocabAdd_${g.key}" class="email-input" style="margin:0;flex:1;font-size:0.8rem;" placeholder="Add ${g.single}…" onkeydown="if(event.key==='Enter')addVocabItem('${g.key}')">
         <button class="btn-add" style="margin:0;padding:6px 12px;" onclick="addVocabItem('${g.key}')">+</button>
       </div>
     </div>`;
-  }).join('');
+  };
+
+  // ── Cities panel: each city carries a country, grouped for clarity ──
+  const cities = (V.cities || []);
+  const unassigned = cities.filter(c => !V.cityCountry[c]);
+  // Group: assigned countries (alphabetical) first, then Unassigned last.
+  const groups = {};
+  cities.forEach(c => {
+    const k = V.cityCountry[c] || '\u0000Unassigned';
+    (groups[k] = groups[k] || []).push(c);
+  });
+  const groupKeys = Object.keys(groups).sort((a,b)=>a.localeCompare(b));
+
+  const countryOpts = (sel) =>
+    '<option value="">— Unassigned —</option>' +
+    countries.map(c => `<option value="${_vocabEsc(c)}"${c===sel?' selected':''}>${_vocabEsc(c)}</option>`).join('');
+
+  const citiesPanel = `<div style="background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:10px;padding:14px;">
+    <div style="font-family:var(--display);font-weight:700;font-size:0.9rem;color:var(--text-bright);margin-bottom:4px;">🌆 Cities <span style="color:var(--text-dim);font-weight:400;">(${cities.length})</span></div>
+    <div style="font-size:0.7rem;color:var(--text-dim);margin-bottom:9px;">Click a name to rename. Set each city's country from the dropdown.</div>
+    ${unassigned.length ? `<div class="vocab-warn">⚠ ${unassigned.length} ${unassigned.length===1?'city has':'cities have'} no country assigned.</div>` : ''}
+    <div style="max-height:260px;overflow-y:auto;margin-bottom:10px;">
+      ${cities.length ? groupKeys.map(gk => {
+        const label = gk === '\u0000Unassigned' ? '— Unassigned —' : gk;
+        return `<div class="vocab-group-label">${_vocabEsc(label)} (${groups[gk].length})</div>` +
+          groups[gk].sort((a,b)=>a.localeCompare(b)).map(city => {
+            const idx = cities.indexOf(city);
+            const assigned = V.cityCountry[city] || '';
+            return `<div class="vocab-row">
+              <input class="vocab-name" value="${_vocabEsc(city)}"
+                     onchange="renameCity(${idx},this.value)"
+                     onkeydown="if(event.key==='Enter')this.blur()">
+              <select class="vocab-country${assigned?'':' unassigned'}" onchange="setCityCountry('${_vocabEsc(city).replace(/'/g,"\\'")}',this.value)">
+                ${countryOpts(assigned)}
+              </select>
+              <button class="vocab-del" onclick="removeVocabItem('cities',${idx})" title="Delete">✕</button>
+            </div>`;
+          }).join('');
+      }).join('') : '<div style="color:var(--text-dim);font-size:0.76rem;font-style:italic;">No entries yet</div>'}
+    </div>
+    <div style="display:flex;gap:6px;">
+      <input type="text" id="vocabAdd_cities" class="email-input" style="margin:0;flex:1;font-size:0.8rem;" placeholder="Add city…" onkeydown="if(event.key==='Enter')addVocabItem('cities')">
+      <select id="vocabAddCountry_cities" class="vocab-country" style="width:132px;">${countryOpts('')}</select>
+      <button class="btn-add" style="margin:0;padding:6px 12px;" onclick="addVocabItem('cities')">+</button>
+    </div>
+  </div>`;
+
+  host.innerHTML = simplePanel(simple[0]) + citiesPanel + simplePanel(simple[1]) + simplePanel(simple[2]);
+}
+
+// Rename any simple vocabulary entry. Renaming a country re-points every city
+// currently assigned to it, so the association is never silently orphaned.
+function renameVocabItem(key, idx, val) {
+  const V = window._VOCAB;
+  const next = (val || '').trim();
+  const prev = V[key][idx];
+  if (!next) { renderVocab(); return; }                 // empty -> revert
+  if (next === prev) return;
+  if (V[key].some((x,i) => i !== idx && x.toLowerCase() === next.toLowerCase())) {
+    showAdminToast ? showAdminToast('"' + next + '" already exists') : null;
+    renderVocab(); return;
+  }
+  V[key][idx] = next;
+  if (key === 'countries') {
+    Object.keys(V.cityCountry || {}).forEach(city => {
+      if (V.cityCountry[city] === prev) V.cityCountry[city] = next;
+    });
+  }
+  V[key].sort((a,b)=>a.localeCompare(b));
+  renderVocab();
+}
+
+// Renaming a city must carry its country assignment across to the new key.
+function renameCity(idx, val) {
+  const V = window._VOCAB;
+  const next = (val || '').trim();
+  const prev = V.cities[idx];
+  if (!next) { renderVocab(); return; }
+  if (next === prev) return;
+  if (V.cities.some((x,i) => i !== idx && x.toLowerCase() === next.toLowerCase())) {
+    renderVocab(); return;
+  }
+  const country = V.cityCountry[prev];
+  delete V.cityCountry[prev];
+  V.cities[idx] = next;
+  if (country) V.cityCountry[next] = country;
+  V.cities.sort((a,b)=>a.localeCompare(b));
+  renderVocab();
+}
+
+function setCityCountry(city, country) {
+  const V = window._VOCAB;
+  if (!V.cityCountry) V.cityCountry = {};
+  if (country) V.cityCountry[city] = country; else delete V.cityCountry[city];
+  renderVocab();
 }
 
 function addVocabItem(key) {
@@ -4899,13 +5065,30 @@ function addVocabItem(key) {
   if (window._VOCAB[key].some(x => x.toLowerCase() === val.toLowerCase())) { input.value=''; return; }
   window._VOCAB[key].push(val);
   window._VOCAB[key].sort((a,b)=>a.localeCompare(b));
+  // A new city can be given its country in the same action.
+  if (key === 'cities') {
+    const sel = document.getElementById('vocabAddCountry_cities');
+    if (sel && sel.value) {
+      if (!window._VOCAB.cityCountry) window._VOCAB.cityCountry = {};
+      window._VOCAB.cityCountry[val] = sel.value;
+    }
+  }
   input.value = '';
   renderVocab();
 }
 
 function removeVocabItem(key, idx) {
   if (!window._VOCAB[key]) return;
+  const removed = window._VOCAB[key][idx];
   window._VOCAB[key].splice(idx, 1);
+  // Keep the city→country map free of orphans.
+  if (!window._VOCAB.cityCountry) window._VOCAB.cityCountry = {};
+  if (key === 'cities') delete window._VOCAB.cityCountry[removed];
+  if (key === 'countries') {
+    Object.keys(window._VOCAB.cityCountry).forEach(city => {
+      if (window._VOCAB.cityCountry[city] === removed) delete window._VOCAB.cityCountry[city];
+    });
+  }
   renderVocab();
 }
 
@@ -7044,11 +7227,56 @@ function nav(el, pageId) {
   if (typeof closeAdminSidebar === 'function') closeAdminSidebar();
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   el.classList.add('active');
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
+
+  const target = document.getElementById('page-' + pageId);
+  if (target) {
+    target.classList.add('active');
+    target.style.display = '';
+  } else {
+    // These sections are sidebar scaffolding whose pages were never built.
+    // Previously this threw a TypeError and the click appeared to do nothing.
+    showAdminPlaceholder(pageId);
+  }
   const _tt = document.getElementById('topbarTitleText');
-  if (_tt) _tt.textContent = PAGES[pageId];
-  document.getElementById('topbarSub').textContent = SUBS[pageId];
+  if (_tt) _tt.textContent = PAGES[pageId] || '';
+  const _ts = document.getElementById('topbarSub');
+  if (_ts) _ts.textContent = SUBS[pageId] || '';
+}
+
+// Honest stand-in for unbuilt admin sections, with a pointer to the page that
+// already does the job where one exists.
+function showAdminPlaceholder(pageId) {
+  const ALIAS = {
+    statistics:   { label: 'Calculations Log & Analytics', page: 'sa-calcs' },
+    demographics: { label: 'Calculations Log & Analytics', page: 'sa-calcs' },
+    reports:      { label: 'Calculations Log & Analytics', page: 'sa-calcs' },
+    users:        { label: 'Members',                      page: 'sa-members' },
+  };
+  let host = document.getElementById('page-__placeholder');
+  if (!host) {
+    host = document.createElement('div');
+    host.className = 'page';
+    host.id = 'page-__placeholder';
+    const main = document.querySelector('#adminOverlay .main');
+    if (main) main.appendChild(host); else return;
+  }
+  const a = ALIAS[pageId];
+  host.innerHTML =
+    `<div class="page-heading">${PAGES[pageId] || 'Section'}</div>
+     <div class="page-sub">${SUBS[pageId] || ''}</div>
+     <div class="card" style="text-align:center;padding:44px 24px;">
+       <div style="font-size:2.4rem;margin-bottom:10px;">🚧</div>
+       <div style="font-family:var(--display);font-weight:700;font-size:1.05rem;color:var(--text-bright);margin-bottom:8px;">This section isn't built yet</div>
+       <div style="font-size:0.84rem;color:var(--text-dim);line-height:1.7;max-width:460px;margin:0 auto;">
+         ${a ? `This was placeholder navigation. The functionality already exists under
+                <b style="color:var(--gold);">${a.label}</b>.`
+             : `This was placeholder navigation carried over from the original template.`}
+       </div>
+       ${a ? `<button class="btn-add" style="margin-top:18px;" onclick="saNav(document.querySelector('[onclick*=\\'${a.page}\\']'),'${a.page}')">Go to ${a.label}</button>` : ''}
+     </div>`;
+  host.classList.add('active');
+  host.style.display = '';
 }
 
 // ── BAR CHARTS ─────────────────────────────────────────
