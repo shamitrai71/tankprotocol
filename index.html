@@ -3352,6 +3352,37 @@ body.editing .report-delete-btn { display: block; }
       if (!res.ok) throw { code: 'rest-' + res.status, message: 'REST delete failed: ' + res.status };
       return true;
     },
+    getSettingsREST: async () => {
+      const DEFAULTS = { limitUser: 2, limitGold: 10, limitAdmin: 0, monthlyReset: true };
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${window.fb._restBase}/config/settings`, { headers: { Authorization: 'Bearer '+token } });
+      if (res.status === 404) return { ...DEFAULTS };
+      if (!res.ok) throw { code:'rest-'+res.status, message:'getSettings '+res.status };
+      const j = await res.json();
+      const d = window.fb._decodeFields(j.fields);
+      return {
+        limitUser:  Number.isFinite(d.limitUser)  ? d.limitUser  : DEFAULTS.limitUser,
+        limitGold:  Number.isFinite(d.limitGold)  ? d.limitGold  : DEFAULTS.limitGold,
+        limitAdmin: Number.isFinite(d.limitAdmin) ? d.limitAdmin : DEFAULTS.limitAdmin,
+        monthlyReset: d.monthlyReset !== false
+      };
+    },
+    setSettingsREST: async (s) => {
+      const token = await auth.currentUser.getIdToken();
+      const fields = {
+        limitUser:  { integerValue: String(parseInt(s.limitUser,10)  || 0) },
+        limitGold:  { integerValue: String(parseInt(s.limitGold,10)  || 0) },
+        limitAdmin: { integerValue: String(parseInt(s.limitAdmin,10) || 0) },
+        monthlyReset: { booleanValue: s.monthlyReset !== false }
+      };
+      const res = await fetch(`${window.fb._restBase}/config/settings`, {
+        method: 'PATCH',
+        headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
+        body: JSON.stringify({ fields })
+      });
+      if (!res.ok) throw { code:'rest-'+res.status, message:'setSettings '+res.status };
+      return true;
+    },
     getVocabREST: async () => {
       const token = await auth.currentUser.getIdToken();
       const res = await fetch(`${window.fb._restBase}/config/vocabularies`, { headers: { Authorization: 'Bearer '+token } });
@@ -4336,7 +4367,7 @@ body.editing .report-delete-btn { display: block; }
     </div>
   </div>
 
-  <div class="sidebar-section">
+  <div class="sidebar-section" id="secAnalytics">
     <div class="sidebar-section-label">Analytics</div>
     <div class="nav-item" onclick="nav(this,'statistics')">
       <span class="nav-icon">📊</span> Site Statistics
@@ -4346,7 +4377,7 @@ body.editing .report-delete-btn { display: block; }
     </div>
   </div>
 
-  <div class="sidebar-section">
+  <div class="sidebar-section" id="secContent">
     <div class="sidebar-section-label">Content</div>
     <div class="nav-item" onclick="nav(this,'reports')">
       <span class="nav-icon">📁</span> Reports Library
@@ -4354,7 +4385,7 @@ body.editing .report-delete-btn { display: block; }
     </div>
   </div>
 
-  <div class="sidebar-section">
+  <div class="sidebar-section" id="secConfig">
     <div class="sidebar-section-label">Configuration</div>
     <div class="nav-item" onclick="nav(this,'settings')">
       <span class="nav-icon">⚙️</span> Site Settings
@@ -4423,7 +4454,9 @@ body.editing .report-delete-btn { display: block; }
   <!-- ══ SUPER ADMIN: MEMBERS ══ -->
   <div class="page" id="sa-members" style="display:none;">
     <div class="page-heading">Members</div>
-    <div class="page-sub">All registered users — manage roles, downloads, and membership</div>
+    <div class="page-sub">All registered users — demographics overview and member records</div>
+    <div id="memberStatsRow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;"></div>
+    <div id="memberDemographics" style="display:flex;gap:14px;flex-wrap:wrap;margin-bottom:20px;"></div>
     <div class="sa-section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
         <input type="text" id="memberSearch" class="email-input" style="max-width:320px;margin:0;" placeholder="Search by name, email, company…" oninput="renderMembersTable()">
@@ -4615,6 +4648,36 @@ body.editing .report-delete-btn { display: block; }
             <th>Liquid</th><th>Type</th><th>Total Loss</th><th>Date</th><th>Status</th>
           </tr></thead>
           <tbody id="libTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ USER MANAGEMENT ══ -->
+  <div class="page" id="page-users" style="display:none;">
+    <div class="page-heading">User Management</div>
+    <div class="page-sub">Roles, permissions and account removal — super admin only</div>
+    <div class="sa-section">
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center;">
+        <input type="text" id="umSearch" class="email-input" style="max-width:300px;margin:0;" placeholder="Search name, email, company…" oninput="renderUserManagement()">
+        <select id="umRole" class="email-input" style="width:auto;margin:0;" onchange="renderUserManagement()">
+          <option value="">All roles</option>
+          <option value="super_admin">Super Admin</option>
+          <option value="admin">Admin</option>
+          <option value="gold">Gold</option>
+          <option value="user">Member</option>
+        </select>
+        <button class="btn-add" style="margin:0;" onclick="loadUsersREST().then(renderUserManagement)">↻ Refresh</button>
+        <span id="umCount" style="font-size:0.76rem;color:var(--text-dim);"></span>
+      </div>
+      <div id="umNotice"></div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+          <thead><tr>
+            <th>Member</th><th>Company</th><th>Role</th><th>Status</th>
+            <th>Reports (this month)</th><th>Actions</th>
+          </tr></thead>
+          <tbody id="umTableBody"></tbody>
         </table>
       </div>
     </div>
@@ -5019,7 +5082,7 @@ function saNav(el, pageId) {
   });
   if (el) { el.style.background = 'rgba(232,201,122,0.12)'; el.style.color = '#e8c97a'; }
   // Render content
-  if (pageId === 'sa-members')   renderMembersTable();
+  if (pageId === 'sa-members')   { renderMembersTable(); try { renderMemberDashboard(); } catch(e){} }
   if (pageId === 'sa-calcs')     { renderCalcsTable(); if (typeof loadReportsREST==='function') loadReportsREST(); }
   if (pageId === 'sa-approvals') renderApprovals();
   if (pageId === 'sa-vocab')     loadVocab();
@@ -5226,14 +5289,35 @@ function saveVocab() {
 }
 
 // ── Download limit helper ───────────────────────────────────
+// Editable platform settings (loaded from config/settings; defaults until then).
+window._SETTINGS = { limitUser: 2, limitGold: 10, limitAdmin: 0, monthlyReset: true };
+
+// Current quota period, e.g. "2026-07". Quotas reset when the month rolls over.
+function currentPeriod() { return new Date().toISOString().slice(0,7); }
+
+// Downloads consumed in the CURRENT period. If the stored period is stale the
+// user has effectively started a fresh month, so usage reads as zero.
+function periodDownloads(user) {
+  if (!user) return 0;
+  const S = window._SETTINGS || {};
+  if (S.monthlyReset === false) return user.downloadsUsed || 0;
+  return (user.downloadsPeriod === currentPeriod()) ? (user.downloadsUsed || 0) : 0;
+}
+
 function getDownloadLimit(user) {
-  if (user.role === 'super_admin' || user.role === 'admin') return Infinity;
-  if (user.role === 'gold') return 10;
-  return 2; // regular user
+  const S = window._SETTINGS || {};
+  if (user.role === 'super_admin') return Infinity;
+  // Admins get reports only if super_admin has granted it (0 = not permitted).
+  if (user.role === 'admin') {
+    if (user.canGenerateReports === false) return 0;
+    return (S.limitAdmin > 0) ? S.limitAdmin : Infinity;
+  }
+  if (user.role === 'gold') return S.limitGold ?? 10;
+  return S.limitUser ?? 2;
 }
 
 function canDownload(user) {
-  return (user.downloadsUsed || 0) < getDownloadLimit(user);
+  return periodDownloads(user) < getDownloadLimit(user);
 }
 
 function getRoleBadgeHTML(role) {
@@ -5806,11 +5890,12 @@ function closeAdminOverlay() {
 }
 
 function openAdminOverlay() {
-  // Guard: only super_admin can open the admin panel
-  if (!currentUser || currentUser.role !== 'super_admin') {
+  // Admins may open the console; super admins get the management tools.
+  if (!currentUser || (currentUser.role !== 'super_admin' && currentUser.role !== 'admin')) {
     console.warn('Admin panel: access denied');
     return;
   }
+  const isSuper = currentUser.role === 'super_admin';
 
   // On phones, the dense desktop console isn't usable — show the gate instead.
   // Matches the Tank Bazaar "Admin works best on desktop" pattern.
@@ -5837,13 +5922,23 @@ function openAdminOverlay() {
   const rt = document.getElementById('roleTag');
   if (ai) ai.textContent = initials;
   if (au) au.textContent = currentUser.firstName + ' ' + currentUser.lastName;
-  if (rt) { rt.textContent = '👑 SUPER ADMIN'; rt.className = 'role-tag super_admin topbar-desktop-only'; }
+  if (rt) {
+    rt.textContent = isSuper ? '👑 SUPER ADMIN' : '⭐ ADMIN';
+    rt.className = 'role-tag ' + (isSuper ? 'super_admin' : 'admin') + ' topbar-desktop-only';
+  }
   const akr = document.getElementById('adminKebabRoleLine');
-  if (akr) akr.textContent = '👑 ' + currentUser.firstName + ' ' + currentUser.lastName + ' — Super Admin';
+  if (akr) akr.textContent = (isSuper ? '👑 ' : '⭐ ') + currentUser.firstName + ' ' + currentUser.lastName + (isSuper ? ' — Super Admin' : ' — Admin');
 
-  // Show super admin section in sidebar
+  // Management tooling is super-admin only. An admin sees the console and the
+  // reports they can generate, and nothing that mutates the platform.
   const ss = document.getElementById('superAdminSection');
-  if (ss) ss.style.display = 'block';
+  if (ss) ss.style.display = isSuper ? 'block' : 'none';
+  ['secAnalytics','secConfig'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.style.display = isSuper ? '' : 'none';
+  });
+  const secContent = document.getElementById('secContent');
+  if (secContent) secContent.style.display = '';   // Reports Library stays visible
 
   // Show overlay
   overlay.style.display = 'block';
@@ -5929,6 +6024,8 @@ function mapUserDoc(uid, d) {
     joined: d.joined || (d.createdAt && d.createdAt.toDate ? d.createdAt.toDate().getFullYear().toString() : ''),
     downloadLimit: DOWNLOAD_LIMITS[d.role] ?? 2,
     downloadsUsed: d.downloadsUsed || 0,
+    downloadsPeriod: d.downloadsPeriod || '',
+    canGenerateReports: d.canGenerateReports !== false,
     myReports: d.myReports || [],
     calcs: d.calcs || 0,
     experience: d.experience || '', specialisations: d.specialisations || '',
@@ -6367,8 +6464,9 @@ function loadDashboard() {
 
   // Show/hide admin nav
   const isAdmin = u.role === 'admin' || u.role === 'super_admin';
-  if (_s('adminNavBtn'))    _s('adminNavBtn').style.display    = u.role === 'super_admin' ? '' : 'none';
-  if (_s('adminNavBtnMobile')) _s('adminNavBtnMobile').style.display = u.role === 'super_admin' ? '' : 'none';
+  const _canAdmin = (u.role === 'super_admin' || u.role === 'admin');
+  if (_s('adminNavBtn'))    _s('adminNavBtn').style.display    = _canAdmin ? '' : 'none';
+  if (_s('adminNavBtnMobile')) _s('adminNavBtnMobile').style.display = _canAdmin ? '' : 'none';
   if (_s('superAdminRoleHint')) _s('superAdminRoleHint').style.display = u.role === 'super_admin' ? '' : 'none';
 
   // ── Rich profile hero fields ──────────────────────────────────────
@@ -7514,8 +7612,10 @@ function renderStatistics() {
 }
 
 // ── USER DEMOGRAPHICS (from profile entries) ─────────────────────────────
-function renderDemographics() {
-  const host = document.getElementById('demoBreakdowns');
+// hostId lets the same breakdowns serve both the Statistics page and the
+// Members page dashboard.
+function renderDemographics(hostId) {
+  const host = document.getElementById(hostId || 'demoBreakdowns');
   if (!host) return;
   const users = (typeof USERS !== "undefined" ? USERS : []).slice();
   if (!users.length) {
@@ -7533,6 +7633,20 @@ function renderDemographics() {
     _barPanel('By Experience', _tally(users, u => u.experience), t, C.blue) +
     _barPanel('By Role',       _tally(users, u => u.role),       t, C.gold) +
     _barPanel('By Status',     _tally(users, u => u.approved ? 'Approved' : 'Pending'), t, C.green);
+}
+
+// Demographics dashboard shown at the top of the Members page.
+function renderMemberDashboard() {
+  const users = (typeof USERS !== "undefined" ? USERS : []);
+  const row = document.getElementById('memberStatsRow');
+  if (row) {
+    row.innerHTML =
+      _statCard('👥', users.length, 'Total Members') +
+      _statCard('✓',  users.filter(u => u.approved).length, 'Approved') +
+      _statCard('⏳', users.filter(u => !u.approved).length, 'Pending') +
+      _statCard('✦',  users.filter(u => u.role === 'gold' || u.role === 'admin' || u.role === 'super_admin').length, 'Gold / Admin');
+  }
+  renderDemographics('memberDemographics');
 }
 
 // ── REPORTS LIBRARY ──────────────────────────────────────────────────────
@@ -7594,23 +7708,186 @@ function exportReportsLibraryCSV() {
   URL.revokeObjectURL(a.href);
 }
 
-// ── SITE SETTINGS ────────────────────────────────────────────────────────
+// ── USER MANAGEMENT (super admin) ────────────────────────────────────────
+function renderUserManagement() {
+  const tbody  = document.getElementById('umTableBody');
+  const notice = document.getElementById('umNotice');
+  if (!tbody) return;
+  const isSuper = currentUser && currentUser.role === 'super_admin';
+  if (notice) {
+    notice.innerHTML = isSuper ? '' :
+      `<div style="background:rgba(240,91,91,0.08);border:1px solid rgba(240,91,91,0.25);border-radius:8px;padding:11px 13px;margin-bottom:12px;font-size:0.8rem;color:#f05b5b;">
+         View only — role changes and removals require a super admin.</div>`;
+  }
+
+  const q  = ((document.getElementById('umSearch')||{}).value || '').toLowerCase().trim();
+  const rf = (document.getElementById('umRole')||{}).value || '';
+  const all = (typeof USERS !== "undefined" ? USERS : []);
+  const rows = all.filter(u => {
+    if (rf && u.role !== rf) return false;
+    if (!q) return true;
+    return [u.firstName, u.lastName, u.email, u.company].join(' ').toLowerCase().includes(q);
+  });
+  const count = document.getElementById('umCount');
+  if (count) count.textContent = rows.length + ' of ' + all.length + ' members';
+
+  const ROLE_BADGE = {
+    super_admin: ['👑 Super Admin', 'var(--gold,#c9a84c)'],
+    admin:       ['⭐ Admin',       '#5b9bd5'],
+    gold:        ['✦ Gold',        '#e8c97a'],
+    user:        ['Member',        'var(--text-dim)']
+  };
+
+  tbody.innerHTML = rows.length ? rows.map(u => {
+    const isSelf  = currentUser && u.uid === currentUser.uid;
+    const locked  = u.role === 'super_admin' || isSelf;   // never let a super admin be demoted/removed here
+    const badge   = ROLE_BADGE[u.role] || ROLE_BADGE.user;
+    const limit   = getDownloadLimit(u);
+    const used    = periodDownloads(u);
+    const canAct  = isSuper && !locked;
+    const btn = (label, fn, color) =>
+      `<button class="btn-add" style="margin:0 4px 4px 0;padding:4px 9px;font-size:0.7rem;${color?`background:${color}1f;border-color:${color}59;color:${color};`:''}"
+        ${canAct?'':'disabled'} onclick="${fn}">${label}</button>`;
+
+    return `<tr style="border-top:1px solid var(--border);">
+      <td style="padding:9px;">
+        <div style="color:var(--text-bright);">${String((u.firstName||'')+' '+(u.lastName||'')).trim()||'—'}${isSelf?' <span style="color:var(--text-dim);font-size:0.7rem;">(you)</span>':''}</div>
+        <div style="font-size:0.7rem;color:var(--text-dim);">${String(u.email||'').replace(/</g,'&lt;')}</div>
+      </td>
+      <td style="padding:9px;color:var(--text-dim);">${String(u.company||'—').replace(/</g,'&lt;')}</td>
+      <td style="padding:9px;"><span style="color:${badge[1]};font-size:0.74rem;">${badge[0]}</span>
+        ${u.role==='admin' ? `<div style="font-size:0.66rem;color:${u.canGenerateReports===false?'#f05b5b':'#06d6a0'};margin-top:2px;">
+             ${u.canGenerateReports===false?'✕ cannot generate reports':'✓ may generate reports'}</div>` : ''}</td>
+      <td style="padding:9px;">${u.approved
+        ? '<span style="color:#06d6a0;font-size:0.72rem;">✓ Approved</span>'
+        : '<span style="color:#f0955a;font-size:0.72rem;">⏳ Pending</span>'}</td>
+      <td style="padding:9px;font-family:var(--mono);">${used} / ${limit===Infinity?'∞':limit}</td>
+      <td style="padding:9px;">
+        ${!u.approved ? btn('Approve', `umApprove('${u.uid}')`, '#06d6a0') : ''}
+        ${u.role !== 'admin'
+          ? btn('Make Admin', `umSetRole('${u.uid}','admin')`, '#5b9bd5')
+          : btn('Remove Admin', `umSetRole('${u.uid}','user')`, '#f0955a')}
+        ${u.role === 'admin'
+          ? btn(u.canGenerateReports===false ? 'Allow Reports' : 'Block Reports', `umToggleReports('${u.uid}')`, '#a78bfa')
+          : ''}
+        ${u.role !== 'gold'
+          ? btn('Make Gold', `umSetRole('${u.uid}','gold')`, '#e8c97a')
+          : btn('Remove Gold', `umSetRole('${u.uid}','user')`, '#f0955a')}
+        ${btn('Reset Reports', `umResetDownloads('${u.uid}')`)}
+        ${btn('Remove', `umRemove('${u.uid}')`, '#f05b5b')}
+      </td>
+    </tr>`;
+  }).join('') : '<tr><td colspan="6" style="padding:18px;text-align:center;color:var(--text-dim);font-style:italic;">No members match.</td></tr>';
+}
+
+function _umGuard(uid) {
+  if (!currentUser || currentUser.role !== 'super_admin') { showAdminToast('Super admin only'); return null; }
+  const u = (typeof USERS !== "undefined" ? USERS : []).find(x => x.uid === uid);
+  if (!u) return null;
+  if (u.role === 'super_admin') { showAdminToast('Super admin accounts cannot be modified here'); return null; }
+  if (u.uid === currentUser.uid) { showAdminToast('You cannot change your own account'); return null; }
+  return u;
+}
+
+function umSetRole(uid, role) {
+  const u = _umGuard(uid); if (!u) return;
+  const patch = { role };
+  // Granting admin implies report permission unless it was explicitly revoked.
+  if (role === 'admin' && u.canGenerateReports === undefined) patch.canGenerateReports = true;
+  window.fb.setUserREST(u.uid, patch).then(() => {
+    showAdminToast(`${u.firstName} ${u.lastName} → ${role.replace('_',' ')}`);
+    return loadUsersREST();
+  }).then(() => renderUserManagement())
+    .catch(e => showAdminToast('Error: ' + (e.message || e.code)));
+}
+
+function umToggleReports(uid) {
+  const u = _umGuard(uid); if (!u) return;
+  const next = u.canGenerateReports === false;   // flip
+  window.fb.setUserREST(u.uid, { canGenerateReports: next }).then(() => {
+    showAdminToast(`${u.firstName}: report generation ${next ? 'enabled' : 'blocked'}`);
+    return loadUsersREST();
+  }).then(() => renderUserManagement())
+    .catch(e => showAdminToast('Error: ' + (e.message || e.code)));
+}
+
+function umApprove(uid) {
+  const u = _umGuard(uid); if (!u) return;
+  window.fb.setUserREST(u.uid, { approved: true }).then(() => {
+    showAdminToast(`${u.firstName} ${u.lastName} approved`);
+    return loadUsersREST();
+  }).then(() => renderUserManagement())
+    .catch(e => showAdminToast('Error: ' + (e.message || e.code)));
+}
+
+function umResetDownloads(uid) {
+  const u = _umGuard(uid); if (!u) return;
+  window.fb.setUserREST(u.uid, { downloadsUsed: 0, downloadsPeriod: currentPeriod() }).then(() => {
+    showAdminToast(`Report counter reset for ${u.firstName}`);
+    return loadUsersREST();
+  }).then(() => renderUserManagement())
+    .catch(e => showAdminToast('Error: ' + (e.message || e.code)));
+}
+
+function umRemove(uid) {
+  const u = _umGuard(uid); if (!u) return;
+  if (!confirm(`Remove ${u.firstName} ${u.lastName} (${u.email})?\n\nThis deletes their profile and locks them out. Their Firebase Auth identity is not removed (that needs server-side code).`)) return;
+  window.fb.deleteUserREST(u.uid).then(() => {
+    showAdminToast(`${u.firstName} ${u.lastName} removed`);
+    return loadUsersREST();
+  }).then(() => renderUserManagement())
+    .catch(e => showAdminToast('Error: ' + (e.message || e.code)));
+}
+
+// ── SITE SETTINGS (editable) ─────────────────────────────────────────────
+function loadSettings() {
+  if (!window.fb || !window.fb.getSettingsREST) { renderSettings(); return; }
+  window.fb.getSettingsREST().then(s => {
+    window._SETTINGS = s;
+    (typeof USERS !== "undefined" ? USERS : []).forEach(u => { u.downloadLimit = getDownloadLimit(u); });
+    renderSettings();
+  }).catch(() => renderSettings());
+}
+
 function renderSettings() {
   const host = document.getElementById('settingsPanels');
   if (!host) return;
   const users = typeof USERS !== "undefined" ? USERS : [];
+  const S = window._SETTINGS || {};
+  const isSuper = currentUser && currentUser.role === 'super_admin';
+
   const panel = (title, body) => `<div class="sa-section" style="margin-bottom:18px;">
     <div style="font-family:var(--display);font-weight:700;font-size:0.95rem;color:var(--text-bright);margin-bottom:12px;">${title}</div>${body}</div>`;
   const kv = (k, v) => `<div style="display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
     <span style="color:var(--text-dim);">${k}</span><span style="color:var(--text-bright);font-family:var(--mono);">${v}</span></div>`;
+  const numRow = (label, id, val, hint) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--border);">
+      <div style="min-width:0;">
+        <div style="font-size:0.82rem;color:var(--text-bright);">${label}</div>
+        ${hint?`<div style="font-size:0.7rem;color:var(--text-dim);margin-top:2px;">${hint}</div>`:''}
+      </div>
+      <input type="number" min="0" id="${id}" value="${val}" ${isSuper?'':'disabled'}
+        style="width:110px;background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:7px;color:var(--text-bright);font-family:var(--mono);font-size:0.85rem;padding:7px 10px;${isSuper?'':'opacity:0.55;'}">
+    </div>`;
 
   const accepted = users.filter(u => u.disclaimerAccepted).length;
+  const period = currentPeriod();
+  const usedThisPeriod = users.filter(u => u.downloadsPeriod === period && (u.downloadsUsed||0) > 0).length;
+
   host.innerHTML =
-    panel('Download Limits by Role',
-      kv('Member (user)', (typeof DOWNLOAD_LIMITS!=='undefined' ? DOWNLOAD_LIMITS.user : 2) + ' reports') +
-      kv('Gold member',   (typeof DOWNLOAD_LIMITS!=='undefined' ? DOWNLOAD_LIMITS.gold : 10) + ' reports') +
-      kv('Admin / Super Admin', 'Unlimited') +
-      `<div style="font-size:0.72rem;color:var(--text-dim);margin-top:10px;">Limits are defined in <code>DOWNLOAD_LIMITS</code> and applied at download time.</div>`) +
+    panel('Report Limits <span style="font-weight:400;font-size:0.76rem;color:var(--text-dim);">— per member, per month</span>',
+      numRow('Member (user)', 'setLimitUser',  S.limitUser  != null ? S.limitUser  : 2,  'Reports a standard member may download each month') +
+      numRow('Gold member',   'setLimitGold',  S.limitGold  != null ? S.limitGold  : 10, 'Monthly allowance for gold members') +
+      numRow('Admin',         'setLimitAdmin', S.limitAdmin != null ? S.limitAdmin : 0,  'Monthly allowance for admins. 0 = unlimited (when permitted)') +
+      `<div style="display:flex;align-items:center;gap:9px;padding:11px 0;">
+         <input type="checkbox" id="setMonthlyReset" ${S.monthlyReset!==false?'checked':''} ${isSuper?'':'disabled'}>
+         <label for="setMonthlyReset" style="font-size:0.8rem;color:var(--text);">Reset every member's counter automatically at the start of each month</label>
+       </div>
+       <div style="font-size:0.72rem;color:var(--text-dim);margin-bottom:12px;">Current period: <b style="color:var(--gold);">${period}</b> · ${usedThisPeriod} member${usedThisPeriod===1?'':'s'} downloaded this month.</div>
+       ${isSuper ? `<div style="display:flex;gap:9px;flex-wrap:wrap;">
+         <button class="btn-add" style="margin:0;" onclick="saveSettings()">💾 Save Settings</button>
+         <button class="btn-add" style="margin:0;background:rgba(240,91,91,0.12);border-color:rgba(240,91,91,0.35);color:#f05b5b;" onclick="resetAllDownloads()">↺ Reset All Counters Now</button>
+       </div>` : '<div style="font-size:0.74rem;color:var(--text-dim);">Only a super admin can change these values.</div>'}`) +
     panel('Terms of Use',
       kv('Current version', (typeof DISCLAIMER_VERSION!=='undefined' ? DISCLAIMER_VERSION : '—')) +
       kv('Members accepted', accepted + ' of ' + users.length) +
@@ -7624,6 +7901,39 @@ function renderSettings() {
       kv('Transport', 'HTTPS REST') +
       kv('Registered members', users.length) +
       kv('Pending approval', users.filter(u => !u.approved).length));
+}
+
+function saveSettings() {
+  if (!currentUser || currentUser.role !== 'super_admin') return;
+  const val = id => parseInt((document.getElementById(id)||{}).value, 10) || 0;
+  const next = {
+    limitUser:  val('setLimitUser'),
+    limitGold:  val('setLimitGold'),
+    limitAdmin: val('setLimitAdmin'),
+    monthlyReset: !!(document.getElementById('setMonthlyReset')||{}).checked
+  };
+  window.fb.setSettingsREST(next).then(() => {
+    window._SETTINGS = next;
+    (typeof USERS !== "undefined" ? USERS : []).forEach(u => { u.downloadLimit = getDownloadLimit(u); });
+    showAdminToast('Settings saved');
+    renderSettings();
+    try { renderMembersTable(); } catch(e){}
+  }).catch(e => showAdminToast('Save failed: ' + (e.message || e.code || 'error')));
+}
+
+// Manually clear every member's counter for the current period.
+function resetAllDownloads() {
+  if (!currentUser || currentUser.role !== 'super_admin') return;
+  const targets = (typeof USERS !== "undefined" ? USERS : []).filter(u => (u.downloadsUsed||0) > 0);
+  if (!targets.length) { showAdminToast('Nothing to reset'); return; }
+  if (!confirm(`Reset download counters for ${targets.length} member${targets.length===1?'':'s'}?`)) return;
+  Promise.all(targets.map(u =>
+    window.fb.setUserREST(u.uid, { downloadsUsed: 0, downloadsPeriod: currentPeriod() }).catch(()=>null)
+  )).then(() => {
+    showAdminToast(`Reset ${targets.length} counter${targets.length===1?'':'s'}`);
+    loadUsersREST();
+    renderSettings();
+  });
 }
 
 // ── NOTIFICATIONS ────────────────────────────────────────────────────────
@@ -7697,6 +8007,12 @@ function nav(el, pageId) {
   el.classList.add('active');
   document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); p.style.display = 'none'; });
 
+  // Management pages are super-admin only, even if reached programmatically.
+  const SUPER_ONLY = ['statistics','demographics','settings','users'];
+  if (SUPER_ONLY.indexOf(pageId) !== -1 && !(currentUser && currentUser.role === 'super_admin')) {
+    showAdminToast && showAdminToast('Super admin only');
+    return;
+  }
   // Site Statistics and User Demographics share one page, as requested.
   const PAGE_ALIAS = { demographics: 'statistics' };
   const realPage = PAGE_ALIAS[pageId] || pageId;
@@ -7708,8 +8024,9 @@ function nav(el, pageId) {
     try {
       if (realPage === 'dashboard')     renderDashboardPage();
       if (realPage === 'statistics')    loadStatistics();
+      if (realPage === 'users')         { if (!USERS.length) loadUsersREST().then(renderUserManagement); else renderUserManagement(); }
       if (realPage === 'reports')       { if (!window._REPORTS) loadReportsREST().then(renderReportsLibrary); else renderReportsLibrary(); }
-      if (realPage === 'settings')      renderSettings();
+      if (realPage === 'settings')      loadSettings();
       if (realPage === 'notifications') { if (!window._EVENTS) loadStatistics(); renderNotifications(); }
     } catch (e) { console.warn('page render failed:', realPage, e); }
     // Jump straight to the demographics half when that item was clicked.

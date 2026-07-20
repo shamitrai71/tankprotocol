@@ -1,36 +1,97 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
     function isSignedIn() { return request.auth != null; }
+
     function myRole() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
     }
+
     function isAdmin() {
       return isSignedIn() && (myRole() == 'admin' || myRole() == 'super_admin');
     }
 
+    function isSuperAdmin() {
+      return isSignedIn() && myRole() == 'super_admin';
+    }
+
+    // Current quota period as "YYYY-MM", derived from SERVER time so a client
+    // cannot claim a fabricated month to win itself a fresh allowance.
+    function currentPeriod() {
+      return string(request.time.year()) + '-' +
+        (request.time.month() < 10
+          ? '0' + string(request.time.month())
+          : string(request.time.month()));
+    }
+
+    // The calculator increments the member's own counter after a download, so
+    // the field cannot simply be read-only. Instead it may move in exactly
+    // three legitimate ways - never downward, and never into a period the
+    // server clock disagrees with:
+    //   1. unchanged
+    //   2. +1 within the SAME period (a normal download)
+    //   3. reset to 1 when a genuinely new period has begun (first download
+    //      of the new month), validated against server time
+    // This blocks the obvious attacks: zeroing your own counter, or inventing
+    // a future month to earn a fresh allowance.
+    function quotaChangeOk() {
+      return (request.resource.data.get('downloadsUsed', 0) == resource.data.get('downloadsUsed', 0)
+              && request.resource.data.get('downloadsPeriod', '') == resource.data.get('downloadsPeriod', ''))
+          || (request.resource.data.get('downloadsUsed', 0) == resource.data.get('downloadsUsed', 0) + 1
+              && request.resource.data.get('downloadsPeriod', '') == resource.data.get('downloadsPeriod', ''))
+          || (request.resource.data.get('downloadsUsed', 0) == 1
+              && request.resource.data.get('downloadsPeriod', '') == currentPeriod()
+              && resource.data.get('downloadsPeriod', '') != currentPeriod());
+    }
+
     match /users/{uid} {
-      // A user can read their own doc; admins can read all
+
+      // Own doc always readable; admins and super admins may read all.
       allow read: if isSignedIn() && (request.auth.uid == uid || isAdmin());
-      // On signup, a user creates their OWN doc, but cannot self-promote or self-approve
-      allow create: if isSignedIn() && request.auth.uid == uid
+
+      // Self-signup: cannot self-promote, self-approve, or start with credit
+      // already granted.
+      allow create: if isSignedIn()
+                    && request.auth.uid == uid
                     && request.resource.data.role == 'user'
-                    && request.resource.data.approved == false;
-      // Users may edit their own profile but NOT role/approved
-      allow update: if isSignedIn() && request.auth.uid == uid
+                    && request.resource.data.approved == false
+                    && request.resource.data.get('downloadsUsed', 0) == 0;
+
+      // Self-service profile updates. A member may edit their own profile and
+      // record acceptance of the Terms, but may NOT touch anything governing
+      // their own privileges:
+      //   role               - privilege escalation
+      //   approved           - self-approval
+      //   canGenerateReports - would bypass a super admin's report block
+      //   downloadLimit      - quota override
+      //   downloadsUsed / downloadsPeriod - constrained by quotaChangeOk()
+      allow update: if isSignedIn()
+                    && request.auth.uid == uid
                     && request.resource.data.role == resource.data.role
-                    && request.resource.data.approved == resource.data.approved;
-      // Only super_admin can change role/approved or delete
-      allow update, delete: if isSignedIn() && myRole() == 'super_admin';
+                    && request.resource.data.approved == resource.data.approved
+                    && request.resource.data.get('canGenerateReports', true)
+                       == resource.data.get('canGenerateReports', true)
+                    && request.resource.data.get('downloadLimit', 0)
+                       == resource.data.get('downloadLimit', 0)
+                    && quotaChangeOk();
+
+      // Only a super admin may change roles, approval, permissions, or delete.
+      allow update, delete: if isSuperAdmin();
     }
 
     match /reports/{id} {
-      allow create: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
       allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow update, delete: if false;
+      // Members may only flag their own report as downloaded - nothing else.
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
     }
 
-    // Site analytics: any signed-in user may append their own event.
+    // Site analytics: a signed-in member may append events about themselves.
     // Only admins can read the log; events are immutable once written.
     match /events/{id} {
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
@@ -38,11 +99,12 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Controlled vocabularies: readable by any signed-in member (the calculator
-    // and profile need them), writable only by super_admin.
+    // Controlled vocabularies and platform settings: readable by any signed-in
+    // member (the calculator and profile need them), writable only by a super
+    // admin - this is what makes the report limits tamper-proof.
     match /config/{doc} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && myRole() == 'super_admin';
+      allow write: if isSuperAdmin();
     }
   }
 }

@@ -306,11 +306,13 @@ a { color: var(--accent); }
     // Bump downloadsUsed on the user doc
     bumpDownloads: async (uid, n) => {
       const token = await auth.currentUser.getIdToken();
-      const params = 'updateMask.fieldPaths=downloadsUsed';
+      const params = 'updateMask.fieldPaths=downloadsUsed&updateMask.fieldPaths=downloadsPeriod';
       const res = await fetch(`${REST}/users/${uid}?${params}`, {
         method: 'PATCH',
         headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
-        body: JSON.stringify({ fields: { downloadsUsed: { integerValue: String(n) } } })
+        body: JSON.stringify({ fields: {
+          downloadsUsed: { integerValue: String(n) },
+          downloadsPeriod: { stringValue: new Date().toISOString().slice(0,7) } } })
       });
       return res.ok;
     }
@@ -340,8 +342,25 @@ a { color: var(--accent); }
         company: profile.company || '', role: profile.role || 'user',
         country: profile.country || '', city: profile.city || '',
         dept: profile.dept || '', location: profile.location || '',
-        downloadsUsed: profile.downloadsUsed || 0
+        downloadsUsed: profile.downloadsUsed || 0,
+        downloadsPeriod: profile.downloadsPeriod || '',
+        canGenerateReports: profile.canGenerateReports !== false
       };
+      // Report limits are configured by the super admin.
+      try {
+        const stok = await user.getIdToken();
+        const sres = await fetch(`${REST}/config/settings`, { headers: { Authorization: 'Bearer '+stok } });
+        if (sres.ok) {
+          const sj = await sres.json();
+          const sd = decodeFields(sj.fields || {});
+          window._TP_SETTINGS = {
+            limitUser:  Number.isFinite(sd.limitUser)  ? sd.limitUser  : 2,
+            limitGold:  Number.isFinite(sd.limitGold)  ? sd.limitGold  : 10,
+            limitAdmin: Number.isFinite(sd.limitAdmin) ? sd.limitAdmin : 0,
+            monthlyReset: sd.monthlyReset !== false
+          };
+        }
+      } catch (e) { /* fall back to defaults */ }
       window.dispatchEvent(new Event('tp-user-ready'));
       // Record the calculator page view for Site Statistics.
       try {
@@ -2094,15 +2113,37 @@ ${fullDisclaimerHTML()}
 }
 
 // ── REPORT DOWNLOAD ───────────────────────────────────────────────────────────
-// Download limits by role, and mark the logged report as downloaded.
-const DL_LIMITS = { user: 2, gold: 10, admin: Infinity, super_admin: Infinity };
+// Report limits are per calendar month and configured by the super admin in
+// Site Settings (config/settings). These are fallbacks until that loads.
+const DL_FALLBACK = { user: 2, gold: 10, admin: 0, super_admin: Infinity };
+function _currentPeriod() { return new Date().toISOString().slice(0,7); }
+function _dlLimitFor(u) {
+  const S = window._TP_SETTINGS || {};
+  if (u.role === 'super_admin') return Infinity;
+  if (u.role === 'admin') {
+    if (u.canGenerateReports === false) return 0;          // blocked by super admin
+    return (S.limitAdmin > 0) ? S.limitAdmin : Infinity;
+  }
+  if (u.role === 'gold') return (S.limitGold != null) ? S.limitGold : DL_FALLBACK.gold;
+  return (S.limitUser != null) ? S.limitUser : DL_FALLBACK.user;
+}
+// Usage only counts within the current month unless monthly reset is disabled.
+function _dlUsed(u) {
+  const S = window._TP_SETTINGS || {};
+  if (S.monthlyReset === false) return u.downloadsUsed || 0;
+  return (u.downloadsPeriod === _currentPeriod()) ? (u.downloadsUsed || 0) : 0;
+}
 function _checkAndMarkDownload() {
   const u = window._tpUser;
   if (!u) return true; // not signed in via calc guard (shouldn't happen) — allow
-  const limit = DL_LIMITS[u.role] ?? 2;
-  const used = u.downloadsUsed || 0;
+  const limit = _dlLimitFor(u);
+  const used  = _dlUsed(u);
+  if (limit === 0) {
+    alert('Report generation is not enabled for your account. Please contact a super administrator.');
+    return false;
+  }
   if (used >= limit) {
-    alert(`Download limit reached (${used}/${limit === Infinity ? '∞' : limit}). Contact an administrator to increase your limit.`);
+    alert(`Monthly report limit reached (${used}/${limit === Infinity ? '∞' : limit}).\n\nYour allowance resets at the start of next month, or an administrator can reset it for you.`);
     return false;
   }
   // Mark the current report as downloaded + bump the user's counter (best-effort).
@@ -2111,7 +2152,9 @@ function _checkAndMarkDownload() {
   }
   if (window.fbCalc && u.uid) {
     const next = used + 1;
-    window.fbCalc.bumpDownloads(u.uid, next).then(ok => { if (ok) u.downloadsUsed = next; }).catch(()=>{});
+    window.fbCalc.bumpDownloads(u.uid, next).then(ok => {
+      if (ok) { u.downloadsUsed = next; u.downloadsPeriod = _currentPeriod(); }
+    }).catch(()=>{});
   }
   return true;
 }
