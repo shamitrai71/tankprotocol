@@ -91,6 +91,31 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /rimSealSurveys/{id} {
+
+      // Colleagues at the same company need to see each other's surveys on the
+      // same tank to compare gap positions across levels/dates - unlike
+      // `reports`, this isn't purely personal history, so read access is
+      // scoped to "same company" (via the requester's own user doc), not just
+      // "own uid".
+      function sameCompany() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn()
+                    && request.resource.data.uid == request.auth.uid
+                    && request.resource.data.status == 'draft';
+
+      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || sameCompany() || isAdmin());
+
+      // A survey is an inspection record: once submitted it becomes an
+      // immutable audit trail, same principle as `reports`/`events`. Only the
+      // author, and only while still a draft, may edit or delete it.
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'draft';
+      allow delete: if isSignedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'draft';
+    }
+
     // Site analytics: a signed-in member may append events about themselves.
     // Only admins can read the log; events are immutable once written.
     match /events/{id} {
