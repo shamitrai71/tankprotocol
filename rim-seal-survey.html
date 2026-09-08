@@ -258,6 +258,16 @@ table.survey-grid input.note-input { text-align:left; font-family:var(--sans); }
       <div class="field"><label>Weather Conditions</label><input id="weatherConditions" placeholder="e.g. clear, 18 kt wind, 24&deg;C"></div>
       <div class="field"><label>Notes</label><input id="surveyNotes" placeholder="General notes for this survey"></div>
     </div>
+    <div class="grid2" style="margin-top:2px;">
+      <div class="field">
+        <label>Record Type</label>
+        <select id="recordType">
+          <option value="research" selected>Just for research (only visible to you + admins)</option>
+          <option value="official">Official / true record (visible to your company + admins)</option>
+        </select>
+      </div>
+      <div class="card-hint" style="align-self:end;margin-bottom:9px;">Research surveys stay private to you for practice/testing. Switch to Official once this is a real inspection your company should see in the shared history and heatmap.</div>
+    </div>
   </div>
 
   <!-- REGULATORY PROFILE -->
@@ -329,7 +339,7 @@ table.survey-grid input.note-input { text-align:left; font-family:var(--sans); }
   <!-- HEATMAP -->
   <div class="card">
     <div class="card-title">Gap Map — Position &times; Survey Level <button class="btn" style="padding:6px 14px;font-size:0.76rem;" onclick="loadHistory()">&#8635; Load Survey History</button></div>
-    <div class="card-hint">Rows are past surveys for this Company + Tank ID (most recent first), colour-coded against each survey's own regulatory profile. A position that runs hot across multiple rows points to localized shell deformation rather than a one-off seal issue.</div>
+    <div class="card-hint">Rows are past surveys for this Company + Tank ID (most recent first), colour-coded against each survey's own regulatory profile. A position that runs hot across multiple rows points to localized shell deformation rather than a one-off seal issue. Your own "research" surveys always show here for you; colleagues only see surveys marked Official.</div>
     <div class="tabs">
       <button class="tab-btn active" id="hmTabPrimary" onclick="switchHeatmapTab('primary')">Primary Seal</button>
       <button class="tab-btn" id="hmTabSecondary" onclick="switchHeatmapTab('secondary')">Secondary Seal</button>
@@ -676,6 +686,7 @@ function gatherSurveyData(status) {
     minPoints: parseInt(g('minPoints'),10) || 0, pointCount: readings.length,
     roofLevel: g('roofLevel'), surveyDate: g('surveyDate'), inspector: g('inspector'),
     instrumentUsed: g('instrumentUsed'), weatherConditions: g('weatherConditions'), surveyNotes: g('surveyNotes'),
+    recordType: g('recordType') || 'research',
     regulatoryProfile: g('regProfile'),
     primaryMaxWidth: parseFloat(g('primaryMaxWidth')), primaryMaxAreaPerFt: parseFloat(g('primaryMaxAreaPerFt')),
     secondaryMaxWidth: parseFloat(g('secondaryMaxWidth')), secondaryMaxAreaPerFt: parseFloat(g('secondaryMaxAreaPerFt')),
@@ -785,7 +796,8 @@ function renderHeatmap() {
   surveys.forEach(s => {
     const rowLabel = document.createElement('div');
     rowLabel.className = 'hm-row-label';
-    rowLabel.textContent = (s.surveyDate || '\u2014') + (s.roofLevel ? ' \u00b7 ' + s.roofLevel : '');
+    const tag = (s.recordType === 'research') ? ' (research)' : '';
+    rowLabel.textContent = (s.surveyDate || '\u2014') + (s.roofLevel ? ' \u00b7 ' + s.roofLevel : '') + tag;
     grid.appendChild(rowLabel);
 
     const buckets = new Array(BUCKETS).fill(null);

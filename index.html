@@ -4554,7 +4554,7 @@ body.editing .report-delete-btn { display: block; }
         <table class="sa-table">
           <thead><tr>
             <th>Member</th><th>Company</th><th>Tank ID</th><th>Location</th>
-            <th>Liquid</th><th>Type</th><th>Date</th><th>Download</th>
+            <th>Liquid</th><th>Type</th><th>Record</th><th>Date</th><th>Download</th>
           </tr></thead>
           <tbody id="calcsTableBody"></tbody>
         </table>
@@ -5518,7 +5518,7 @@ function renderCalcsTable() {
   ) : reports;
 
   if (!filtered.length) {
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-dim);padding:20px;">' +
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-dim);padding:20px;">' +
       (reports.length ? 'No reports match your search' : 'No reports generated yet') + '</td></tr>';
     return;
   }
@@ -5536,6 +5536,9 @@ function renderCalcsTable() {
       <td style="font-size:0.78rem;color:var(--text-dim);">${r.location || '—'}</td>
       <td style="font-size:0.78rem;">${r.chemical || '—'}</td>
       <td><span class="sa-badge ${r.tankClass === 'floating' ? 'gold' : 'user'}" style="padding:2px 7px;">${r.tankType || r.tankClass || '—'}</span></td>
+      <td>${(r.recordType || 'research') === 'official'
+        ? '<span style="color:var(--green,#06d6a0);font-size:0.72rem;">Official</span>'
+        : '<span style="color:var(--text-dim);font-size:0.72rem;">Research</span>'}</td>
       <td style="font-family:var(--mono);font-size:0.72rem;color:var(--text-dim);">${fmtDate(r.createdAt)}</td>
       <td>${r.downloaded
         ? '<span style="color:var(--green,#06d6a0);font-size:0.75rem;">✓ Downloaded</span>'

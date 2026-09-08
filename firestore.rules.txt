@@ -81,8 +81,22 @@ service cloud.firestore {
     }
 
     match /reports/{id} {
+
+      // A report is "research" (private practice/testing, the default - also
+      // the fallback for any report written before this field existed) or
+      // "official" (a true record, visible to the rest of the company).
+      // Admins can always read everything either way.
+      function sameCompanyReport() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
       allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
-      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyReport())
+      );
       // Members may only flag their own report as downloaded - nothing else.
       allow update: if isSignedIn()
                     && resource.data.uid == request.auth.uid
@@ -97,7 +111,9 @@ service cloud.firestore {
       // same tank to compare gap positions across levels/dates - unlike
       // `reports`, this isn't purely personal history, so read access is
       // scoped to "same company" (via the requester's own user doc), not just
-      // "own uid".
+      // "own uid" - but ONLY for surveys marked "official". A "research"
+      // survey (the default) stays private to its author, same idea as
+      // `reports`. Admins can always read everything either way.
       function sameCompany() {
         return isSignedIn() &&
           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
@@ -107,7 +123,11 @@ service cloud.firestore {
                     && request.resource.data.uid == request.auth.uid
                     && request.resource.data.status == 'draft';
 
-      allow read: if isSignedIn() && (resource.data.uid == request.auth.uid || sameCompany() || isAdmin());
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompany())
+      );
 
       // A survey is an inspection record: once submitted it becomes an
       // immutable audit trail, same principle as `reports`/`events`. Only the

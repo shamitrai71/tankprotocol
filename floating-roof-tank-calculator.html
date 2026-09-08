@@ -482,6 +482,16 @@ a { color: var(--accent); }
           </div>
           <div class="field"><label>Location (Tank site)</label><input id="tankLocation" placeholder="City, State"></div>
         </div>
+        <div class="grid2" style="margin-top:2px;">
+          <div class="field">
+            <label>Record Type</label>
+            <select id="recordType">
+              <option value="research" selected>Just for research (only visible to you + admins)</option>
+              <option value="official">Official / true record (visible to your company + admins)</option>
+            </select>
+          </div>
+          <div class="card-hint" style="align-self:end;margin-bottom:9px;">Research entries stay private to you for practice/testing. Switch to Official once this is a real assessment your company should see.</div>
+        </div>
       </div>
 
       <div id="floatingCards">
@@ -1875,6 +1885,7 @@ function _gatherReportMeta(d) {
     metLocationName: metLocationDisplay().name, metSource: metLocationDisplay().source,
     chemical: (document.getElementById('chemical') && document.getElementById('chemical').options.length)
               ? document.getElementById('chemical').options[document.getElementById('chemical').selectedIndex].text : '',
+    recordType: g('recordType') || 'research',
     losses, units: (d && d.nonRoutine) ? 'lb/event' : 'lb/yr',
     downloaded: false,
     createdAt: new Date().toISOString()
