@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rim Seal Gap Survey — Tank Protocol</title>
+<title>Tank Spacing Calculator — Tank Protocol</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -107,7 +107,7 @@ a { color: var(--accent); }
 .std-badge { display:inline-flex; align-items:center; gap:6px; font-family:var(--mono); font-size:0.62rem; color:var(--accent); background:rgba(201,168,76,0.08); border:1px solid rgba(201,168,76,0.25); border-radius:20px; padding:3px 12px; margin-bottom:24px; }
 
 .card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:22px; margin-bottom:20px; }
-.card-title { font-family:var(--cond); font-weight:600; font-size:1.05rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; display:flex; align-items:center; gap:8px; justify-content:space-between; }
+.card-title { font-family:var(--cond); font-weight:600; font-size:1.05rem; color:var(--accent); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; display:flex; align-items:center; gap:8px; justify-content:space-between; flex-wrap:wrap; }
 .card-hint { font-size:0.76rem; color:var(--text-dim); margin-bottom:16px; }
 
 .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; min-width:0; }
@@ -124,6 +124,9 @@ a { color: var(--accent); }
 .field input:focus, .field select:focus { border-color:rgba(201,168,76,0.5); }
 .field input::placeholder { color:#3a4a5e; }
 .field input:disabled, .field select:disabled { opacity:0.55; cursor:not-allowed; }
+.field.checkbox { flex-direction:row; align-items:center; gap:8px; }
+.field.checkbox label { font-size:0.82rem; color:var(--text); font-weight:400; }
+.field.checkbox input { width:auto; }
 
 .err { background:rgba(240,91,91,0.08); border:1px solid rgba(240,91,91,0.3); border-radius:8px; color:var(--red); font-size:0.82rem; padding:11px 14px; margin-bottom:16px; display:none; }
 .err.show { display:block; }
@@ -140,51 +143,18 @@ a { color: var(--accent); }
 .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(201,168,76,0.3); color:#080c14; }
 .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
 
-.tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
-.tab-btn { background:transparent; border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-family:var(--sans); font-size:0.82rem; padding:8px 16px; cursor:pointer; transition:all .15s; }
-.tab-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(201,168,76,0.08); }
+.result-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-top:14px; }
+.result-card .r-lbl { font-family:var(--cond); font-weight:600; font-size:0.85rem; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-bright); margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.result-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
+.result-row:last-child { border-bottom:none; }
+.result-row .k { color:var(--text-dim); }
+.result-row .v { font-family:var(--mono); color:var(--text-bright); }
+.result-row .v.big { font-size:1.05rem; color:var(--accent); font-weight:600; }
 
-.survey-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; }
-table.survey-grid { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:820px; }
-table.survey-grid th { background:var(--surface2); color:var(--text-dim); font-weight:600; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.4px; padding:9px 8px; text-align:center; border-bottom:1px solid var(--border); position:sticky; top:0; }
-table.survey-grid td { padding:5px 6px; border-bottom:1px solid var(--border); text-align:center; }
-table.survey-grid tr:last-child td { border-bottom:none; }
-table.survey-grid input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:5px; color:var(--text-bright); font-family:var(--mono); font-size:0.78rem; padding:6px 5px; text-align:center; outline:none; box-sizing:border-box; }
-table.survey-grid input:focus { border-color:rgba(201,168,76,0.5); }
-table.survey-grid input.pos-input { color:var(--accent); }
-table.survey-grid input.area-out { background:transparent; border-color:transparent; color:var(--text-dim); font-weight:600; }
-table.survey-grid input.over-limit { border-color:var(--red); color:var(--red); }
-table.survey-grid input.near-limit { border-color:var(--warn); color:var(--warn); }
-table.survey-grid td.pt-idx { color:var(--text-dim); font-family:var(--mono); font-size:0.72rem; }
-table.survey-grid input.note-input { text-align:left; font-family:var(--sans); }
-
-.compliance-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-.compliance-grid.with-rim { grid-template-columns:1fr 1fr 1fr; }
-@media (max-width:920px) { .compliance-grid.with-rim { grid-template-columns:1fr 1fr; } }
-@media (max-width:760px) { .compliance-grid, .compliance-grid.with-rim { grid-template-columns:1fr; } }
-.compliance-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
-.compliance-card .seal-lbl { font-family:var(--cond); font-weight:600; font-size:0.85rem; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-bright); margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
 .badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:0.66rem; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.4px; }
 .badge.pass { background:rgba(6,214,160,0.12); color:var(--green); border:1px solid rgba(6,214,160,0.35); }
 .badge.fail { background:rgba(240,91,91,0.12); color:var(--red); border:1px solid rgba(240,91,91,0.35); }
 .badge.unset { background:rgba(107,127,150,0.12); color:var(--text-dim); border:1px solid var(--border); }
-.compliance-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.8rem; }
-.compliance-row:last-child { border-bottom:none; }
-.compliance-row .k { color:var(--text-dim); }
-.compliance-row .v { font-family:var(--mono); color:var(--text-bright); }
-
-.heatmap-scroll { overflow-x:auto; padding-bottom:6px; }
-.heatmap-grid { display:grid; gap:3px; min-width:max-content; }
-.hm-cell { border-radius:4px; height:26px; min-width:22px; }
-.hm-row-label { font-size:0.68rem; color:var(--text-dim); white-space:nowrap; padding-right:8px; display:flex; align-items:center; justify-content:flex-end; }
-.hm-col-label { font-size:0.6rem; color:var(--text-dim); text-align:center; font-family:var(--mono); }
-.hm-green { background:rgba(6,214,160,0.55); }
-.hm-amber { background:rgba(255,209,102,0.6); }
-.hm-red { background:rgba(240,91,91,0.65); }
-.hm-gray { background:rgba(107,127,150,0.25); }
-.hm-legend { display:flex; gap:16px; margin-top:12px; font-size:0.72rem; color:var(--text-dim); flex-wrap:wrap; }
-.hm-legend span { display:inline-flex; align-items:center; gap:6px; }
-.hm-swatch { width:11px; height:11px; border-radius:3px; display:inline-block; }
 
 .footer { text-align:center; color:var(--text-dim); font-size:0.72rem; margin-top:40px; padding-top:20px; border-top:1px solid var(--border); }
 
@@ -201,70 +171,51 @@ table.survey-grid input.note-input { text-align:left; font-family:var(--sans); }
     <div class="brand-mark"></div>
     <div>
       <div class="brand-name">TANK PROTOCOL</div>
-      <div class="brand-sub">RIM SEAL SURVEY</div>
+      <div class="brand-sub">TANK SPACING</div>
     </div>
   </div>
   <a href="index.html?portal=1" class="back-link topbar-desktop-only">&#128100; Profile</a>
   <a href="floating-roof-tank-calculator.html" class="back-link topbar-desktop-only">&#9879; Calculator</a>
+  <a href="rim-seal-survey.html" class="back-link topbar-desktop-only">&#127919; Rim Seal Survey</a>
   <a href="dike-bund-calculator.html" class="back-link topbar-desktop-only">&#129521; Dike Capacity</a>
-  <a href="spacing-calculator.html" class="back-link topbar-desktop-only">&#128207; Tank Spacing</a>
   <a href="firewater-calculator.html" class="back-link topbar-desktop-only">&#128674; Fire Water Demand</a>
-  <a href="index.html?admin=1" id="survAdminLink" class="back-link topbar-desktop-only" style="display:none;">&#11049; Admin Panel</a>
-  <button class="topbar-desktop-only calc-signout" type="button" onclick="survSignOut()">Sign out</button>
+  <a href="index.html?admin=1" id="spAdminLink" class="back-link topbar-desktop-only" style="display:none;">&#11049; Admin Panel</a>
+  <button class="topbar-desktop-only calc-signout" type="button" onclick="spSignOut()">Sign out</button>
 
   <div class="topbar-kebab-wrap">
     <button class="topbar-kebab-btn" type="button" aria-label="Menu" onclick="toggleKebabMenu(this)">&#8942;</button>
     <div class="topbar-kebab-menu">
       <a href="index.html?portal=1" class="kebab-item" onclick="closeKebabMenu(this);">&#128100; Profile</a>
       <a href="floating-roof-tank-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#9879; Calculator</a>
+      <a href="rim-seal-survey.html" class="kebab-item" onclick="closeKebabMenu(this);">&#127919; Rim Seal Survey</a>
       <a href="dike-bund-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#129521; Dike Capacity</a>
-      <a href="spacing-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128207; Tank Spacing</a>
       <a href="firewater-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128674; Fire Water Demand</a>
-      <a href="index.html?admin=1" id="survAdminLinkMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this);">&#11049; Admin Panel</a>
+      <a href="index.html?admin=1" id="spAdminLinkMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this);">&#11049; Admin Panel</a>
       <div class="kebab-divider"></div>
-      <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); survSignOut();">Sign out</button>
+      <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); spSignOut();">Sign out</button>
     </div>
   </div>
 </div>
 
 <div class="wrap">
-  <div class="page-title">Rim Seal Gap Survey</div>
-  <div class="page-sub">Primary &amp; secondary seal gap measurements by circumferential position, mapped across surveyed roof levels</div>
-  <div class="std-badge">&#9673; POSITION-BASED GAP SURVEY &middot; NOT A REGULATORY SUBMISSION TOOL</div>
+  <div class="page-title">Tank Spacing Calculator</div>
+  <div class="page-sub">Shell-to-shell spacing and property-line / public-way distance checks for aboveground tanks</div>
+  <div class="std-badge">&#9673; NFPA 30 / OISD-118 STYLE CHECK &middot; NOT A REGULATORY SUBMISSION TOOL</div>
 
   <div class="warn-note">
-    <strong>&#9888; Indicative tool only.</strong> This module helps you record and visualize rim seal gap surveys and compare them against limits you enter yourself.
-    The default regulatory profiles below (US EPA / India CPCB / EU EN 14015) are <strong>placeholders</strong> — several fields are intentionally left blank because we have not verified the current published limits for every jurisdiction.
-    Confirm all limit values against the current regulation text (e.g. 40 CFR 60.113b for US EPA) before using this for any compliance purpose.
+    <strong>&#9888; Indicative tool only.</strong> The NFPA 30 tables here (22.4.2.1 shell-to-shell spacing, 22.4.1.1(b) property-line/public-way distance) are cross-verified across three independently-sourced extracts of the 2008 edition, not a single scan - but they're still compiled extracts, not the current official code text. OISD-118's Table-4 (within-dyke spacing) is sourced from the 2025 revision directly. OISD-118's Table-3/Table-5 (tank-to-offsite-facility matrix) is manually transcribed from a legible, non-OCR'd training-deck image (a GAIL India presentation on OISD-118) rather than the code text itself - the "T4" cells resolve the "Note-i" gap from the 2025 revision (refer to Table-4), but two things remain unresolved: the 2025 revision layers additional footnotes (Note-g/j) onto a few Table-3 cells that this older-edition image doesn't show, and two cell pairs read asymmetrically in the source image itself (Storage Tank Class C &harr; Tank Vehicle Loading A/B in Table-3; Flameproof Pump Motor &harr; Office Building in Table-5) - both flagged, neither silently resolved. Confirm all figures against the current published edition before relying on any of this for a real assessment.
   </div>
 
   <div class="err" id="errorMsg"></div>
   <div class="ok-msg" id="okMsg"></div>
 
-  <!-- SURVEY SETUP -->
+  <!-- IDENTIFICATION -->
   <div class="card">
-    <div class="card-title">Survey Setup</div>
+    <div class="card-title">Identification</div>
     <div class="grid3">
       <div class="field"><label>Company</label><input id="companyName" placeholder="Company"></div>
-      <div class="field"><label>Tank ID <span class="req">*</span></label><input id="tankId" placeholder="e.g. TK-101"></div>
-      <div class="field"><label>Location</label><input id="tankLocation" placeholder="City, State / Country"></div>
-    </div>
-    <div class="grid4">
-      <div class="field"><label>Tank Diameter <span class="unit">ft</span> <span class="req">*</span></label><input id="diameter" type="number" step="0.01" placeholder="0" oninput="onGeometryChange()"></div>
-      <div class="field"><label>Point Spacing <span class="unit">ft</span></label><input id="spacingFt" type="number" step="0.5" value="10" oninput="onGeometryChange()"></div>
-      <div class="field"><label>Min. Points</label><input id="minPoints" type="number" step="1" value="8" oninput="onGeometryChange()"></div>
-      <div class="field"><label>Point Count</label><input id="pointCountDisplay" disabled></div>
-    </div>
-    <div class="card-hint" style="margin-top:2px;">Point count = max(min points, &#8968;&pi; &times; diameter &divide; spacing&#8969;) — evenly spaced by degrees around the circumference. Spacing is a configurable survey-procedure value, not a hardcoded regulatory requirement — adjust to match your own inspection SOP.</div>
-    <div class="grid4">
-      <div class="field"><label>Roof / Liquid Level <span class="unit">ft or %</span></label><input id="roofLevel" placeholder="e.g. 62% or 41.5 ft"></div>
-      <div class="field"><label>Survey Date <span class="req">*</span></label><input id="surveyDate" type="date"></div>
-      <div class="field"><label>Inspector</label><input id="inspector" placeholder="Name"></div>
-      <div class="field"><label>Instrument Used</label><input id="instrumentUsed" placeholder="e.g. feeler gauge, laser gauge"></div>
-    </div>
-    <div class="grid2">
-      <div class="field"><label>Weather Conditions</label><input id="weatherConditions" placeholder="e.g. clear, 18 kt wind, 24&deg;C"></div>
-      <div class="field"><label>Notes</label><input id="surveyNotes" placeholder="General notes for this survey"></div>
+      <div class="field"><label>Facility / Site ID</label><input id="facilityId" placeholder="e.g. Terminal-3"></div>
+      <div class="field"><label>Location</label><input id="siteLocation" placeholder="City, State / Country"></div>
     </div>
     <div class="grid2" style="margin-top:2px;">
       <div class="field">
@@ -274,120 +225,152 @@ table.survey-grid input.note-input { text-align:left; font-family:var(--sans); }
           <option value="official">Official / true record (visible to your company + admins)</option>
         </select>
       </div>
-      <div class="card-hint" style="align-self:end;margin-bottom:9px;">Research surveys stay private to you for practice/testing. Switch to Official once this is a real inspection your company should see in the shared history and heatmap.</div>
+      <div class="card-hint" style="align-self:end;margin-bottom:9px;">Research entries stay private to you for practice/testing. Switch to Official once this is a real assessment your company should see.</div>
     </div>
   </div>
 
-  <!-- REGULATORY PROFILE -->
-  <div class="card" id="regProfileCard">
-    <div class="card-title">Regulatory Profile</div>
-    <div class="card-hint">Values are editable — the defaults below are placeholders, not verified regulation text (see warning above). Leave a limit blank to skip compliance evaluation for that metric. These limits stay editable even after a survey is submitted — only the measured readings lock, since a reference standard shouldn't require reopening the record to correct.</div>
+  <!-- TANK TO TANK SPACING -->
+  <div class="card">
+    <div class="card-title">Tank-to-Tank Shell Spacing</div>
+    <div class="card-hint">NFPA 30 Table 22.4.2.1 or OISD-118 Table-4 — required spacing as a function of the two tanks' diameters, roof type, and (NFPA) size/impounding condition or (OISD) diameter threshold.</div>
     <div class="field" style="margin-bottom:14px;">
-      <label>Jurisdiction / Standard</label>
-      <select id="regProfile" onchange="onProfileChange()">
-        <option value="US_EPA">US EPA — NSPS Kb / Method 21</option>
-        <option value="IN_CPCB">India — CPCB Guidelines</option>
-        <option value="EU_EN14015">EU — EN 14015</option>
-        <option value="CUSTOM">Custom / Manual Entry</option>
+      <label>Standard</label>
+      <select id="spacingStandard" onchange="onSpacingStandardChange()">
+        <option value="NFPA_30">NFPA 30 — Table 22.4.2.1</option>
+        <option value="OISD_118">India — OISD-118 Table-4 (within same dyke)</option>
       </select>
     </div>
     <div class="grid4">
-      <div class="field"><label>Primary Max Gap Width <span class="unit">in</span></label><input id="primaryMaxWidth" type="number" step="0.01" oninput="recalcTotals()"></div>
-      <div class="field"><label>Primary Max Area <span class="unit">in&sup2;/ft dia.</span></label><input id="primaryMaxAreaPerFt" type="number" step="0.01" oninput="recalcTotals()"></div>
-      <div class="field"><label>Secondary Max Gap Width <span class="unit">in</span></label><input id="secondaryMaxWidth" type="number" step="0.01" oninput="recalcTotals()"></div>
-      <div class="field"><label>Secondary Max Area <span class="unit">in&sup2;/ft dia.</span></label><input id="secondaryMaxAreaPerFt" type="number" step="0.01" oninput="recalcTotals()"></div>
+      <div class="field"><label>Tank A ID</label><input id="tankA_id" placeholder="TK-101"></div>
+      <div class="field"><label>Tank A Diameter <span class="unit">ft</span></label><input id="tankA_dia" type="number" step="0.01" min="0" oninput="recalcSpacing()"></div>
+      <div class="field"><label>Tank B ID</label><input id="tankB_id" placeholder="TK-102"></div>
+      <div class="field"><label>Tank B Diameter <span class="unit">ft</span></label><input id="tankB_dia" type="number" step="0.01" min="0" oninput="recalcSpacing()"></div>
     </div>
-    <div class="grid2" style="margin-top:10px;">
-      <div class="field"><label>Rim Gap Expected Min <span class="unit">mm</span></label><input id="rimGapExpMin" type="number" step="1" oninput="recalcTotals()"></div>
-      <div class="field"><label>Rim Gap Expected Max <span class="unit">mm</span></label><input id="rimGapExpMax" type="number" step="1" oninput="recalcTotals()"></div>
+    <div class="card-hint" style="margin-top:-6px;">Diameters in feet for NFPA 30, meters for OISD-118 — the label updates when you switch standards; enter in the unit shown.</div>
+
+    <div id="nfpaSpacingFields">
+      <div class="grid3">
+        <div class="field">
+          <label>Roof / Liquid Type</label>
+          <select id="nfpaRoofType" onchange="recalcSpacing()">
+            <option value="floating">Floating Roof</option>
+            <option value="fixed">Fixed Roof or Horizontal (Class I/II)</option>
+            <option value="iiiA">Class IIIA</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Size / Impounding Category</label>
+          <select id="nfpaSizeCategory" onchange="recalcSpacing()">
+            <option value="le150">&le;150 ft diameter, standard</option>
+            <option value="gt150_remote">&gt;150 ft diameter, with remote impounding</option>
+            <option value="open_dike">Open dike</option>
+          </select>
+        </div>
+        <div class="field checkbox" style="align-self:end;">
+          <input type="checkbox" id="nfpaCrudeException" onchange="recalcSpacing()">
+          <label for="nfpaCrudeException">Crude petroleum exception applies (22.4.2.1.1) — forces 1/6 &Sigma;D, 3 ft floor</label>
+        </div>
+      </div>
     </div>
-    <div class="card-hint" style="margin-top:8px;">India practice commonly standardizes rim gap at 200 mm &plusmn; 100 mm (i.e. 100&ndash;300 mm) for tank diameters above 30 m &mdash; auto-filled when the India profile is selected and diameter exceeds that threshold, editable otherwise. As with the seal gap limits above, this is a figure you've given us directly rather than something independently verified against a specific published clause &mdash; confirm against current OISD/CPCB guidance before relying on it for a real assessment.</div>
-    <div class="btn-row" id="limitsBtnRow" style="display:none;">
-      <button class="btn" onclick="saveLimitsOnly()">Update Limits</button>
-      <span class="card-hint" style="margin:0;align-self:center;">This survey is submitted and locked — this button updates only the regulatory limits above, without reopening the readings.</span>
+    <div id="oisdSpacingFields" style="display:none;">
+      <div class="grid3">
+        <div class="field">
+          <label>Petroleum Class</label>
+          <select id="oisdClass" onchange="recalcSpacing()">
+            <option value="AB">Class A / B</option>
+            <option value="C">Class C</option>
+          </select>
+        </div>
+        <div class="field"><label>Roof Type (for &gt;50 m dia. row)</label>
+          <select id="oisdRoofType" onchange="recalcSpacing()">
+            <option value="floating">Floating Roof</option>
+            <option value="fixed">Fixed Roof</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="field"><label>Actual / Proposed Spacing <span class="unit" id="spacingActualUnit">ft</span></label><input id="actualSpacing" type="number" step="0.01" min="0" oninput="recalcSpacing()"></div>
+      <div class="field"><label>Required Spacing</label><input id="requiredSpacingDisplay" disabled></div>
+    </div>
+    <div class="result-card">
+      <div class="r-lbl">Result <span class="badge unset" id="spacingBadge">Not evaluated</span></div>
+      <div class="result-row"><span class="k">Sum of diameters</span><span class="v" id="spacingSumDia">—</span></div>
+      <div class="result-row"><span class="k">Multiplier / formula applied</span><span class="v" id="spacingFormula">—</span></div>
+      <div class="result-row"><span class="k">Required spacing</span><span class="v big" id="spacingRequired">—</span></div>
+      <div class="result-row"><span class="k">Surplus / deficit</span><span class="v" id="spacingSurplus">—</span></div>
     </div>
   </div>
 
-  <!-- GAP READING GRID -->
+  <!-- OISD TANK TO OFFSITE FACILITY -->
   <div class="card">
-    <div class="card-title">Gap Readings</div>
-    <div class="card-hint">Position is auto-spaced by point count above but is editable per row if a point needs to move. Areas compute automatically as length &times; width. Rim gap is optional — the physical shell-to-roof-rim clearance at that position, independent of either seal, useful for correlating seal gap severity against underlying shell fit/deformation.</div>
-    <div class="survey-table-wrap">
-      <table class="survey-grid" id="gapTable">
-        <thead>
-          <tr>
-            <th>#</th><th>Position &deg;</th><th>Rim Gap <span class="unit">mm</span></th>
-            <th>Primary L <span class="unit">in</span></th><th>Primary W <span class="unit">in</span></th><th>Primary Area <span class="unit">in&sup2;</span></th>
-            <th>Secondary L <span class="unit">in</span></th><th>Secondary W <span class="unit">in</span></th><th>Secondary Area <span class="unit">in&sup2;</span></th>
-            <th>Note</th>
-          </tr>
-        </thead>
-        <tbody id="gapTableBody"></tbody>
-      </table>
+    <div class="card-title">Tank-to-Offsite-Facility Distance (OISD-118)</div>
+    <div class="card-hint">Table-3 (large installations) or Table-5 (small installations) — pick the pair of categories and the tool looks up the required separation. Large installation applies when total Class A/B storage exceeds 5000 m&sup3; or any Class A/B tank exceeds 9m diameter; otherwise use Table-5. Manually transcribed from a legible training-deck image (GAIL India, OISD-118 training material) rather than OCR — cross-check before relying on it, and see the note below on two specific cell pairs that read asymmetrically in the source.</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Installation Size</label>
+        <select id="facilitySize" onchange="onFacilitySizeChange()">
+          <option value="large">Large (Table-3)</option>
+          <option value="small">Small (Table-5)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>From</label>
+        <select id="facilityFrom" onchange="recalcFacility()"></select>
+      </div>
+      <div class="field">
+        <label>To</label>
+        <select id="facilityTo" onchange="recalcFacility()"></select>
+      </div>
+    </div>
+    <div class="grid3">
+      <div class="field"><label>Relevant Tank Diameter <span class="unit">m</span></label><input id="facilityDia" type="number" step="0.01" min="0" oninput="recalcFacility()"></div>
+      <div class="field"><label>Actual Distance <span class="unit">m</span></label><input id="facilityActual" type="number" step="0.01" min="0" oninput="recalcFacility()"></div>
+      <div class="field"><label>Required Distance</label><input id="facilityRequiredDisplay" disabled></div>
+    </div>
+    <div class="card-hint" style="margin-top:-6px;">Diameter only matters for cells expressed as a fraction of tank diameter (0.5D, D, etc.) — leave blank for flat-number cells.</div>
+    <div class="result-card">
+      <div class="r-lbl">Result <span class="badge unset" id="facilityBadge">Not evaluated</span></div>
+      <div class="result-row"><span class="k">Cell value</span><span class="v" id="facilityCellRaw">—</span></div>
+      <div class="result-row"><span class="k">Required distance</span><span class="v big" id="facilityRequired">—</span></div>
+      <div class="result-row"><span class="k">Surplus / deficit</span><span class="v" id="facilitySurplus">—</span></div>
     </div>
   </div>
 
-  <!-- COMPLIANCE SUMMARY -->
+  <!-- PROPERTY LINE / PUBLIC WAY -->
   <div class="card">
-    <div class="card-title">Compliance Summary</div>
-    <div class="compliance-grid with-rim">
-      <div class="compliance-card">
-        <div class="seal-lbl">Primary Seal <span class="badge unset" id="primaryBadge">Not evaluated</span></div>
-        <div class="compliance-row"><span class="k">Total gap area</span><span class="v" id="primaryTotalArea">—</span></div>
-        <div class="compliance-row"><span class="k">Area per ft diameter</span><span class="v" id="primaryAreaPerFt">—</span></div>
-        <div class="compliance-row"><span class="k">Max single gap width</span><span class="v" id="primaryMaxWidthFound">—</span></div>
-        <div class="compliance-row"><span class="k">Gap count &gt; 0</span><span class="v" id="primaryGapCount">—</span></div>
-      </div>
-      <div class="compliance-card">
-        <div class="seal-lbl">Secondary Seal <span class="badge unset" id="secondaryBadge">Not evaluated</span></div>
-        <div class="compliance-row"><span class="k">Total gap area</span><span class="v" id="secondaryTotalArea">—</span></div>
-        <div class="compliance-row"><span class="k">Area per ft diameter</span><span class="v" id="secondaryAreaPerFt">—</span></div>
-        <div class="compliance-row"><span class="k">Max single gap width</span><span class="v" id="secondaryMaxWidthFound">—</span></div>
-        <div class="compliance-row"><span class="k">Gap count &gt; 0</span><span class="v" id="secondaryGapCount">—</span></div>
-      </div>
-      <div class="compliance-card">
-        <div class="seal-lbl">Rim Gap <span class="badge unset" id="rimGapBadge">Informational</span></div>
-        <div class="compliance-row"><span class="k">Expected range</span><span class="v" id="rimGapExpectedDisplay">—</span></div>
-        <div class="compliance-row"><span class="k">Min rim gap</span><span class="v" id="rimGapMin">—</span></div>
-        <div class="compliance-row"><span class="k">Max rim gap</span><span class="v" id="rimGapMax">—</span></div>
-        <div class="compliance-row"><span class="k">Average rim gap</span><span class="v" id="rimGapAvg">—</span></div>
-        <div class="compliance-row"><span class="k">Outside expected range</span><span class="v" id="rimGapOutOfRange">—</span></div>
-        <div class="compliance-row"><span class="k">Readings logged</span><span class="v" id="rimGapCount">—</span></div>
-      </div>
+    <div class="card-title">Tank-to-Property-Line / Public-Way Distance</div>
+    <div class="card-hint">NFPA 30 Table 22.4.1.1(b), the base reference table for stable liquids &le;2.5 psig at 1&times; multiplier. Other tank/pressure categories (Table 22.4.1.3) use a multiple of this table (commonly &frac12;&times;, 1&frac12;&times; with a 25 ft floor, 2&times;, or 3&times; with a 50 ft floor) — set the multiplier manually since which sub-case applies depends on tank pressure rating and construction, not modeled here.</div>
+    <div class="grid4">
+      <div class="field"><label>Tank Diameter <span class="unit">ft</span></label><input id="plDiameter" type="number" step="0.01" min="0" oninput="recalcPropertyLine()"></div>
+      <div class="field"><label>Tank Height <span class="unit">ft</span></label><input id="plHeight" type="number" step="0.01" min="0" oninput="recalcPropertyLine()"></div>
+      <div class="field"><label>Computed Capacity</label><input id="plCapacityDisplay" disabled></div>
+      <div class="field"><label>Table Multiplier</label><input id="plMultiplier" type="number" step="0.1" value="1" oninput="recalcPropertyLine()"></div>
     </div>
+    <div class="grid4">
+      <div class="field"><label>Actual Distance to Property Line <span class="unit">ft</span></label><input id="plActualProperty" type="number" step="0.01" min="0" oninput="recalcPropertyLine()"></div>
+      <div class="field"><label>Required — Property Line</label><input id="plRequiredPropertyDisplay" disabled></div>
+      <div class="field"><label>Actual Distance to Public Way <span class="unit">ft</span></label><input id="plActualPublic" type="number" step="0.01" min="0" oninput="recalcPropertyLine()"></div>
+      <div class="field"><label>Required — Public Way / Bldg</label><input id="plRequiredPublicDisplay" disabled></div>
+    </div>
+    <div class="result-card">
+      <div class="r-lbl">Result <span class="badge unset" id="plBadge">Not evaluated</span></div>
+      <div class="result-row"><span class="k">Capacity band</span><span class="v" id="plBand">—</span></div>
+      <div class="result-row"><span class="k">Property line — surplus/deficit</span><span class="v" id="plPropertySurplus">—</span></div>
+      <div class="result-row"><span class="k">Public way/building — surplus/deficit</span><span class="v" id="plPublicSurplus">—</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Save &amp; Report</div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveSurvey('draft')">Save Draft</button>
-      <button class="btn" onclick="saveSurvey('submitted')">Submit Survey</button>
-      <button class="btn" onclick="printSurveyReport()">Print / PDF Report</button>
+      <button class="btn btn-primary" onclick="saveSpacingCalc()">Calculate &amp; Save</button>
+      <button class="btn" onclick="printSpacingReport()">Print / PDF Report</button>
     </div>
   </div>
 
-  <!-- HEATMAP -->
-  <div class="card">
-    <div class="card-title">Gap Map — Position &times; Survey Level <button class="btn" style="padding:6px 14px;font-size:0.76rem;" onclick="loadHistory()">&#8635; Load Survey History</button></div>
-    <div class="card-hint">Rows are past surveys for this Company + Tank ID (most recent first), colour-coded against each survey's own regulatory profile. A position that runs hot across multiple rows points to localized shell deformation rather than a one-off seal issue. Your own "research" surveys always show here for you; colleagues only see surveys marked Official.</div>
-    <div class="tabs">
-      <button class="tab-btn active" id="hmTabPrimary" onclick="switchHeatmapTab('primary')">Primary Seal</button>
-      <button class="tab-btn" id="hmTabSecondary" onclick="switchHeatmapTab('secondary')">Secondary Seal</button>
-      <button class="tab-btn" id="hmTabRim" onclick="switchHeatmapTab('rim')">Rim Gap</button>
-    </div>
-    <div id="heatmapContainer" style="color:var(--text-dim);font-size:0.82rem;">No survey history loaded yet for this tank. Fill in Company + Tank ID above, save at least one survey, then click "Load Survey History".</div>
-    <div class="hm-legend" id="hmLegendSeal">
-      <span><span class="hm-swatch hm-green"></span>Within limit</span>
-      <span><span class="hm-swatch hm-amber"></span>&ge; 70% of limit</span>
-      <span><span class="hm-swatch hm-red"></span>Exceeds limit</span>
-      <span><span class="hm-swatch hm-gray"></span>No limit set</span>
-    </div>
-    <div class="hm-legend" id="hmLegendRim" style="display:none;">
-      <span><span class="hm-swatch hm-green"></span>Within that survey's expected range</span>
-      <span><span class="hm-swatch hm-amber"></span>Near a range boundary</span>
-      <span><span class="hm-swatch hm-red"></span>Outside expected range</span>
-      <span><span class="hm-swatch" style="background:linear-gradient(90deg,#2f6690,#c9a84c,#f05b5b);"></span>No range set for that survey — shown on a relative scale instead</span>
-      <span><span class="hm-swatch hm-gray"></span>No reading</span>
-    </div>
-  </div>
-
-  <div class="footer">Tank Protocol &middot; Rim Seal Gap Survey &middot; indicative tool, not a regulatory submission</div>
+  <div class="footer">Tank Protocol &middot; Tank Spacing Calculator &middot; indicative tool, not a regulatory submission</div>
 </div>
 
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -408,11 +391,10 @@ const DB_ID = 'tankprotocol';
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const REST = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${DB_ID}/documents`;
-const RUNQUERY = `https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/${DB_ID}/documents:runQuery`;
 
 function enc(val) {
   if (val === null || val === undefined) return { nullValue: null };
-  if (typeof val === 'number' && isNaN(val)) return { nullValue: null }; // blank numeric field -> null, not a wire-breaking NaN
+  if (typeof val === 'number' && isNaN(val)) return { nullValue: null };
   if (typeof val === 'boolean') return { booleanValue: val };
   if (typeof val === 'number') return Number.isInteger(val) ? { integerValue: String(val) } : { doubleValue: val };
   if (Array.isArray(val)) return { arrayValue: { values: val.map(enc) } };
@@ -434,7 +416,7 @@ function decodeFields(fields) {
   return out;
 }
 
-window.fbSurvey = {
+window.fbSpacing = {
   auth,
   signOut: () => signOut(auth),
   onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
@@ -446,60 +428,17 @@ window.fbSurvey = {
     const j = await res.json();
     return decodeFields(j.fields);
   },
-  addSurvey: async (data) => {
+  addCalc: async (data) => {
     const token = await auth.currentUser.getIdToken();
     const fields = {}; for (const [k,v] of Object.entries(data)) fields[k] = enc(v);
-    const res = await fetch(`${REST}/rimSealSurveys`, {
+    const res = await fetch(`${REST}/spacingCalcs`, {
       method: 'POST',
       headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
       body: JSON.stringify({ fields })
     });
-    if (!res.ok) throw new Error('addSurvey '+res.status+' '+(await res.text()));
+    if (!res.ok) throw new Error('addCalc '+res.status+' '+(await res.text()));
     const j = await res.json();
     return j.name.split('/').pop();
-  },
-  updateSurvey: async (id, data) => {
-    const token = await auth.currentUser.getIdToken();
-    const fields = {}; const mask = [];
-    for (const [k,v] of Object.entries(data)) { fields[k]=enc(v); mask.push(k); }
-    const params = mask.map(f=>'updateMask.fieldPaths='+encodeURIComponent(f)).join('&');
-    const res = await fetch(`${REST}/rimSealSurveys/${id}?${params}`, {
-      method: 'PATCH',
-      headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
-      body: JSON.stringify({ fields })
-    });
-    if (!res.ok) throw new Error('updateSurvey '+res.status+' '+(await res.text()));
-    return true;
-  },
-  listByTank: async (company, tankId) => {
-    const token = await auth.currentUser.getIdToken();
-    const body = {
-      structuredQuery: {
-        from: [{ collectionId: 'rimSealSurveys' }],
-        where: { compositeFilter: { op: 'AND', filters: [
-          { fieldFilter: { field: { fieldPath: 'company' }, op: 'EQUAL', value: { stringValue: company } } },
-          { fieldFilter: { field: { fieldPath: 'tankId' }, op: 'EQUAL', value: { stringValue: tankId } } }
-        ] } },
-        limit: 50
-      }
-    };
-    const res = await fetch(RUNQUERY, {
-      method: 'POST',
-      headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
-      body: JSON.stringify(body)
-    });
-    if (!res.ok) throw new Error('listByTank '+res.status+' '+(await res.text()));
-    const j = await res.json();
-    const out = [];
-    for (const row of j) {
-      if (row.document) {
-        const d = decodeFields(row.document.fields);
-        d._id = row.document.name.split('/').pop();
-        out.push(d);
-      }
-    }
-    out.sort((a,b) => String(b.surveyDate||'').localeCompare(String(a.surveyDate||'')));
-    return out;
   }
 };
 
@@ -508,7 +447,7 @@ const DISCLAIMER_VERSION = '2025-09-AP42-v1';
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = LOGIN_URL; return; }
   try {
-    const profile = await window.fbSurvey.getUser(user.uid);
+    const profile = await window.fbSpacing.getUser(user.uid);
     if (!profile || profile.approved !== true) { window.location.href = LOGIN_URL; return; }
     if (!(profile.disclaimerAccepted === true && profile.disclaimerVersion === DISCLAIMER_VERSION)) {
       window.location.href = LOGIN_URL; return;
@@ -519,18 +458,17 @@ onAuthStateChanged(auth, async (user) => {
       company: profile.company || '', role: profile.role || 'user'
     };
     if (profile.role === 'admin' || profile.role === 'super_admin') {
-      document.getElementById('survAdminLink').style.display = '';
-      document.getElementById('survAdminLinkMobile').style.display = '';
+      document.getElementById('spAdminLink').style.display = '';
+      document.getElementById('spAdminLinkMobile').style.display = '';
     }
     const companyEl = document.getElementById('companyName');
     if (companyEl && !companyEl.value) companyEl.value = profile.company || '';
-    window.dispatchEvent(new Event('survey-user-ready'));
   } catch (e) {
     window.location.href = LOGIN_URL;
   }
 });
 
-window.survSignOut = () => { window.fbSurvey.signOut().then(()=>{ window.location.href = LOGIN_URL; }); };
+window.spSignOut = () => { window.fbSpacing.signOut().then(()=>{ window.location.href = LOGIN_URL; }); };
 </script>
 
 <script>
@@ -549,470 +487,328 @@ document.addEventListener('click', function (e) {
   if (!e.target.closest('.topbar-kebab-wrap')) closeKebabMenu();
 });
 
-// ══════════════════════ REGULATORY PROFILE DEFAULTS ══════════════════════
-// PLACEHOLDER VALUES — see warning banner. Only the US EPA primary width figure
-// (1.5 in / 3.81 cm) is carried over from source material; everything else is
-// intentionally left blank pending verification against the published standard.
-const REG_PROFILES = {
-  US_EPA:     { primaryMaxWidth: 1.5,  primaryMaxAreaPerFt: null, secondaryMaxWidth: null, secondaryMaxAreaPerFt: null },
-  IN_CPCB:    { primaryMaxWidth: null, primaryMaxAreaPerFt: null, secondaryMaxWidth: null, secondaryMaxAreaPerFt: null },
-  EU_EN14015: { primaryMaxWidth: null, primaryMaxAreaPerFt: null, secondaryMaxWidth: null, secondaryMaxAreaPerFt: null },
-  CUSTOM:     { primaryMaxWidth: null, primaryMaxAreaPerFt: null, secondaryMaxWidth: null, secondaryMaxAreaPerFt: null }
-};
-
-// India practice (as given by the tool's author, not independently verified
-// against a specific published clause): rim gap standardized at 200mm +/- 100mm
-// (i.e. 100-300mm) for tank diameters above 30m. Diameter-dependent, so this
-// can't live as a flat REG_PROFILES constant - computed fresh each time.
-const IN_RIM_GAP_MIN_DIA_M = 30;
-const IN_RIM_GAP_RANGE = { min: 100, max: 300 };
-
-function applyRimGapProfileDefault() {
-  const profile = document.getElementById('regProfile').value;
-  const minEl = document.getElementById('rimGapExpMin'), maxEl = document.getElementById('rimGapExpMax');
-  if (profile === 'IN_CPCB') {
-    const diaFt = parseFloat(document.getElementById('diameter').value) || 0;
-    const diaM = diaFt * 0.3048;
-    if (diaM > IN_RIM_GAP_MIN_DIA_M) {
-      minEl.value = IN_RIM_GAP_RANGE.min; maxEl.value = IN_RIM_GAP_RANGE.max;
-    } else {
-      minEl.value = ''; maxEl.value = '';
-    }
-  } else {
-    minEl.value = ''; maxEl.value = '';
-  }
-}
-
-function onProfileChange() {
-  const p = REG_PROFILES[document.getElementById('regProfile').value] || REG_PROFILES.CUSTOM;
-  document.getElementById('primaryMaxWidth').value = p.primaryMaxWidth ?? '';
-  document.getElementById('primaryMaxAreaPerFt').value = p.primaryMaxAreaPerFt ?? '';
-  document.getElementById('secondaryMaxWidth').value = p.secondaryMaxWidth ?? '';
-  document.getElementById('secondaryMaxAreaPerFt').value = p.secondaryMaxAreaPerFt ?? '';
-  applyRimGapProfileDefault();
-  recalcTotals();
-}
-
-// ══════════════════════ GRID BUILD & GEOMETRY ══════════════════════
-window._currentSurveyId = null;
-window._currentSurveyStatus = 'draft';
-
-function computePointCount() {
-  const D = parseFloat(document.getElementById('diameter').value);
-  const spacing = parseFloat(document.getElementById('spacingFt').value) || 10;
-  const minPts = parseInt(document.getElementById('minPoints').value, 10) || 8;
-  if (!D || D <= 0) return minPts;
-  return Math.max(minPts, Math.ceil((Math.PI * D) / spacing));
-}
-
-function onGeometryChange() {
-  const n = computePointCount();
-  document.getElementById('pointCountDisplay').value = n + ' points';
-  if (document.getElementById('regProfile').value === 'IN_CPCB') applyRimGapProfileDefault();
-  buildGrid(n);
-}
-
-function buildGrid(n, existingReadings) {
-  const tbody = document.getElementById('gapTableBody');
-  const prevRows = [];
-  if (!existingReadings) {
-    tbody.querySelectorAll('tr').forEach(tr => {
-      prevRows.push({
-        pos: tr.querySelector('.pos-input').value, rg: tr.querySelector('.rg').value,
-        pl: tr.querySelector('.pl').value, pw: tr.querySelector('.pw').value,
-        sl: tr.querySelector('.sl').value, sw: tr.querySelector('.sw').value,
-        note: tr.querySelector('.note-input').value
-      });
-    });
-  }
-  tbody.innerHTML = '';
-  for (let i = 0; i < n; i++) {
-    let pos, rg='', pl='', pw='', sl='', sw='', note='';
-    if (existingReadings && existingReadings[i]) {
-      const r = existingReadings[i];
-      pos = r.positionDeg; rg = r.rimGapMm ?? ''; pl = r.primaryLengthIn ?? ''; pw = r.primaryWidthIn ?? '';
-      sl = r.secondaryLengthIn ?? ''; sw = r.secondaryWidthIn ?? ''; note = r.note ?? '';
-    } else {
-      pos = (i * 360 / n).toFixed(1);
-      if (prevRows[i]) { rg = prevRows[i].rg; pl = prevRows[i].pl; pw = prevRows[i].pw; sl = prevRows[i].sl; sw = prevRows[i].sw; note = prevRows[i].note; }
-    }
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td class="pt-idx">${i+1}</td>
-      <td><input class="pos-input" type="number" step="0.1" min="0" max="359.9" value="${pos}" oninput="recalcTotals()"></td>
-      <td><input class="rg" type="number" step="0.01" min="0" value="${rg}" placeholder="optional" oninput="recalcTotals()"></td>
-      <td><input class="pl" type="number" step="0.01" min="0" value="${pl}" oninput="recalcTotals()"></td>
-      <td><input class="pw" type="number" step="0.01" min="0" value="${pw}" oninput="recalcTotals()"></td>
-      <td><input class="area-out pArea" disabled value="0.00"></td>
-      <td><input class="sl" type="number" step="0.01" min="0" value="${sl}" oninput="recalcTotals()"></td>
-      <td><input class="sw" type="number" step="0.01" min="0" value="${sw}" oninput="recalcTotals()"></td>
-      <td><input class="area-out sArea" disabled value="0.00"></td>
-      <td><input class="note-input" type="text" value="${note}" placeholder="optional"></td>`;
-    tbody.appendChild(tr);
-  }
-  recalcTotals();
-}
-
 function fmt(n, d=2) { return (Math.round(n * Math.pow(10,d)) / Math.pow(10,d)).toFixed(d); }
 
-function recalcTotals() {
-  const rows = Array.from(document.querySelectorAll('#gapTableBody tr'));
-  const D = parseFloat(document.getElementById('diameter').value) || 0;
-  const pMaxW = parseFloat(document.getElementById('primaryMaxWidth').value);
-  const pMaxA = parseFloat(document.getElementById('primaryMaxAreaPerFt').value);
-  const sMaxW = parseFloat(document.getElementById('secondaryMaxWidth').value);
-  const sMaxA = parseFloat(document.getElementById('secondaryMaxAreaPerFt').value);
-  const rgExpMin = parseFloat(document.getElementById('rimGapExpMin').value);
-  const rgExpMax = parseFloat(document.getElementById('rimGapExpMax').value);
-  const rgHasRange = !isNaN(rgExpMin) && !isNaN(rgExpMax);
+// ══════════════════════ NFPA 30 TABLE 22.4.2.1 ══════════════════════
+// Cross-verified across three independently-sourced extracts (2014 training
+// deck, 2008-edition extract, pre-2008-edition extract) of NFPA 30's
+// shell-to-shell spacing table. Multiplier x (sum of the two tank diameters),
+// floor of 3 ft always applies.
+const NFPA_SPACING_MATRIX = {
+  le150:        { floating: 1/6, fixed: 1/6, iiiA: 1/6 },
+  gt150_remote: { floating: 1/6, fixed: 1/4, iiiA: 1/6 },
+  open_dike:    { floating: 1/4, fixed: 1/3, iiiA: 1/4 }
+};
 
-  let pTotal = 0, pMaxFound = 0, pCount = 0;
-  let sTotal = 0, sMaxFound = 0, sCount = 0;
-  let rgSum = 0, rgMin = null, rgMax = null, rgCount = 0, rgOutCount = 0;
+// NFPA 30 Table 22.4.1.1(b) - reference distance table (ft) by tank capacity
+// (gal), used directly by Table 22.4.1.1(a) at 1x for stable liquids <=2.5
+// psig. Cross-verified: the first four bands match exactly across all three
+// source extracts; the remaining bands match across the two that cover them.
+const NFPA_TABLE_B = [
+  { max: 275,        property: 5,   public: 5  },
+  { max: 750,        property: 10,  public: 5  },
+  { max: 12000,      property: 15,  public: 5  },
+  { max: 30000,      property: 20,  public: 5  },
+  { max: 50000,      property: 30,  public: 10 },
+  { max: 100000,     property: 50,  public: 15 },
+  { max: 500000,     property: 80,  public: 25 },
+  { max: 1000000,    property: 100, public: 35 },
+  { max: 2000000,    property: 135, public: 45 },
+  { max: 3000000,    property: 165, public: 55 },
+  { max: Infinity,   property: 175, public: 60 }
+];
 
-  rows.forEach(tr => {
-    const pl = parseFloat(tr.querySelector('.pl').value) || 0;
-    const pw = parseFloat(tr.querySelector('.pw').value) || 0;
-    const sl = parseFloat(tr.querySelector('.sl').value) || 0;
-    const sw = parseFloat(tr.querySelector('.sw').value) || 0;
-    const rg = parseFloat(tr.querySelector('.rg').value);
-    const pArea = pl * pw, sArea = sl * sw;
-    tr.querySelector('.pArea').value = fmt(pArea);
-    tr.querySelector('.sArea').value = fmt(sArea);
-    if (pArea > 0) { pTotal += pArea; pCount++; }
-    if (sArea > 0) { sTotal += sArea; sCount++; }
-    if (pw > pMaxFound) pMaxFound = pw;
-    if (sw > sMaxFound) sMaxFound = sw;
+function onSpacingStandardChange() {
+  const std = document.getElementById('spacingStandard').value;
+  document.getElementById('nfpaSpacingFields').style.display = (std === 'NFPA_30') ? 'block' : 'none';
+  document.getElementById('oisdSpacingFields').style.display = (std === 'OISD_118') ? 'block' : 'none';
+  document.getElementById('spacingActualUnit').textContent = (std === 'NFPA_30') ? 'ft' : 'm';
+  recalcSpacing();
+}
 
-    const rgInput = tr.querySelector('.rg');
-    rgInput.classList.remove('over-limit','near-limit');
-    if (!isNaN(rg)) {
-      rgSum += rg; rgCount++;
-      if (rgMin === null || rg < rgMin) rgMin = rg;
-      if (rgMax === null || rg > rgMax) rgMax = rg;
-      if (rgHasRange) {
-        const span = rgExpMax - rgExpMin;
-        const nearBand = span * 0.15;
-        if (rg < rgExpMin || rg > rgExpMax) { rgInput.classList.add('over-limit'); rgOutCount++; }
-        else if (rg - rgExpMin < nearBand || rgExpMax - rg < nearBand) rgInput.classList.add('near-limit');
-      }
-    }
+function recalcSpacing() {
+  const std = document.getElementById('spacingStandard').value;
+  const dA = parseFloat(document.getElementById('tankA_dia').value) || 0;
+  const dB = parseFloat(document.getElementById('tankB_dia').value) || 0;
+  const sumDia = dA + dB;
+  const actual = parseFloat(document.getElementById('actualSpacing').value);
+  document.getElementById('spacingSumDia').textContent = fmt(sumDia) + (std === 'NFPA_30' ? ' ft' : ' m');
 
-    const pwInput = tr.querySelector('.pw');
-    pwInput.classList.remove('over-limit','near-limit');
-    if (!isNaN(pMaxW) && pw > 0) {
-      if (pw > pMaxW) pwInput.classList.add('over-limit');
-      else if (pw >= 0.7 * pMaxW) pwInput.classList.add('near-limit');
-    }
-    const swInput = tr.querySelector('.sw');
-    swInput.classList.remove('over-limit','near-limit');
-    if (!isNaN(sMaxW) && sw > 0) {
-      if (sw > sMaxW) swInput.classList.add('over-limit');
-      else if (sw >= 0.7 * sMaxW) swInput.classList.add('near-limit');
-    }
-  });
+  let required = null, formulaText = '—';
 
-  const pPerFt = D > 0 ? pTotal / D : 0;
-  const sPerFt = D > 0 ? sTotal / D : 0;
-
-  document.getElementById('primaryTotalArea').textContent = fmt(pTotal) + ' in\u00b2';
-  document.getElementById('primaryAreaPerFt').textContent = D > 0 ? fmt(pPerFt) + ' in\u00b2/ft' : '\u2014 (enter diameter)';
-  document.getElementById('primaryMaxWidthFound').textContent = fmt(pMaxFound) + ' in';
-  document.getElementById('primaryGapCount').textContent = pCount;
-
-  document.getElementById('secondaryTotalArea').textContent = fmt(sTotal) + ' in\u00b2';
-  document.getElementById('secondaryAreaPerFt').textContent = D > 0 ? fmt(sPerFt) + ' in\u00b2/ft' : '\u2014 (enter diameter)';
-  document.getElementById('secondaryMaxWidthFound').textContent = fmt(sMaxFound) + ' in';
-  document.getElementById('secondaryGapCount').textContent = sCount;
-
-  setBadge('primaryBadge', pMaxFound, pMaxW, pPerFt, pMaxA, pCount);
-  setBadge('secondaryBadge', sMaxFound, sMaxW, sPerFt, sMaxA, sCount);
-
-  document.getElementById('rimGapExpectedDisplay').textContent = rgHasRange ? (fmt(rgExpMin,0) + '\u2013' + fmt(rgExpMax,0) + ' mm') : 'not set';
-  document.getElementById('rimGapMin').textContent = rgCount ? fmt(rgMin) + ' mm' : '—';
-  document.getElementById('rimGapMax').textContent = rgCount ? fmt(rgMax) + ' mm' : '—';
-  document.getElementById('rimGapAvg').textContent = rgCount ? fmt(rgSum / rgCount) + ' mm' : '—';
-  document.getElementById('rimGapOutOfRange').textContent = rgHasRange ? (rgOutCount + ' of ' + rgCount) : '—';
-  document.getElementById('rimGapCount').textContent = rgCount;
-
-  const rgBadge = document.getElementById('rimGapBadge');
-  if (!rgHasRange || rgCount === 0) {
-    rgBadge.className = 'badge unset'; rgBadge.textContent = rgCount === 0 ? 'No readings logged' : 'Informational';
+  if (std === 'NFPA_30') {
+    const crude = document.getElementById('nfpaCrudeException').checked;
+    const roof = document.getElementById('nfpaRoofType').value;
+    const sizeCat = document.getElementById('nfpaSizeCategory').value;
+    let mult;
+    if (crude) { mult = 1/6; formulaText = '1/6 \u03a3D (22.4.2.1.1 crude petroleum exception)'; }
+    else { mult = NFPA_SPACING_MATRIX[sizeCat][roof]; formulaText = fmtFraction(mult) + ' \u03a3D'; }
+    required = Math.max(3, mult * sumDia);
+    formulaText += ', floor 3 ft';
   } else {
-    rgBadge.className = 'badge ' + (rgOutCount > 0 ? 'fail' : 'pass');
-    rgBadge.textContent = rgOutCount > 0 ? (rgOutCount + ' outside range') : 'Within range';
+    const cls = document.getElementById('oisdClass').value;
+    const roof = document.getElementById('oisdRoofType').value;
+    const overFifty = (dA > 50 || dB > 50);
+    if (!overFifty) {
+      // Table-4 row 1 (<=50m dia.): floating & fixed roof Class A/B both use
+      // (D+d)/4, min 10m; Class C uses (D+d)/6, min 6m - visually confirmed.
+      const div = (cls === 'C') ? 6 : 4;
+      const floorM = (cls === 'C') ? 6 : 10;
+      required = Math.max(floorM, sumDia / div);
+      formulaText = '(D+d)/' + div + ', floor ' + floorM + ' m (Table-4, \u226450m dia.)';
+    } else {
+      // Table-4 row 2 (>50m dia., no floor stated): floating roof A/B and
+      // Class C both use (D+d)/4; fixed roof A/B uses the stricter (D+d)/3.
+      let div;
+      if (cls === 'C') div = 4;
+      else div = (roof === 'fixed') ? 3 : 4;
+      required = sumDia / div;
+      formulaText = '(D+d)/' + div + ' (Table-4, >50m dia. \u2014 no floor stated)';
+    }
+  }
+
+  document.getElementById('spacingFormula').textContent = formulaText;
+  document.getElementById('requiredSpacingDisplay').value = required !== null ? fmt(required) + (std==='NFPA_30'?' ft':' m') : '—';
+  document.getElementById('spacingRequired').textContent = required !== null ? fmt(required) + (std==='NFPA_30'?' ft':' m') : '—';
+
+  const badge = document.getElementById('spacingBadge');
+  if (isNaN(actual) || required === null || sumDia === 0) {
+    badge.className = 'badge unset'; badge.textContent = 'Not evaluated';
+    document.getElementById('spacingSurplus').textContent = '—';
+  } else {
+    const surplus = actual - required;
+    document.getElementById('spacingSurplus').textContent = (surplus >= 0 ? '+' : '') + fmt(surplus) + (std==='NFPA_30'?' ft':' m');
+    badge.className = 'badge ' + (surplus >= 0 ? 'pass' : 'fail');
+    badge.textContent = surplus >= 0 ? 'Pass' : 'Deficit';
+  }
+
+  window._lastSpacing = { std, dA, dB, sumDia, actual: isNaN(actual)?null:actual, required, formulaText };
+}
+
+function fmtFraction(x) {
+  if (Math.abs(x - 1/6) < 1e-9) return '1/6';
+  if (Math.abs(x - 1/4) < 1e-9) return '1/4';
+  if (Math.abs(x - 1/3) < 1e-9) return '1/3';
+  return fmt(x, 3);
+}
+
+// ══════════════════════ OISD-118 TABLE-3 / TABLE-5 (TANK-TO-OFFSITE-FACILITY) ══════════════════════
+// Manually transcribed from a legible, non-OCR'd training-deck image (GAIL
+// India presentation on OISD-118) - not the primary OISD-118 code text
+// itself, so cross-check before relying on it. Cell types:
+//   ['x']                   - not applicable
+//   ['t4']                  - refer to the Tank-to-Tank Shell Spacing
+//                             section above (OISD Table-4) - needs a second
+//                             tank's diameter, which this lookup doesn't collect
+//   ['fixed', N]            - flat N metres
+//   ['halfD']               - 0.5 x diameter
+//   ['halfD_floor', N]      - max(0.5 x diameter, N)
+//   ['fullD_floor', N]      - max(diameter, N)
+const FACILITY_LARGE_CATEGORIES = [
+  'Storage Tank Class A/B', 'Storage Tank Class C',
+  'Storage/Filling Shed (packed) Class A/B', 'Storage/Filling Shed (packed) Class C',
+  'Tank Vehicle Loading/Unloading Class A/B', 'Tank Vehicle Loading/Unloading Class C',
+  'Flameproof Electric Pump Motor', 'Non-Flameproof Electric Pump Motor', 'Boundary Wall'
+];
+const T4 = ['t4'], X = ['x'];
+const FACILITY_LARGE_MATRIX = [
+  [T4,               T4,     ['fixed',15], ['fixed',15], ['fixed',15], ['fixed',15], ['fixed',8],  ['fixed',15], ['halfD_floor',20]],
+  [T4,               X,      ['fixed',15], X,            ['fixed',8],  X,            X,            X,            ['halfD_floor',20]],
+  [['fixed',15],     ['fixed',15], X,      ['fixed',8],  ['fixed',15], ['fixed',15], ['fixed',8],  ['fixed',15], ['fixed',15]],
+  [['fixed',15],     X,      ['fixed',8],  X,            ['fixed',8],  X,            X,            X,            ['fixed',10]],
+  [['fixed',15],     ['fixed',15], ['fixed',15], ['fixed',8], X,      X,            ['fixed',8],  ['fixed',15], ['fixed',20]],
+  [['fixed',15],     X,      ['fixed',15], X,            X,            X,            X,            X,            ['fixed',10]],
+  [['fixed',8],      X,      ['fixed',8],  X,            ['fixed',8],  X,            X,            ['fixed',8],  X],
+  [['fixed',15],     X,      ['fixed',15], X,            ['fixed',15], X,            ['fixed',8],  X,            X],
+  [['halfD_floor',20], ['halfD_floor',20], ['fixed',15], ['fixed',10], ['fixed',20], ['fixed',10], X,           X,            X]
+];
+
+const FACILITY_SMALL_CATEGORIES = [
+  'Storage Tank Class A', 'Storage Tank Class B', 'Storage Tank Class C',
+  'Storage/Filling Shed Class A', 'Storage/Filling Shed (non-bulk) Class B', 'Storage/Filling Shed (non-bulk, packed) Class C',
+  'Tank Vehicle Loading/Unloading Class A', 'Tank Vehicle Loading/Unloading Class B', 'Tank Vehicle Loading/Unloading Class C',
+  'Flameproof Electric Pump Motor', 'Non-Flameproof Electric Pump Motor', 'Office Building/Stores/Amenities', 'Boundary Wall'
+];
+const HD = ['halfD'], FD45 = ['fullD_floor',4.5], HD3 = ['halfD_floor',3.0], HD6 = ['halfD_floor',6.0];
+const FACILITY_SMALL_MATRIX = [
+  [HD, HD, HD6, ['fixed',9], ['fixed',9], ['fixed',9], ['fixed',15], ['fixed',15], ['fixed',15], ['fixed',3], ['fixed',15], ['fixed',15], ['fixed',15]],
+  [HD, HD, HD6, ['fixed',9], HD, HD, ['fixed',9], ['fixed',4.5], ['fixed',4.5], ['fixed',3], ['fixed',4.5], FD45, FD45],
+  [HD6, HD6, X, ['fixed',9], HD, X, ['fixed',9], ['fixed',4.5], X, X, X, HD3, HD3],
+  [['fixed',9], ['fixed',9], ['fixed',9], X, ['fixed',4.5], ['fixed',6], ['fixed',9], ['fixed',9], ['fixed',9], ['fixed',3], ['fixed',9], ['fixed',9], ['fixed',9]],
+  [['fixed',9], HD, HD, ['fixed',4.5], X, ['fixed',1.5], ['fixed',9], ['fixed',4.5], ['fixed',4.5], ['fixed',1.5], ['fixed',4.5], ['fixed',4.5], ['fixed',4.5]],
+  [['fixed',9], HD, X, ['fixed',6], ['fixed',1.5], X, ['fixed',9], ['fixed',4.5], X, X, X, ['fixed',3], ['fixed',3]],
+  [['fixed',15], ['fixed',9], ['fixed',9], ['fixed',9], ['fixed',9], ['fixed',9], X, ['fixed',9], ['fixed',9], ['fixed',3], ['fixed',9], ['fixed',9], ['fixed',9]],
+  [['fixed',15], ['fixed',4.5], ['fixed',4.5], ['fixed',9], ['fixed',4.5], ['fixed',4.5], ['fixed',9], X, ['fixed',4.5], ['fixed',1.5], ['fixed',4.5], ['fixed',4.5], ['fixed',4.5]],
+  [['fixed',15], ['fixed',4.5], X, ['fixed',9], ['fixed',4.5], X, ['fixed',9], ['fixed',4.5], X, X, X, ['fixed',3], ['fixed',3]],
+  [['fixed',3], ['fixed',3], X, ['fixed',3], ['fixed',1.5], X, ['fixed',3], ['fixed',1.5], X, X, X, ['fixed',3], X],
+  [['fixed',15], ['fixed',4.5], X, ['fixed',9], ['fixed',4.5], X, ['fixed',9], ['fixed',4.5], X, X, X, X, X],
+  [['fixed',15], FD45, HD3, ['fixed',9], ['fixed',4.5], ['fixed',3], ['fixed',9], ['fixed',4.5], ['fixed',3], X, X, X, X],
+  [['fixed',15], FD45, HD3, ['fixed',9], ['fixed',4.5], ['fixed',3], ['fixed',9], ['fixed',4.5], ['fixed',3], X, X, X, X]
+];
+// Known discrepancies from the source image itself (not transcription
+// errors on this end - re-checked against the slide directly): the matrix
+// isn't perfectly symmetric in two places -
+//   Table-3: Storage Tank Class C -> Tank Vehicle Loading A/B reads 8, but
+//   the reverse direction reads 15.
+//   Table-5: Flameproof Pump Motor -> Office Building reads 3, but the
+//   reverse direction reads x (not applicable).
+// Both are left exactly as read (not silently forced symmetric) and flagged
+// in the card hint - if your lookup hits either pair, check both directions.
+
+function populateFacilityDropdowns() {
+  const size = document.getElementById('facilitySize').value;
+  const cats = (size === 'large') ? FACILITY_LARGE_CATEGORIES : FACILITY_SMALL_CATEGORIES;
+  ['facilityFrom','facilityTo'].forEach((id, idx) => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = cats.map((c,i) => `<option value="${i}" ${i===idx?'selected':''}>${c}</option>`).join('');
+  });
+}
+
+function onFacilitySizeChange() {
+  populateFacilityDropdowns();
+  recalcFacility();
+}
+
+function facilityCellText(cell) {
+  switch (cell[0]) {
+    case 'x': return 'Not applicable';
+    case 't4': return 'See Table-4 above (needs both tanks\u2019 diameters)';
+    case 'fixed': return cell[1] + ' m';
+    case 'halfD': return '0.5 \u00d7 diameter';
+    case 'halfD_floor': return '0.5 \u00d7 diameter, min ' + cell[1] + ' m';
+    case 'fullD_floor': return 'diameter, min ' + cell[1] + ' m';
   }
 }
 
-function setBadge(elId, maxFound, maxW, perFt, maxA, count) {
-  const el = document.getElementById(elId);
-  const haveLimit = !isNaN(maxW) || !isNaN(maxA);
-  if (!haveLimit || count === 0) {
-    el.className = 'badge unset'; el.textContent = count === 0 ? 'No gaps logged' : 'Not evaluated';
+function facilityCellValue(cell, dia) {
+  switch (cell[0]) {
+    case 'x': case 't4': return null;
+    case 'fixed': return cell[1];
+    case 'halfD': return 0.5 * dia;
+    case 'halfD_floor': return Math.max(0.5 * dia, cell[1]);
+    case 'fullD_floor': return Math.max(dia, cell[1]);
+  }
+}
+
+function recalcFacility() {
+  const size = document.getElementById('facilitySize').value;
+  const matrix = (size === 'large') ? FACILITY_LARGE_MATRIX : FACILITY_SMALL_MATRIX;
+  const from = parseInt(document.getElementById('facilityFrom').value, 10);
+  const to = parseInt(document.getElementById('facilityTo').value, 10);
+  const dia = parseFloat(document.getElementById('facilityDia').value) || 0;
+  const actual = parseFloat(document.getElementById('facilityActual').value);
+
+  if (isNaN(from) || isNaN(to) || !matrix[from]) {
+    document.getElementById('facilityCellRaw').textContent = '—';
+    document.getElementById('facilityRequired').textContent = '—';
+    document.getElementById('facilityRequiredDisplay').value = '—';
+    document.getElementById('facilitySurplus').textContent = '—';
+    document.getElementById('facilityBadge').className = 'badge unset';
+    document.getElementById('facilityBadge').textContent = 'Not evaluated';
     return;
   }
-  let fail = false;
-  if (!isNaN(maxW) && maxFound > maxW) fail = true;
-  if (!isNaN(maxA) && perFt > maxA) fail = true;
-  el.className = 'badge ' + (fail ? 'fail' : 'pass');
-  el.textContent = fail ? 'Exceeds limit' : 'Within limit';
+
+  const cell = matrix[from][to];
+  document.getElementById('facilityCellRaw').textContent = facilityCellText(cell);
+  const required = facilityCellValue(cell, dia);
+  document.getElementById('facilityRequired').textContent = required !== null ? fmt(required) + ' m' : '\u2014';
+  document.getElementById('facilityRequiredDisplay').value = required !== null ? fmt(required) + ' m' : '\u2014';
+
+  const badge = document.getElementById('facilityBadge');
+  if (required === null || isNaN(actual)) {
+    badge.className = 'badge unset';
+    badge.textContent = (cell[0] === 't4') ? 'See Table-4' : (cell[0] === 'x' ? 'Not applicable' : 'Not evaluated');
+    document.getElementById('facilitySurplus').textContent = '—';
+  } else {
+    const surplus = actual - required;
+    document.getElementById('facilitySurplus').textContent = (surplus>=0?'+':'') + fmt(surplus) + ' m';
+    badge.className = 'badge ' + (surplus >= 0 ? 'pass' : 'fail');
+    badge.textContent = surplus >= 0 ? 'Pass' : 'Deficit';
+  }
+
+  window._lastFacility = { size, from, to, fromLabel: (size==='large'?FACILITY_LARGE_CATEGORIES:FACILITY_SMALL_CATEGORIES)[from], toLabel: (size==='large'?FACILITY_LARGE_CATEGORIES:FACILITY_SMALL_CATEGORIES)[to], dia, cellText: facilityCellText(cell), required, actual: isNaN(actual)?null:actual };
 }
 
-// ══════════════════════ SAVE / SUBMIT ══════════════════════
-function gatherSurveyData(status) {
+// ══════════════════════ NFPA 30 TABLE 22.4.1.1(b) LOOKUP ══════════════════════
+function recalcPropertyLine() {
+  const D = parseFloat(document.getElementById('plDiameter').value) || 0;
+  const H = parseFloat(document.getElementById('plHeight').value) || 0;
+  const mult = parseFloat(document.getElementById('plMultiplier').value);
+  const hasMult = !isNaN(mult);
+  const volFt3 = (Math.PI / 4) * D * D * H;
+  const capacityGal = volFt3 * 7.48052;
+  document.getElementById('plCapacityDisplay').value = D && H ? fmt(capacityGal, 0) + ' gal' : '—';
+
+  const band = NFPA_TABLE_B.find(b => capacityGal <= b.max) || NFPA_TABLE_B[NFPA_TABLE_B.length - 1];
+  const bandLabel = (D && H) ? ('up to ' + (band.max === Infinity ? '3,000,001+' : fmt(band.max,0)) + ' gal') : '—';
+  document.getElementById('plBand').textContent = bandLabel;
+
+  const reqProperty = (D && H && hasMult) ? band.property * mult : null;
+  const reqPublic = (D && H && hasMult) ? band.public * mult : null;
+  document.getElementById('plRequiredPropertyDisplay').value = reqProperty !== null ? fmt(reqProperty) + ' ft' : '—';
+  document.getElementById('plRequiredPublicDisplay').value = reqPublic !== null ? fmt(reqPublic) + ' ft' : '—';
+
+  const actualProperty = parseFloat(document.getElementById('plActualProperty').value);
+  const actualPublic = parseFloat(document.getElementById('plActualPublic').value);
+  const propSurplus = (!isNaN(actualProperty) && reqProperty !== null) ? actualProperty - reqProperty : null;
+  const pubSurplus = (!isNaN(actualPublic) && reqPublic !== null) ? actualPublic - reqPublic : null;
+  document.getElementById('plPropertySurplus').textContent = propSurplus !== null ? (propSurplus>=0?'+':'')+fmt(propSurplus)+' ft' : '—';
+  document.getElementById('plPublicSurplus').textContent = pubSurplus !== null ? (pubSurplus>=0?'+':'')+fmt(pubSurplus)+' ft' : '—';
+
+  const badge = document.getElementById('plBadge');
+  if (propSurplus === null && pubSurplus === null) {
+    badge.className = 'badge unset'; badge.textContent = 'Not evaluated';
+  } else {
+    const fail = (propSurplus !== null && propSurplus < 0) || (pubSurplus !== null && pubSurplus < 0);
+    badge.className = 'badge ' + (fail ? 'fail' : 'pass');
+    badge.textContent = fail ? 'Deficit' : 'Pass';
+  }
+
+  window._lastPropertyLine = { D, H, capacityGal, band, mult: hasMult?mult:null, reqProperty, reqPublic, actualProperty: isNaN(actualProperty)?null:actualProperty, actualPublic: isNaN(actualPublic)?null:actualPublic };
+}
+
+// ══════════════════════ SAVE / PRINT ══════════════════════
+function gatherSpacingData() {
   const g = id => (document.getElementById(id) ? document.getElementById(id).value : '') || '';
-  const rows = Array.from(document.querySelectorAll('#gapTableBody tr'));
-  const readings = rows.map((tr, i) => ({
-    idx: i,
-    positionDeg: parseFloat(tr.querySelector('.pos-input').value) || 0,
-    rimGapMm: tr.querySelector('.rg').value !== '' ? (parseFloat(tr.querySelector('.rg').value) || 0) : null,
-    primaryLengthIn: parseFloat(tr.querySelector('.pl').value) || 0,
-    primaryWidthIn: parseFloat(tr.querySelector('.pw').value) || 0,
-    primaryAreaIn2: parseFloat(tr.querySelector('.pArea').value) || 0,
-    secondaryLengthIn: parseFloat(tr.querySelector('.sl').value) || 0,
-    secondaryWidthIn: parseFloat(tr.querySelector('.sw').value) || 0,
-    secondaryAreaIn2: parseFloat(tr.querySelector('.sArea').value) || 0,
-    note: tr.querySelector('.note-input').value || ''
-  }));
   const u = window._tpUser || {};
+  const s = window._lastSpacing || {};
+  const p = window._lastPropertyLine || {};
+  const f = window._lastFacility || {};
   return {
     uid: u.uid || '', userEmail: u.email || '', userName: ((u.firstName||'')+' '+(u.lastName||'')).trim(),
-    company: g('companyName'), tankId: g('tankId'), location: g('tankLocation'),
-    diameterFt: parseFloat(g('diameter')) || 0, spacingFt: parseFloat(g('spacingFt')) || 0,
-    minPoints: parseInt(g('minPoints'),10) || 0, pointCount: readings.length,
-    roofLevel: g('roofLevel'), surveyDate: g('surveyDate'), inspector: g('inspector'),
-    instrumentUsed: g('instrumentUsed'), weatherConditions: g('weatherConditions'), surveyNotes: g('surveyNotes'),
+    company: g('companyName'), facilityId: g('facilityId'), location: g('siteLocation'),
     recordType: g('recordType') || 'research',
-    regulatoryProfile: g('regProfile'),
-    primaryMaxWidth: parseFloat(g('primaryMaxWidth')), primaryMaxAreaPerFt: parseFloat(g('primaryMaxAreaPerFt')),
-    secondaryMaxWidth: parseFloat(g('secondaryMaxWidth')), secondaryMaxAreaPerFt: parseFloat(g('secondaryMaxAreaPerFt')),
-    primaryTotalAreaIn2: parseFloat(document.getElementById('primaryTotalArea').textContent) || 0,
-    secondaryTotalAreaIn2: parseFloat(document.getElementById('secondaryTotalArea').textContent) || 0,
-    rimGapMinMm: parseFloat(document.getElementById('rimGapMin').textContent) || null,
-    rimGapMaxMm: parseFloat(document.getElementById('rimGapMax').textContent) || null,
-    rimGapAvgMm: parseFloat(document.getElementById('rimGapAvg').textContent) || null,
-    rimGapExpMinMm: parseFloat(document.getElementById('rimGapExpMin').value),
-    rimGapExpMaxMm: parseFloat(document.getElementById('rimGapExpMax').value),
-    readings, status,
-    updatedAt: new Date().toISOString()
+    spacingStandard: s.std, tankA_id: g('tankA_id'), tankB_id: g('tankB_id'),
+    tankA_dia: s.dA, tankB_dia: s.dB, sumDia: s.sumDia,
+    spacingFormula: s.formulaText, requiredSpacing: s.required, actualSpacing: s.actual,
+    facilitySize: f.size, facilityFrom: f.fromLabel, facilityTo: f.toLabel,
+    facilityDia: f.dia, facilityCellText: f.cellText, facilityRequired: f.required, facilityActual: f.actual,
+    plDiameter: p.D, plHeight: p.H, plCapacityGal: p.capacityGal, plMultiplier: p.mult,
+    plRequiredProperty: p.reqProperty, plRequiredPublic: p.reqPublic,
+    plActualProperty: p.actualProperty, plActualPublic: p.actualPublic,
+    downloaded: false,
+    createdAt: new Date().toISOString()
   };
 }
 
-async function saveSurvey(status) {
+async function saveSpacingCalc() {
   const errEl = document.getElementById('errorMsg'), okEl = document.getElementById('okMsg');
   errEl.classList.remove('show'); okEl.classList.remove('show');
-  const tankId = document.getElementById('tankId').value.trim();
-  const diameter = parseFloat(document.getElementById('diameter').value);
-  const surveyDate = document.getElementById('surveyDate').value;
-  if (!tankId) { errEl.textContent = 'Tank ID is required.'; errEl.classList.add('show'); return; }
-  if (!diameter || diameter <= 0) { errEl.textContent = 'Tank diameter is required to compute point spacing.'; errEl.classList.add('show'); return; }
-  if (!surveyDate) { errEl.textContent = 'Survey date is required.'; errEl.classList.add('show'); return; }
-  if (window._currentSurveyStatus === 'submitted') {
-    errEl.textContent = 'This survey has already been submitted and its readings are locked. Use "Update Limits" in the Regulatory Profile card if you need to revise the applied limits — start a new survey for a follow-up inspection.';
-    errEl.classList.add('show'); return;
-  }
+  recalcSpacing(); recalcFacility(); recalcPropertyLine();
+  const facilityId = document.getElementById('facilityId').value.trim();
+  if (!facilityId) { errEl.textContent = 'Facility / Site ID is required.'; errEl.classList.add('show'); return; }
   try {
-    const data = gatherSurveyData(status);
-    if (!window._currentSurveyId) {
-      data.createdAt = new Date().toISOString();
-      const id = await window.fbSurvey.addSurvey(data);
-      window._currentSurveyId = id;
-    } else {
-      await window.fbSurvey.updateSurvey(window._currentSurveyId, data);
-    }
-    window._currentSurveyStatus = status;
-    okEl.textContent = status === 'submitted'
-      ? 'Survey submitted and locked. Print a report or start a new survey for the next inspection.'
-      : 'Draft saved.';
+    const data = gatherSpacingData();
+    await window.fbSpacing.addCalc(data);
+    okEl.textContent = 'Calculation saved.';
     okEl.classList.add('show');
-    if (status === 'submitted') lockForm(true);
   } catch (e) {
     errEl.textContent = 'Save failed: ' + e.message;
     errEl.classList.add('show');
   }
 }
 
-async function saveLimitsOnly() {
-  const errEl = document.getElementById('errorMsg'), okEl = document.getElementById('okMsg');
-  errEl.classList.remove('show'); okEl.classList.remove('show');
-  if (!window._currentSurveyId) {
-    errEl.textContent = 'Save the survey first (Save Draft or Submit) before updating limits independently.';
-    errEl.classList.add('show'); return;
-  }
-  try {
-    const g = id => document.getElementById(id).value;
-    const patch = {
-      regulatoryProfile: g('regProfile'),
-      primaryMaxWidth: parseFloat(g('primaryMaxWidth')),
-      primaryMaxAreaPerFt: parseFloat(g('primaryMaxAreaPerFt')),
-      secondaryMaxWidth: parseFloat(g('secondaryMaxWidth')),
-      secondaryMaxAreaPerFt: parseFloat(g('secondaryMaxAreaPerFt')),
-      rimGapExpMinMm: parseFloat(g('rimGapExpMin')),
-      rimGapExpMaxMm: parseFloat(g('rimGapExpMax')),
-      updatedAt: new Date().toISOString()
-    };
-    await window.fbSurvey.updateSurvey(window._currentSurveyId, patch);
-    okEl.textContent = 'Regulatory limits updated.';
-    okEl.classList.add('show');
-  } catch (e) {
-    errEl.textContent = 'Update failed: ' + e.message;
-    errEl.classList.add('show');
-  }
-}
-
-function lockForm(locked) {
-  // The regulatory profile card is intentionally excluded from the lock:
-  // measured readings are the immutable audit trail, but the limits applied
-  // against them are a reference/evaluation lens that should stay correctable
-  // (e.g. a limit typo, or a standard update) without reopening the record.
-  document.querySelectorAll('.card input, .card select').forEach(el => {
-    if (el.closest('#regProfileCard')) return;
-    el.disabled = locked;
-  });
-  document.getElementById('pointCountDisplay').disabled = true;
-  document.getElementById('limitsBtnRow').style.display = locked ? 'flex' : 'none';
-}
-
-// ══════════════════════ HISTORY / HEATMAP ══════════════════════
-window._heatmapTab = 'primary';
-window._historySurveys = [];
-
-function switchHeatmapTab(tab) {
-  window._heatmapTab = tab;
-  document.getElementById('hmTabPrimary').classList.toggle('active', tab === 'primary');
-  document.getElementById('hmTabSecondary').classList.toggle('active', tab === 'secondary');
-  document.getElementById('hmTabRim').classList.toggle('active', tab === 'rim');
-  document.getElementById('hmLegendSeal').style.display = (tab === 'rim') ? 'none' : 'flex';
-  document.getElementById('hmLegendRim').style.display = (tab === 'rim') ? 'flex' : 'none';
-  renderHeatmap();
-}
-
-async function loadHistory() {
-  const company = document.getElementById('companyName').value.trim();
-  const tankId = document.getElementById('tankId').value.trim();
-  const container = document.getElementById('heatmapContainer');
-  if (!tankId) { container.textContent = 'Enter a Tank ID above first.'; return; }
-  container.textContent = 'Loading survey history\u2026';
-  try {
-    const surveys = await window.fbSurvey.listByTank(company, tankId);
-    window._historySurveys = surveys;
-    if (surveys.length === 0) {
-      container.textContent = 'No saved surveys found yet for this Company + Tank ID.';
-      return;
-    }
-    renderHeatmap();
-  } catch (e) {
-    container.textContent = 'Could not load history: ' + e.message;
-  }
-}
-
-function severityClass(width, maxWidth) {
-  if (isNaN(maxWidth) || maxWidth === null || maxWidth === undefined) return 'hm-gray';
-  if (width > maxWidth) return 'hm-red';
-  if (width >= 0.7 * maxWidth) return 'hm-amber';
-  return 'hm-green';
-}
-
-function rimGapSeverity(value, min, max) {
-  if (value === null || value === undefined || isNaN(value)) return 'hm-gray';
-  const span = max - min;
-  if (value < min || value > max) return 'hm-red';
-  const nearBand = span * 0.15;
-  if (value - min < nearBand || max - value < nearBand) return 'hm-amber';
-  return 'hm-green';
-}
-
-function rimGapColor(value, min, max) {
-  if (value === null || value === undefined || isNaN(value)) return 'rgba(107,127,150,0.25)';
-  if (min === max) return 'rgba(201,168,76,0.55)';
-  const t = Math.max(0, Math.min(1, (value - min) / (max - min)));
-  const stops = [[47,102,144],[201,168,76],[240,91,91]]; // blue -> gold -> red
-  const seg = t < 0.5 ? 0 : 1;
-  const localT = t < 0.5 ? t / 0.5 : (t - 0.5) / 0.5;
-  const a = stops[seg], b = stops[seg+1];
-  const r = Math.round(a[0] + (b[0]-a[0]) * localT);
-  const g = Math.round(a[1] + (b[1]-a[1]) * localT);
-  const bl = Math.round(a[2] + (b[2]-a[2]) * localT);
-  return `rgba(${r},${g},${bl},0.7)`;
-}
-
-function renderHeatmap() {
-  const surveys = window._historySurveys;
-  const container = document.getElementById('heatmapContainer');
-  if (!surveys || surveys.length === 0) return;
-  const BUCKETS = 24;
-  const sealType = window._heatmapTab;
-  const wrap = document.createElement('div');
-  wrap.className = 'heatmap-scroll';
-  const grid = document.createElement('div');
-  grid.className = 'heatmap-grid';
-  grid.style.gridTemplateColumns = '150px repeat(' + BUCKETS + ', 1fr)';
-
-  grid.appendChild(document.createElement('div'));
-  for (let b = 0; b < BUCKETS; b++) {
-    const lbl = document.createElement('div');
-    lbl.className = 'hm-col-label';
-    lbl.textContent = Math.round(b * 360 / BUCKETS) + '\u00b0';
-    grid.appendChild(lbl);
-  }
-
-  // For the rim-gap tab, scale colour across the min/max seen across every
-  // loaded survey so rows without their own expected range stay comparable
-  // to each other (not re-scaled per row).
-  let rgGlobalMin = null, rgGlobalMax = null;
-  if (sealType === 'rim') {
-    surveys.forEach(s => (s.readings || []).forEach(r => {
-      const v = r.rimGapMm;
-      if (v === null || v === undefined || isNaN(v)) return;
-      if (rgGlobalMin === null || v < rgGlobalMin) rgGlobalMin = v;
-      if (rgGlobalMax === null || v > rgGlobalMax) rgGlobalMax = v;
-    }));
-  }
-
-  surveys.forEach(s => {
-    const rowLabel = document.createElement('div');
-    rowLabel.className = 'hm-row-label';
-    const tag = (s.recordType === 'research') ? ' (research)' : '';
-    rowLabel.textContent = (s.surveyDate || '\u2014') + (s.roofLevel ? ' \u00b7 ' + s.roofLevel : '') + tag;
-    grid.appendChild(rowLabel);
-
-    const buckets = new Array(BUCKETS).fill(null);
-    (s.readings || []).forEach(r => {
-      const idx = Math.round((r.positionDeg / 360) * BUCKETS) % BUCKETS;
-      let val;
-      if (sealType === 'rim') val = r.rimGapMm;
-      else val = sealType === 'primary' ? r.primaryWidthIn : r.secondaryWidthIn;
-      if (val === null || val === undefined || val === 0) return;
-      if (buckets[idx] === null || val > buckets[idx]) buckets[idx] = val;
-    });
-    const maxWidth = sealType === 'primary' ? s.primaryMaxWidth : s.secondaryMaxWidth;
-    const sMin = s.rimGapExpMinMm, sMax = s.rimGapExpMaxMm;
-    const hasOwnRange = sealType === 'rim' && typeof sMin === 'number' && !isNaN(sMin) && typeof sMax === 'number' && !isNaN(sMax);
-    for (let b = 0; b < BUCKETS; b++) {
-      const cell = document.createElement('div');
-      const w = buckets[b];
-      if (sealType === 'rim') {
-        if (hasOwnRange) {
-          cell.className = 'hm-cell ' + rimGapSeverity(w, sMin, sMax);
-        } else {
-          cell.className = 'hm-cell';
-          cell.style.background = rimGapColor(w, rgGlobalMin, rgGlobalMax);
-        }
-      } else {
-        cell.className = 'hm-cell ' + (w === null ? 'hm-gray' : severityClass(w, maxWidth));
-      }
-      cell.title = w === null ? 'No reading' : (w + (sealType==='rim'?' mm':' in') + ' at ~' + Math.round(b*360/BUCKETS) + '\u00b0');
-      grid.appendChild(cell);
-    }
-  });
-
-  wrap.appendChild(grid);
-  container.innerHTML = '';
-  container.appendChild(wrap);
-}
-
-// ══════════════════════ PRINT REPORT ══════════════════════
-function printReport(html, title) {
+function printReport(html) {
   const printCSS = `<style>@media print{@page{margin:14mm;}body{margin:0;}}
     @media screen{body{background:#eee;}.report-wrap{max-width:900px;margin:20px auto;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:28px;}}
     .print-bar{position:fixed;top:0;left:0;right:0;background:#0a0e14;color:#c9a84c;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;display:flex;gap:12px;align-items:center;justify-content:center;z-index:9999;}
@@ -1033,51 +829,51 @@ function printReport(html, title) {
   w.onload = () => { setTimeout(() => { try { w.focus(); w.print(); } catch(e){} }, 400); };
 }
 
-function printSurveyReport() {
+function printSpacingReport() {
+  recalcSpacing(); recalcFacility(); recalcPropertyLine();
   const g = id => (document.getElementById(id) ? document.getElementById(id).value : '') || '\u2014';
-  const rows = Array.from(document.querySelectorAll('#gapTableBody tr')).map((tr,i) => {
-    const c = sel => tr.querySelector(sel).value || '0';
-    const rgVal = tr.querySelector('.rg').value;
-    return `<tr><td>${i+1}</td><td>${c('.pos-input')}</td><td>${rgVal || '\u2014'}</td><td>${c('.pl')}</td><td>${c('.pw')}</td><td>${c('.pArea')}</td><td>${c('.sl')}</td><td>${c('.sw')}</td><td>${c('.sArea')}</td><td>${tr.querySelector('.note-input').value||''}</td></tr>`;
-  }).join('');
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Rim Seal Survey \u2014 ${g('tankId')}</title>
+  const s = window._lastSpacing || {};
+  const p = window._lastPropertyLine || {};
+  const f = window._lastFacility || {};
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Tank Spacing \u2014 ${g('facilityId')}</title>
 <style>body{font-family:Arial,sans-serif;color:#222;font-size:12px;} h1{font-size:18px;margin-bottom:4px;} h2{font-size:14px;margin:18px 0 6px;}
 table{border-collapse:collapse;width:100%;margin-bottom:14px;} th,td{border:1px solid #ccc;padding:5px 6px;text-align:center;font-size:11px;}
 th{background:#f2f2f2;} .meta td{text-align:left;}</style></head>
 <body>
-<h1>Rim Seal Gap Survey \u2014 ${g('tankId')}</h1>
-<p style="color:#666;margin-bottom:14px;">Company: ${g('companyName')} &middot; Location: ${g('tankLocation')} &middot; Survey date: ${g('surveyDate')}</p>
-<table class="meta">
-<tr><th>Diameter (ft)</th><td>${g('diameter')}</td><th>Point spacing (ft)</th><td>${g('spacingFt')}</td><th>Point count</th><td>${document.querySelectorAll('#gapTableBody tr').length}</td></tr>
-<tr><th>Roof/liquid level</th><td>${g('roofLevel')}</td><th>Inspector</th><td>${g('inspector')}</td><th>Instrument</th><td>${g('instrumentUsed')}</td></tr>
-<tr><th>Weather</th><td colspan="5">${g('weatherConditions')}</td></tr>
-</table>
-<h2>Compliance summary</h2>
+<h1>Tank Spacing \u2014 ${g('facilityId')}</h1>
+<p style="color:#666;margin-bottom:14px;">Company: ${g('companyName')} &middot; Location: ${g('siteLocation')}</p>
+<h2>Tank-to-tank shell spacing (${s.std || '\u2014'})</h2>
 <table>
-<tr><th></th><th>Total gap area (in&sup2;)</th><th>Area per ft diameter</th><th>Max gap width (in)</th><th>Status</th></tr>
-<tr><td>Primary seal</td><td>${document.getElementById('primaryTotalArea').textContent}</td><td>${document.getElementById('primaryAreaPerFt').textContent}</td><td>${document.getElementById('primaryMaxWidthFound').textContent}</td><td>${document.getElementById('primaryBadge').textContent}</td></tr>
-<tr><td>Secondary seal</td><td>${document.getElementById('secondaryTotalArea').textContent}</td><td>${document.getElementById('secondaryAreaPerFt').textContent}</td><td>${document.getElementById('secondaryMaxWidthFound').textContent}</td><td>${document.getElementById('secondaryBadge').textContent}</td></tr>
+<tr><th>Tank A</th><td>${g('tankA_id')} (${fmt(s.dA||0)})</td><th>Tank B</th><td>${g('tankB_id')} (${fmt(s.dB||0)})</td><th>Sum of diameters</th><td>${fmt(s.sumDia||0)}</td></tr>
+<tr><th>Formula applied</th><td colspan="3">${s.formulaText||'\u2014'}</td><th>Required</th><td>${s.required!==null&&s.required!==undefined?fmt(s.required):'\u2014'}</td></tr>
+<tr><th>Actual / proposed</th><td colspan="5">${s.actual!==null&&s.actual!==undefined?fmt(s.actual):'\u2014'}</td></tr>
 </table>
-<p style="color:#666;">Regulatory profile applied: ${g('regProfile')} &middot; Primary limit ${g('primaryMaxWidth')} in / ${g('primaryMaxAreaPerFt')} in&sup2;/ft &middot; Secondary limit ${g('secondaryMaxWidth')} in / ${g('secondaryMaxAreaPerFt')} in&sup2;/ft</p>
-<p style="color:#666;">Rim gap expected range: ${document.getElementById('rimGapExpectedDisplay').textContent} &middot; observed min ${document.getElementById('rimGapMin').textContent}, max ${document.getElementById('rimGapMax').textContent}, average ${document.getElementById('rimGapAvg').textContent} &middot; outside range: ${document.getElementById('rimGapOutOfRange').textContent} &middot; ${document.getElementById('rimGapCount').textContent} of ${document.querySelectorAll('#gapTableBody tr').length} points logged.</p>
-<h2>Gap readings</h2>
+<h2>Tank-to-offsite-facility distance (OISD-118 ${f.size==='small'?'Table-5, small installation':'Table-3, large installation'})</h2>
 <table>
-<tr><th>#</th><th>Position &deg;</th><th>Rim Gap</th><th>Primary L</th><th>Primary W</th><th>Primary Area</th><th>Secondary L</th><th>Secondary W</th><th>Secondary Area</th><th>Note</th></tr>
-${rows}
+<tr><th>From</th><td>${f.fromLabel||'\u2014'}</td><th>To</th><td>${f.toLabel||'\u2014'}</td><th>Relevant diameter</th><td>${f.dia?fmt(f.dia)+' m':'\u2014'}</td></tr>
+<tr><th>Cell value</th><td colspan="3">${f.cellText||'\u2014'}</td><th>Required</th><td>${f.required!==null&&f.required!==undefined?fmt(f.required)+' m':'\u2014'}</td></tr>
+<tr><th>Actual</th><td colspan="5">${f.actual!==null&&f.actual!==undefined?fmt(f.actual)+' m':'\u2014'}</td></tr>
+</table>
+<h2>Tank-to-property-line / public-way distance (NFPA 30 Table 22.4.1.1(b))</h2>
+<table>
+<tr><th>Diameter</th><td>${fmt(p.D||0)} ft</td><th>Height</th><td>${fmt(p.H||0)} ft</td><th>Computed capacity</th><td>${fmt(p.capacityGal||0,0)} gal</td></tr>
+<tr><th>Table multiplier</th><td>${p.mult!==null&&p.mult!==undefined?p.mult:'\u2014'}</td><th>Required \u2014 property line</th><td>${p.reqProperty!==null&&p.reqProperty!==undefined?fmt(p.reqProperty)+' ft':'\u2014'}</td><th>Required \u2014 public way/bldg</th><td>${p.reqPublic!==null&&p.reqPublic!==undefined?fmt(p.reqPublic)+' ft':'\u2014'}</td></tr>
+<tr><th>Actual \u2014 property line</th><td>${p.actualProperty!==null&&p.actualProperty!==undefined?fmt(p.actualProperty)+' ft':'\u2014'}</td><th>Actual \u2014 public way/bldg</th><td colspan="3">${p.actualPublic!==null&&p.actualPublic!==undefined?fmt(p.actualPublic)+' ft':'\u2014'}</td></tr>
 </table>
 <div style="margin-top:20px;padding:14px 16px;border:1px solid #c9a84c;border-radius:6px;background:#faf7ef;font-size:10.5px;line-height:1.5;color:#3a3320;">
-<strong style="text-transform:uppercase;color:#8a6d1a;">Indicative survey record only</strong><br>
-This report is a field data record, not a certified regulatory compliance demonstration. Regulatory limit values shown were entered by the survey author and must be independently verified against the current published standard (e.g. 40 CFR 60.113b for US EPA NSPS Kb) before use in any compliance submission.
+<strong style="text-transform:uppercase;color:#8a6d1a;">Indicative calculation only</strong><br>
+This report is a spacing estimate, not a certified regulatory compliance demonstration. NFPA 30 figures are cross-verified across three independently-sourced compiled extracts of the 2008 edition, not the current official code text. OISD-118 Table-4 is sourced from the 2025 revision. The tank-to-offsite-facility matrix (OISD Table-3/5) is manually transcribed from a training-deck image, not the code text itself - two known gaps: Table-3 footnotes Note-g/j (2025 revision) aren't resolved, and two cell pairs (one in Table-3, one in Table-5) read asymmetrically in the source image. Confirm all figures against the current published standard before use in any compliance submission.
 </div>
 </body></html>`;
-  printReport(html, `rim_seal_survey_${g('tankId')}`);
+  printReport(html);
 }
 
-window.addEventListener('survey-user-ready', () => { onProfileChange(); onGeometryChange(); });
 document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('surveyDate').value = new Date().toISOString().slice(0,10);
-  onProfileChange();
-  onGeometryChange();
+  onSpacingStandardChange();
+  recalcSpacing();
+  populateFacilityDropdowns();
+  recalcFacility();
+  recalcPropertyLine();
 });
 </script>
 </body>

@@ -105,6 +105,75 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /dikeCalcs/{id} {
+      // Same shape as `reports`: auto-logged on each calculation, "research"
+      // by default (private), "official" visible to the rest of the company,
+      // admins can always read either way. Only the `downloaded` flag is
+      // mutable after save.
+      function sameCompanyDike() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyDike())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /spacingCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`: auto-logged on each calculation,
+      // "research" by default (private), "official" visible to the rest of
+      // the company, admins can always read either way. Only the
+      // `downloaded` flag is mutable after save.
+      function sameCompanySpacing() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanySpacing())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /fireWaterCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`: auto-logged on
+      // each calculation, "research" by default (private), "official"
+      // visible to the rest of the company, admins can always read either
+      // way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyFireWater() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyFireWater())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
     match /rimSealSurveys/{id} {
 
       // Colleagues at the same company need to see each other's surveys on the
@@ -129,10 +198,24 @@ service cloud.firestore {
         (resource.data.get('recordType','research') == 'official' && sameCompany())
       );
 
-      // A survey is an inspection record: once submitted it becomes an
-      // immutable audit trail, same principle as `reports`/`events`. Only the
-      // author, and only while still a draft, may edit or delete it.
-      allow update: if isSignedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'draft';
+      // A survey is an inspection record: once submitted, the measured
+      // readings become an immutable audit trail, same principle as
+      // `reports`/`events` - full edits are only allowed while still a draft.
+      // The regulatory limits applied against those readings are a reference/
+      // evaluation lens, not measured data, so they stay correctable even
+      // after submission - a second, narrower allowance for a diff touching
+      // only those fields (mirrors how `reports` allows updating just
+      // `downloaded` regardless of who logged it).
+      function limitsOnlyDiff() {
+        return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'regulatoryProfile', 'primaryMaxWidth', 'primaryMaxAreaPerFt',
+          'secondaryMaxWidth', 'secondaryMaxAreaPerFt',
+          'rimGapExpMinMm', 'rimGapExpMaxMm', 'updatedAt'
+        ]);
+      }
+
+      allow update: if isSignedIn() && resource.data.uid == request.auth.uid &&
+                    (resource.data.status == 'draft' || limitsOnlyDiff());
       allow delete: if isSignedIn() && resource.data.uid == request.auth.uid && resource.data.status == 'draft';
     }
 
