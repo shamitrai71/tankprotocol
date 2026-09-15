@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dike / Bund Capacity Calculator — Tank Protocol</title>
+<title>Tank Capacity / Strapping Table — Tank Protocol</title>
 <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -124,6 +124,9 @@ a { color: var(--accent); }
 .field input:focus, .field select:focus { border-color:rgba(201,168,76,0.5); }
 .field input::placeholder { color:#3a4a5e; }
 .field input:disabled, .field select:disabled { opacity:0.55; cursor:not-allowed; }
+.field.checkbox { flex-direction:row; align-items:center; gap:8px; }
+.field.checkbox label { font-size:0.82rem; color:var(--text); font-weight:400; }
+.field.checkbox input { width:auto; }
 
 .err { background:rgba(240,91,91,0.08); border:1px solid rgba(240,91,91,0.3); border-radius:8px; color:var(--red); font-size:0.82rem; padding:11px 14px; margin-bottom:16px; display:none; }
 .err.show { display:block; }
@@ -139,51 +142,32 @@ a { color: var(--accent); }
 .btn-sm { padding:6px 14px; font-size:0.76rem; }
 .btn-primary { background:linear-gradient(135deg,var(--accent),var(--accent2)); border:none; color:#080c14; font-weight:700; }
 .btn-primary:hover { transform:translateY(-1px); box-shadow:0 6px 22px rgba(201,168,76,0.3); color:#080c14; }
-.btn-danger-outline { border-color:rgba(240,91,91,0.35); color:var(--red); }
-.btn-danger-outline:hover { border-color:var(--red); background:rgba(240,91,91,0.08); }
 .btn-row { display:flex; gap:10px; flex-wrap:wrap; margin-top:16px; }
 
-.method-toggle { display:flex; gap:8px; margin-bottom:14px; }
-.method-btn { flex:1; background:var(--surface2); border:1px solid var(--border); border-radius:8px; color:var(--text-dim); font-family:var(--sans); font-size:0.82rem; padding:10px; cursor:pointer; transition:all .15s; text-align:center; }
-.method-btn.active { border-color:var(--accent); color:var(--accent); background:rgba(201,168,76,0.08); }
-
-.tank-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-bottom:6px; }
-table.tank-grid { width:100%; border-collapse:collapse; font-size:0.82rem; min-width:680px; }
-table.tank-grid th { background:var(--surface2); color:var(--text-dim); font-weight:600; font-size:0.66rem; text-transform:uppercase; letter-spacing:0.4px; padding:9px 8px; text-align:center; border-bottom:1px solid var(--border); }
-table.tank-grid td { padding:6px 7px; border-bottom:1px solid var(--border); text-align:center; }
-table.tank-grid tr:last-child td { border-bottom:none; }
-table.tank-grid input[type=text], table.tank-grid input[type=number] { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:5px; color:var(--text-bright); font-family:var(--mono); font-size:0.8rem; padding:6px 5px; text-align:center; outline:none; box-sizing:border-box; }
-table.tank-grid input:focus { border-color:rgba(201,168,76,0.5); }
-table.tank-grid input.area-out { background:transparent; border-color:transparent; color:var(--text-dim); font-weight:600; }
-table.tank-grid tr.largest-row { background:rgba(201,168,76,0.06); }
-table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--accent); }
-.largest-tag { font-family:var(--mono); font-size:0.6rem; color:var(--accent); }
-.rm-row-btn { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-dim); width:28px; height:28px; cursor:pointer; font-size:0.9rem; line-height:1; transition:all .15s; }
-.rm-row-btn:hover { border-color:var(--red); color:var(--red); }
-
-.results-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-@media (max-width:760px) { .results-grid { grid-template-columns:1fr; } }
-.result-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px 18px; }
+.result-card { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin-top:14px; }
 .result-card .r-lbl { font-family:var(--cond); font-weight:600; font-size:0.85rem; letter-spacing:0.5px; text-transform:uppercase; color:var(--text-bright); margin-bottom:10px; }
 .result-row { display:flex; justify-content:space-between; padding:6px 0; border-bottom:1px solid var(--border); font-size:0.82rem; }
 .result-row:last-child { border-bottom:none; }
 .result-row .k { color:var(--text-dim); }
 .result-row .v { font-family:var(--mono); color:var(--text-bright); }
-.result-row .v.big { font-size:1.05rem; color:var(--accent); font-weight:600; }
+.result-row .v.big { font-size:1.1rem; color:var(--accent); font-weight:700; }
 
-.badge { display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:0.66rem; padding:3px 10px; border-radius:20px; text-transform:uppercase; letter-spacing:0.4px; }
-.badge.pass { background:rgba(6,214,160,0.12); color:var(--green); border:1px solid rgba(6,214,160,0.35); }
-.badge.fail { background:rgba(240,91,91,0.12); color:var(--red); border:1px solid rgba(240,91,91,0.35); }
-.badge.unset { background:rgba(107,127,150,0.12); color:var(--text-dim); border:1px solid var(--border); }
+.tank-table-wrap { overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; }
+table.tank-grid { width:100%; border-collapse:collapse; font-size:0.8rem; min-width:560px; }
+table.tank-grid th { background:var(--surface2); color:var(--text-dim); font-weight:600; font-size:0.64rem; text-transform:uppercase; letter-spacing:0.4px; padding:8px 7px; text-align:center; border-bottom:1px solid var(--border); }
+table.tank-grid td { padding:5px 6px; border-bottom:1px solid var(--border); text-align:center; }
+table.tank-grid tr:last-child td { border-bottom:none; }
+table.tank-grid input[type=text], table.tank-grid input[type=number], table.tank-grid select { width:100%; background:var(--bg); border:1px solid var(--border); border-radius:5px; color:var(--text-bright); font-family:var(--mono); font-size:0.76rem; padding:5px 4px; text-align:center; outline:none; box-sizing:border-box; }
+table.tank-grid input:focus { border-color:rgba(201,168,76,0.5); }
+table.tank-grid input.area-out { background:transparent; border-color:transparent; color:var(--text-dim); font-weight:600; }
+.rm-row-btn { background:transparent; border:1px solid var(--border); border-radius:6px; color:var(--text-dim); width:26px; height:26px; cursor:pointer; font-size:0.85rem; line-height:1; transition:all .15s; }
+.rm-row-btn:hover { border-color:var(--red); color:var(--red); }
 
-.bar-compare { margin-top:8px; }
-.bar-row { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
-.bar-label { width:130px; flex-shrink:0; font-size:0.76rem; color:var(--text-dim); text-align:right; }
-.bar-track { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:6px; height:26px; overflow:hidden; position:relative; }
-.bar-fill { height:100%; border-radius:5px; transition:width .3s ease; display:flex; align-items:center; padding-left:10px; font-family:var(--mono); font-size:0.72rem; color:#080c14; font-weight:700; white-space:nowrap; }
-.bar-fill.available { background:linear-gradient(90deg,var(--green),#03a880); }
-.bar-fill.required-pass { background:linear-gradient(90deg,var(--accent),var(--accent2)); }
-.bar-fill.required-fail { background:linear-gradient(90deg,var(--red),#c23e3e); }
+.output-table-wrap { overflow-x:auto; overflow-y:auto; max-height:420px; border:1px solid var(--border); border-radius:10px; margin-bottom:10px; }
+table.output-grid { width:100%; border-collapse:collapse; font-size:0.8rem; }
+table.output-grid th { position:sticky; top:0; background:var(--surface2); color:var(--accent); font-weight:600; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.4px; padding:8px 10px; text-align:right; border-bottom:1px solid var(--border); }
+table.output-grid td { padding:5px 10px; border-bottom:1px solid var(--border); text-align:right; font-family:var(--mono); font-size:0.78rem; }
+table.output-grid tr:nth-child(even) { background:rgba(255,255,255,0.02); }
 
 .footer { text-align:center; color:var(--text-dim); font-size:0.72rem; margin-top:40px; padding-top:20px; border-top:1px solid var(--border); }
 
@@ -200,12 +184,13 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
     <div class="brand-mark"></div>
     <div>
       <div class="brand-name">TANK PROTOCOL</div>
-      <div class="brand-sub">DIKE / BUND CAPACITY</div>
+      <div class="brand-sub">CAPACITY / STRAPPING</div>
     </div>
   </div>
   <a href="index.html?portal=1" class="back-link topbar-desktop-only">&#128100; Profile</a>
   <a href="floating-roof-tank-calculator.html" class="back-link topbar-desktop-only">&#9879; Calculator</a>
   <a href="rim-seal-survey.html" class="back-link topbar-desktop-only">&#127919; Rim Seal Survey</a>
+  <a href="dike-bund-calculator.html" class="back-link topbar-desktop-only">&#129521; Dike Capacity</a>
   <a href="spacing-calculator.html" class="back-link topbar-desktop-only">&#128207; Tank Spacing</a>
   <a href="firewater-calculator.html" class="back-link topbar-desktop-only">&#128674; Fire Water Demand</a>
   <a href="venting-calculator.html" class="back-link topbar-desktop-only">&#128168; Tank Venting</a>
@@ -213,7 +198,6 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
   <a href="shell-thickness-calculator.html" class="back-link topbar-desktop-only">&#128295; Shell Thickness</a>
   <a href="inspection-interval-calculator.html" class="back-link topbar-desktop-only">&#128197; Inspection Interval</a>
   <a href="brittle-fracture-calculator.html" class="back-link topbar-desktop-only">&#129513; Brittle Fracture</a>
-  <a href="strapping-table-calculator.html" class="back-link topbar-desktop-only">&#128202; Capacity Table</a>
   <a href="wind-girder-calculator.html" class="back-link topbar-desktop-only">&#128168; Wind Girder</a>
   <a href="roof-vent-calculator.html" class="back-link topbar-desktop-only">&#127788; Roof Vapor Venting</a>
   <a href="seismic-calculator.html" class="back-link topbar-desktop-only">&#127756; Seismic Design</a>
@@ -221,8 +205,8 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
   <a href="shell-design-calculator.html" class="back-link topbar-desktop-only">&#128295; Shell Design</a>
   <a href="roof-design-calculator.html" class="back-link topbar-desktop-only">&#127960; Roof Design</a>
   <a href="nozzle-reinforcement-calculator.html" class="back-link topbar-desktop-only">&#128296; Nozzle Reinforcement</a>
-  <a href="index.html?admin=1" id="dikeAdminLink" class="back-link topbar-desktop-only" style="display:none;">&#11049; Admin Panel</a>
-  <button class="topbar-desktop-only calc-signout" type="button" onclick="dikeSignOut()">Sign out</button>
+  <a href="index.html?admin=1" id="scAdminLink" class="back-link topbar-desktop-only" style="display:none;">&#11049; Admin Panel</a>
+  <button class="topbar-desktop-only calc-signout" type="button" onclick="scSignOut()">Sign out</button>
 
   <div class="topbar-kebab-wrap">
     <button class="topbar-kebab-btn" type="button" aria-label="Menu" onclick="toggleKebabMenu(this)">&#8942;</button>
@@ -230,6 +214,7 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
       <a href="index.html?portal=1" class="kebab-item" onclick="closeKebabMenu(this);">&#128100; Profile</a>
       <a href="floating-roof-tank-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#9879; Calculator</a>
       <a href="rim-seal-survey.html" class="kebab-item" onclick="closeKebabMenu(this);">&#127919; Rim Seal Survey</a>
+      <a href="dike-bund-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#129521; Dike Capacity</a>
       <a href="spacing-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128207; Tank Spacing</a>
       <a href="firewater-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128674; Fire Water Demand</a>
       <a href="venting-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128168; Tank Venting</a>
@@ -237,7 +222,6 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
       <a href="shell-thickness-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128295; Shell Thickness</a>
       <a href="inspection-interval-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128197; Inspection Interval</a>
       <a href="brittle-fracture-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#129513; Brittle Fracture</a>
-      <a href="strapping-table-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128202; Capacity Table</a>
       <a href="wind-girder-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128168; Wind Girder</a>
       <a href="roof-vent-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#127788; Roof Vapor Venting</a>
       <a href="seismic-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#127756; Seismic Design</a>
@@ -245,20 +229,20 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
       <a href="shell-design-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128295; Shell Design</a>
       <a href="roof-design-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#127960; Roof Design</a>
       <a href="nozzle-reinforcement-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">&#128296; Nozzle Reinforcement</a>
-      <a href="index.html?admin=1" id="dikeAdminLinkMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this);">&#11049; Admin Panel</a>
+      <a href="index.html?admin=1" id="scAdminLinkMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this);">&#11049; Admin Panel</a>
       <div class="kebab-divider"></div>
-      <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); dikeSignOut();">Sign out</button>
+      <button class="kebab-item kebab-danger" onclick="closeKebabMenu(this); scSignOut();">Sign out</button>
     </div>
   </div>
 </div>
 
 <div class="wrap">
-  <div class="page-title">Dike / Bund Capacity Calculator</div>
-  <div class="page-sub">Net available containment volume vs. required capacity for tanks sharing a diked/bunded enclosure</div>
-  <div class="std-badge">&#9673; NFPA 30 / OISD-118 STYLE CHECK &middot; NOT A REGULATORY SUBMISSION TOOL</div>
+  <div class="page-title">Tank Capacity / Strapping Table</div>
+  <div class="page-sub">Volume-vs-height gauge table from tank geometry — shell courses, bottom shape, deadwood, and floating roof displacement</div>
+  <div class="std-badge">&#9673; GEOMETRIC ENGINEERING MODEL &middot; NOT A CERTIFIED CALIBRATION TABLE</div>
 
   <div class="warn-note">
-    <strong>&#9888; Indicative tool only.</strong> All figures below are editable. NFPA 30's 100% baseline — dike capacity not less than the greatest volume that could be released from the largest tank — is now corroborated by API 2610 Section 9.2.2, which cites it directly and separately notes freeboard for precipitation is "typically either 110% or 24-hour, 25-year rainfall event, depending on the jurisdiction." That 110% figure is the commonly-cited number in practice, but it's a precipitation allowance layered on the 100% baseline, not a different containment rule — see the API 2610 profile's hint below before combining it with a manually-set freeboard height. OISD-118's figures are sourced from the OISD/DOC/06/2025/34 revision: 100% containment and the 120,000/60,000 m&sup3; aggregate caps are unchanged from the earlier Aug 2000 text, but freeboard was revised to max(200mm, 10% of calculated capacity). PDVSA AG-212-PT (Venezuela) requires 150% plus displaced volume of other tanks — algebraically the same check, just a stricter target — with a 300mm minimum freeboard; this is a proprietary internal PDVSA standard, not a public national code, so treat its applicability accordingly. Custom starts blank.
+    <strong>&#9888; Not a substitute for a certified tank calibration.</strong> This is a geometric model, not sourced from a specific standard the way the other calculators in this app are — custody-transfer-grade strapping tables are normally produced by physical tank calibration per API MPMS Chapter 2.2A (or equivalent), which accounts for as-built deviations this geometric model can't capture. Use measured (not nominal) circumferences per course for better accuracy if you have them. The bottom-shape and cone-volume math is exact for the two shapes offered (flat, and a uniformly-sloped center-sump cone) and has been independently verified against numerical integration. Floating roof displacement and non-cylindrical deadwood items are necessarily simplified &mdash; see the hints on those cards.
   </div>
 
   <div class="err" id="errorMsg"></div>
@@ -266,11 +250,11 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
 
   <!-- IDENTIFICATION -->
   <div class="card">
-    <div class="card-title">Dike Identification</div>
+    <div class="card-title">Identification</div>
     <div class="grid3">
       <div class="field"><label>Company</label><input id="companyName" placeholder="Company"></div>
-      <div class="field"><label>Dike / Bund ID <span class="req">*</span></label><input id="dikeId" placeholder="e.g. DK-1"></div>
-      <div class="field"><label>Location</label><input id="dikeLocation" placeholder="City, State / Country"></div>
+      <div class="field"><label>Tank ID</label><input id="tankId" placeholder="e.g. TK-601"></div>
+      <div class="field"><label>Location</label><input id="siteLocation" placeholder="City, State / Country"></div>
     </div>
     <div class="grid2" style="margin-top:2px;">
       <div class="field">
@@ -280,122 +264,96 @@ table.tank-grid tr.largest-row td:first-child { border-left:3px solid var(--acce
           <option value="official">Official / true record (visible to your company + admins)</option>
         </select>
       </div>
-      <div class="card-hint" style="align-self:end;margin-bottom:9px;">Research entries stay private to you for practice/testing. Switch to Official once this is a real assessment your company should see.</div>
+      <div class="card-hint" style="align-self:end;margin-bottom:9px;">Research entries stay private to you for practice/testing. Switch to Official once this is a real table your company should see.</div>
     </div>
   </div>
 
-  <!-- GEOMETRY -->
+  <!-- SHELL COURSES -->
   <div class="card">
-    <div class="card-title">Dike Geometry</div>
-    <div class="method-toggle">
-      <button class="method-btn active" id="methodRectBtn" onclick="setAreaMethod('rect')">Rectangular Dimensions</button>
-      <button class="method-btn" id="methodAreaBtn" onclick="setAreaMethod('area')">Known Plan Area</button>
-    </div>
-    <div class="grid3" id="rectFields">
-      <div class="field"><label>Dike Internal Length <span class="unit">m</span></label><input id="dikeLength" type="number" step="0.01" oninput="recalc()"></div>
-      <div class="field"><label>Dike Internal Width <span class="unit">m</span></label><input id="dikeWidth" type="number" step="0.01" oninput="recalc()"></div>
-      <div class="field"><label>Plan Area <span class="unit">m&sup2;</span></label><input id="planAreaDisplay" disabled></div>
-    </div>
-    <div class="grid3" id="areaFields" style="display:none;">
-      <div class="field"><label>Plan Area (enclosed, inside toe) <span class="unit">m&sup2;</span></label><input id="planAreaDirect" type="number" step="0.01" oninput="recalc()"></div>
-    </div>
-    <div class="grid3">
-      <div class="field"><label>Dike Wall Height <span class="unit">m</span> <span class="req">*</span></label><input id="wallHeight" type="number" step="0.01" oninput="recalc()"></div>
-      <div class="field"><label>Freeboard / Height Deduction <span class="unit">m</span></label><input id="freeboard" type="number" step="0.01" value="0" oninput="recalc()"></div>
-      <div class="field"><label>Effective Dike Height</label><input id="effHeightDisplay" disabled></div>
-    </div>
-    <div class="card-hint">Effective height = wall height − freeboard. Under NFPA 30 / Custom, freeboard is a plain editable margin you set (0 by default). Under OISD-118, freeboard is auto-computed and locked — per the 2025 revision, it's max(200mm, 10% of the required dyke capacity expressed as a height over the plan area).</div>
-    <div class="grid3">
-      <div class="field"><label>Tank Pad / Foundation Volume <span class="unit">m&sup3;</span></label><input id="padVolume" type="number" step="0.01" value="0" oninput="recalc()"></div>
-      <div class="field"><label>Fire Wall Volume <span class="unit">m&sup3;</span></label><input id="fireWallVolume" type="number" step="0.01" value="0" oninput="recalc()"></div>
-      <div class="field"><label>Other Margin (pipes/supports) <span class="unit">m&sup3;</span></label><input id="marginVolume" type="number" step="0.01" value="0" oninput="recalc()"></div>
-    </div>
-    <div class="card-hint">Three additional deductions from enclosure capacity, all optional (default 0) and general-purpose — not profile-gated, since the physical volumes exist regardless of which standard you're checking against. OISD-118 (2025) explicitly names all three as required deductions in its dyke capacity calculation.</div>
-  </div>
-
-  <!-- TANKS -->
-  <div class="card">
-    <div class="card-title">Tanks Within This Dike <button class="btn btn-sm" onclick="addTankRow()">+ Add Tank</button></div>
-    <div class="card-hint">The tank with the largest computed volume is auto-marked "largest" (highlighted) and excluded from the displacement deduction — its own release is what the dike must hold. All other tanks' below-wall-height volume displaces usable capacity. Override with "Force largest" if your worst case isn't simply the biggest tank (e.g. product density / partial fill differences). Roof type feeds the OISD-118 aggregate capacity check below — a fixed-cum-floating (internal floating roof) tank counts as fixed roof by default; OISD-118 (2025) allows counting it as floating only if it has shell-mounted windows that stay unblocked, which this tool doesn't model — override manually if that applies to your tank.</div>
+    <div class="card-title">Shell Courses</div>
+    <div class="card-hint">Diameter can be nominal (design) or a measured circumference (real strapping practice). If you give a measured circumference and plate thickness, the tool converts to internal diameter: ID = Circumference/&pi; &minus; 2&times;thickness.</div>
     <div class="tank-table-wrap">
-      <table class="tank-grid" id="tankTable">
-        <thead>
-          <tr>
-            <th></th><th>Tank ID</th><th>Roof Type</th><th>Diameter <span class="unit">m</span></th><th>Height <span class="unit">m</span></th>
-            <th>Volume <span class="unit">m&sup3;</span></th><th>Force Largest</th><th></th>
-          </tr>
-        </thead>
-        <tbody id="tankTableBody"></tbody>
+      <table class="tank-grid" id="courseTable">
+        <thead><tr><th>Course</th><th>Height <span class="unit">ft</span></th><th>Diameter Source</th><th>Nominal ID <span class="unit">ft</span></th><th>Measured Circumference <span class="unit">ft</span></th><th>Plate Thickness <span class="unit">in</span></th><th>Effective ID <span class="unit">ft</span></th><th></th></tr></thead>
+        <tbody id="courseTableBody"></tbody>
       </table>
     </div>
+    <button class="btn btn-sm" onclick="addCourseRow()">+ Add Course</button>
   </div>
 
-  <!-- REGULATORY BASIS -->
-  <div class="card" id="regBasisCard">
-    <div class="card-title">Regulatory Basis</div>
-    <div class="card-hint">Editable — see warning above. These stay editable even after a calculation has been saved, since they're the comparison lens, not the measured geometry.</div>
-    <div class="field" style="margin-bottom:14px;">
-      <label>Standard</label>
-      <select id="dikeRegProfile" onchange="onDikeProfileChange()">
-        <option value="NFPA_30">NFPA 30 (strict baseline)</option>
-        <option value="OISD_118">India — OISD-118</option>
-        <option value="API_2610">API 2610 / US common practice</option>
-        <option value="PDVSA_AG212">PDVSA AG-212-PT (Venezuela)</option>
-        <option value="CUSTOM">Custom / Manual Entry</option>
-      </select>
-    </div>
-    <div class="card-hint" id="profileNote" style="margin-top:-8px;"></div>
-    <div class="grid2">
-      <div class="field"><label>Required Capacity <span class="unit">% of largest tank</span></label><input id="requiredPercent" type="number" step="1" oninput="recalc()"></div>
-      <div class="field"><label>&nbsp;</label><div class="card-hint" style="margin:0;">Leave blank to skip the pass/fail check and just see the computed volumes.</div></div>
-    </div>
-  </div>
-
-  <!-- RESULTS -->
+  <!-- BOTTOM SHAPE -->
   <div class="card">
-    <div class="card-title">Results <span class="badge unset" id="dikeBadge">Not evaluated</span></div>
-    <div class="results-grid">
-      <div class="result-card">
-        <div class="r-lbl">Available Capacity</div>
-        <div class="result-row"><span class="k">Plan area</span><span class="v" id="rPlanArea">—</span></div>
-        <div class="result-row"><span class="k">Effective dike height</span><span class="v" id="rEffHeight">—</span></div>
-        <div class="result-row"><span class="k">Gross dike volume</span><span class="v" id="rGrossVol">—</span></div>
-        <div class="result-row"><span class="k">Displacement + deductions</span><span class="v" id="rDisplacement">—</span></div>
-        <div class="result-row"><span class="k">Net available capacity</span><span class="v big" id="rNetAvailable">—</span></div>
+    <div class="card-title">Bottom Shape</div>
+    <div class="grid3">
+      <div class="field">
+        <label>Bottom Type</label>
+        <select id="bottomType" onchange="onBottomTypeChange()">
+          <option value="flat">Flat</option>
+          <option value="cone_center">Sloped, center sump (cone-down toward center)</option>
+        </select>
       </div>
-      <div class="result-card">
-        <div class="r-lbl">Required Capacity</div>
-        <div class="result-row"><span class="k">Largest tank</span><span class="v" id="rLargestId">—</span></div>
-        <div class="result-row"><span class="k">Largest tank volume</span><span class="v" id="rLargestVol">—</span></div>
-        <div class="result-row"><span class="k">Required percentage</span><span class="v" id="rRequiredPct">—</span></div>
-        <div class="result-row"><span class="k">Required capacity</span><span class="v big" id="rRequiredVol">—</span></div>
-        <div class="result-row"><span class="k">Surplus / deficit</span><span class="v" id="rSurplus">—</span></div>
-      </div>
+      <div class="field" id="slopeField" style="display:none;"><label>Slope <span class="unit">rise/run, e.g. 1/48</span></label><input id="bottomSlope" type="number" step="0.0001" value="0.0208" oninput="generateTable()"></div>
+      <div class="field" id="coneRiseField" style="display:none;"><label>Total Rise at Edge (computed)</label><input id="coneRiseDisplay" disabled></div>
     </div>
-    <div class="bar-compare">
-      <div class="bar-row">
-        <div class="bar-label">Available</div>
-        <div class="bar-track"><div class="bar-fill available" id="barAvailable" style="width:0%;">0 m&sup3;</div></div>
-      </div>
-      <div class="bar-row">
-        <div class="bar-label">Required</div>
-        <div class="bar-track"><div class="bar-fill required-pass" id="barRequired" style="width:0%;">0 m&sup3;</div></div>
-      </div>
+    <div class="card-hint" style="margin-top:-6px;">Edge-sump (cone-up) bottoms and knuckle/dished bottoms aren't modeled &mdash; genuinely less common, and the liquid-pooling geometry is materially more complex to derive correctly.</div>
+  </div>
+
+  <!-- DEADWOOD -->
+  <div class="card">
+    <div class="card-title">Deadwood (Internal Obstructions)</div>
+    <div class="card-hint">Cylindrical items (columns, coil bundles approximated as a cylinder) deduct their exact cross-sectional volume over their submerged height range. "Fixed volume" items deduct a user-supplied total volume, spread linearly across their elevation range as a simplification.</div>
+    <div class="tank-table-wrap">
+      <table class="tank-grid" id="deadwoodTable">
+        <thead><tr><th>Description</th><th>Type</th><th>Diameter <span class="unit">in</span></th><th>Fixed Volume <span class="unit">ft&sup3;</span></th><th>Qty</th><th>Bottom Elev <span class="unit">ft</span></th><th>Top Elev <span class="unit">ft</span></th><th></th></tr></thead>
+        <tbody id="deadwoodTableBody"></tbody>
+      </table>
     </div>
-    <div class="result-card" id="aggregateCard" style="margin-top:16px;display:none;">
-      <div class="r-lbl">Aggregate Tank Capacity (OISD-118) <span class="badge unset" id="aggregateBadge">—</span></div>
-      <div class="result-row"><span class="k">Group composition</span><span class="v" id="aggGroupType">—</span></div>
-      <div class="result-row"><span class="k">Aggregate tank capacity in this dyke</span><span class="v" id="aggTotalVol">—</span></div>
-      <div class="result-row"><span class="k">Applicable limit</span><span class="v" id="aggLimit">—</span></div>
-      <div class="card-hint" style="margin:8px 0 0;">Per OISD-STD-118 (2025 revision, unchanged from Aug 2000): a group of floating roof tanks in one dyked enclosure is capped at 120,000 m&sup3; aggregate; a group of fixed roof tanks (or any mixed group) at 60,000 m&sup3;. Does not apply to a single tank in a dyke. This is separate from the containment-volume check above — a dyke can pass the volume check and still exceed this cap.</div>
+    <button class="btn btn-sm" onclick="addDeadwoodRow()">+ Add Item</button>
+  </div>
+
+  <!-- FLOATING ROOF -->
+  <div class="card">
+    <div class="card-title">Floating Roof <span class="card-hint" style="margin:0;font-size:0.72rem;">(optional)</span></div>
+    <div class="card-hint">Roof buoyancy/displacement is genuinely roof-design-specific engineering (pontoon vs. double-deck, ballast, etc.) &mdash; not something this tool derives from geometry alone. Enter the displacement volume from the roof's own design drawings/flotation calc if you have it; it's applied as a constant deduction once the liquid level is at or above the roof's landed height.</div>
+    <div class="grid3">
+      <div class="field checkbox"><input type="checkbox" id="hasFloatingRoof" onchange="generateTable()"><label for="hasFloatingRoof">Tank has a floating roof</label></div>
+      <div class="field"><label>Roof Landed Height <span class="unit">ft</span></label><input id="roofLandedHeight" type="number" step="0.01" min="0" oninput="generateTable()"></div>
+      <div class="field"><label>Roof Displacement Volume <span class="unit">ft&sup3;</span></label><input id="roofDisplacement" type="number" step="0.1" min="0" oninput="generateTable()"></div>
+    </div>
+  </div>
+
+  <!-- TABLE GENERATION -->
+  <div class="card">
+    <div class="card-title">Generate Table</div>
+    <div class="grid3">
+      <div class="field"><label>Increment <span class="unit">ft</span></label><input id="increment" type="number" step="0.01" min="0.001" value="0.5" oninput="generateTable()"></div>
+      <div class="field"><label>Max Height (blank = sum of courses)</label><input id="maxHeightOverride" type="number" step="0.01" min="0" oninput="generateTable()"></div>
+      <div class="field"><label>Safe Fill Height <span class="unit">ft (optional)</span></label><input id="safeFillHeight" type="number" step="0.01" min="0" oninput="generateTable()"></div>
     </div>
     <div class="btn-row">
-      <button class="btn btn-primary" onclick="saveDikeCalc()">Calculate &amp; Save</button>
-      <button class="btn" onclick="printDikeReport()">Print / PDF Report</button>
+      <button class="btn btn-primary" onclick="generateTable()">Generate Table</button>
+      <button class="btn" onclick="downloadCSV()">Download CSV</button>
+    </div>
+    <div class="result-card">
+      <div class="r-lbl">Summary</div>
+      <div class="result-row"><span class="k">Total shell height</span><span class="v" id="totalHeightOut">—</span></div>
+      <div class="result-row"><span class="k">Gross capacity (full height)</span><span class="v" id="grossCapOut">—</span></div>
+      <div class="result-row"><span class="k">Capacity at safe fill height</span><span class="v big" id="safeFillCapOut">—</span></div>
+    </div>
+    <div class="output-table-wrap" style="margin-top:14px;">
+      <table class="output-grid" id="outputTable"><thead><tr><th>Height (ft)</th><th>Volume (ft&sup3;)</th><th>Volume (bbl)</th><th>Volume (US gal)</th></tr></thead><tbody id="outputTableBody"></tbody></table>
     </div>
   </div>
 
-  <div class="footer">Tank Protocol &middot; Dike / Bund Capacity Calculator &middot; indicative tool, not a regulatory submission</div>
+  <div class="card">
+    <div class="card-title">Save Record</div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveStrappingCalc()">Save Summary</button>
+    </div>
+    <div class="card-hint" style="margin-top:10px;">Saves the input geometry and summary capacity figures. The full row-by-row table stays local to this session &mdash; use Download CSV to keep a copy.</div>
+  </div>
+
+  <div class="footer">Tank Protocol &middot; Tank Capacity / Strapping Table &middot; geometric model, not a certified calibration</div>
 </div>
 
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
@@ -441,7 +399,7 @@ function decodeFields(fields) {
   return out;
 }
 
-window.fbDike = {
+window.fbStrapping = {
   auth,
   signOut: () => signOut(auth),
   onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
@@ -456,7 +414,7 @@ window.fbDike = {
   addCalc: async (data) => {
     const token = await auth.currentUser.getIdToken();
     const fields = {}; for (const [k,v] of Object.entries(data)) fields[k] = enc(v);
-    const res = await fetch(`${REST}/dikeCalcs`, {
+    const res = await fetch(`${REST}/strappingTableCalcs`, {
       method: 'POST',
       headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
       body: JSON.stringify({ fields })
@@ -464,19 +422,6 @@ window.fbDike = {
     if (!res.ok) throw new Error('addCalc '+res.status+' '+(await res.text()));
     const j = await res.json();
     return j.name.split('/').pop();
-  },
-  updateCalc: async (id, data) => {
-    const token = await auth.currentUser.getIdToken();
-    const fields = {}; const mask = [];
-    for (const [k,v] of Object.entries(data)) { fields[k]=enc(v); mask.push(k); }
-    const params = mask.map(f=>'updateMask.fieldPaths='+encodeURIComponent(f)).join('&');
-    const res = await fetch(`${REST}/dikeCalcs/${id}?${params}`, {
-      method: 'PATCH',
-      headers: { Authorization: 'Bearer '+token, 'Content-Type':'application/json' },
-      body: JSON.stringify({ fields })
-    });
-    if (!res.ok) throw new Error('updateCalc '+res.status+' '+(await res.text()));
-    return true;
   }
 };
 
@@ -485,7 +430,7 @@ const DISCLAIMER_VERSION = '2025-09-AP42-v1';
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = LOGIN_URL; return; }
   try {
-    const profile = await window.fbDike.getUser(user.uid);
+    const profile = await window.fbStrapping.getUser(user.uid);
     if (!profile || profile.approved !== true) { window.location.href = LOGIN_URL; return; }
     if (!(profile.disclaimerAccepted === true && profile.disclaimerVersion === DISCLAIMER_VERSION)) {
       window.location.href = LOGIN_URL; return;
@@ -496,18 +441,17 @@ onAuthStateChanged(auth, async (user) => {
       company: profile.company || '', role: profile.role || 'user'
     };
     if (profile.role === 'admin' || profile.role === 'super_admin') {
-      document.getElementById('dikeAdminLink').style.display = '';
-      document.getElementById('dikeAdminLinkMobile').style.display = '';
+      document.getElementById('scAdminLink').style.display = '';
+      document.getElementById('scAdminLinkMobile').style.display = '';
     }
     const companyEl = document.getElementById('companyName');
     if (companyEl && !companyEl.value) companyEl.value = profile.company || '';
-    window.dispatchEvent(new Event('dike-user-ready'));
   } catch (e) {
     window.location.href = LOGIN_URL;
   }
 });
 
-window.dikeSignOut = () => { window.fbDike.signOut().then(()=>{ window.location.href = LOGIN_URL; }); };
+window.scSignOut = () => { window.fbStrapping.signOut().then(()=>{ window.location.href = LOGIN_URL; }); };
 </script>
 
 <script>
@@ -526,290 +470,283 @@ document.addEventListener('click', function (e) {
   if (!e.target.closest('.topbar-kebab-wrap')) closeKebabMenu();
 });
 
-// ══════════════════════ REGULATORY BASIS DEFAULTS ══════════════════════
-// NFPA 30's baseline (100% of the largest tank's capacity, before
-// displacement of other tanks) is now corroborated by API 2610 Section 9.2.2,
-// which cites the same rule verbatim (see API_2610 below for the separate
-// precipitation-freeboard figure that's often confused with this baseline).
-// Custom stays blank by design.
-const DIKE_REG_PROFILES = {
-  NFPA_30:  { requiredPercent: 100 },
-  // OISD-STD-118 - verified against BOTH the Third Revision (Aug 2000) and
-  // the 2025 revision (OISD/DOC/06/2025/34) the user provided. The 100%
-  // largest-tank rule and the 60,000/120,000 m3 aggregate caps are unchanged
-  // across both. The freeboard rule DID change (2000: flat 200mm; 2025:
-  // max(200mm, 10% of calculated dyke capacity)) - freeboard is computed
-  // live in recalc() for this profile rather than set as a static default here.
-  OISD_118: { requiredPercent: 100 },
-  // API 2610 Section 9.2.2 (Design, Construction, Operation, Maintenance, and
-  // Inspection of Terminal and Tank Facilities): dikes shall contain the
-  // largest tank's volume "while providing sufficient freeboard for
-  // precipitation, typically either 110% or 24-hour, 25-year rainfall event,
-  // depending on the jurisdiction" - the 110% figure IS the freeboard
-  // allowance (folded into the required percentage, not a separate height
-  // added on top), so freeboard is left manual/blank here deliberately - see
-  // the card hint for the double-counting warning. The rainfall-event
-  // alternative needs site-specific IDF data this tool doesn't have.
-  API_2610: { requiredPercent: 110 },
-  // PDVSA AG-212-PT (Venezuela) Section 8.7: retention capacity >= 1.5x the
-  // largest tank's volume, plus the displaced volume of the other tanks -
-  // algebraically the same net-available-capacity check already built here
-  // (gross minus displacement >= required), just at a stricter 150% target.
-  // Section 8.10/8.14: minimum 300mm freeboard ("free edge"), prefilled here
-  // but left editable (unlike OISD-118, PDVSA doesn't give a capacity-
-  // dependent formula - it's a flat design minimum). This is a proprietary,
-  // access-restricted PDVSA internal standard, not a public national code -
-  // treat its applicability accordingly.
-  PDVSA_AG212: { requiredPercent: 150, freeboardDefault: 0.3 },
-  CUSTOM:   { requiredPercent: null }
-};
+function fmt(n, d=2) { return (Math.round(n * Math.pow(10,d)) / Math.pow(10,d)).toLocaleString('en-US', {minimumFractionDigits:d, maximumFractionDigits:d}); }
+const FT3_PER_BBL = 5.614583;
+const FT3_PER_USGAL = 0.133681;
 
-// OISD-118 also caps aggregate tank capacity per dyked enclosure, independent
-// of the containment-volume check above: 120,000 m3 for a group of floating
-// roof tanks, 60,000 m3 for a group of fixed roof tanks - a mixed group (any
-// fixed roof tank present) is treated as fixed-roof for this limit, and the
-// cap does not apply when there is only a single tank in the dyke.
-const OISD_AGGREGATE_LIMIT_FLOATING_M3 = 120000;
-const OISD_AGGREGATE_LIMIT_FIXED_M3 = 60000;
-
-function onDikeProfileChange() {
-  const profileKey = document.getElementById('dikeRegProfile').value;
-  const p = DIKE_REG_PROFILES[profileKey] || DIKE_REG_PROFILES.CUSTOM;
-  document.getElementById('requiredPercent').value = p.requiredPercent ?? '';
-  if (profileKey !== 'OISD_118') {
-    document.getElementById('freeboard').disabled = false;
-    if (p.freeboardDefault !== undefined) document.getElementById('freeboard').value = p.freeboardDefault;
-  }
-  const notes = {
-    NFPA_30: 'Strict code baseline (100%, no built-in freeboard formula) — the commonly-cited 110% figure is a separate precipitation allowance; see API 2610 below if you want that folded in.',
-    OISD_118: 'Freeboard is auto-computed and locked for this profile (2025 revision formula) — see the Dike Geometry card.',
-    API_2610: '110% already includes the precipitation freeboard allowance API 2610 describes. Leave the Freeboard field at 0 unless you\'re intentionally adding height on top — setting both double-counts the rainfall margin.',
-    PDVSA_AG212: 'A proprietary PDVSA internal standard (Venezuela), not a public national code — confirm applicability before relying on it. 300mm minimum freeboard pre-filled, editable.',
-    CUSTOM: ''
-  };
-  document.getElementById('profileNote').textContent = notes[profileKey] || '';
-  recalc();
-}
-
-// ══════════════════════ AREA METHOD ══════════════════════
-window._areaMethod = 'rect';
-function setAreaMethod(m) {
-  window._areaMethod = m;
-  document.getElementById('methodRectBtn').classList.toggle('active', m === 'rect');
-  document.getElementById('methodAreaBtn').classList.toggle('active', m === 'area');
-  document.getElementById('rectFields').style.display = (m === 'rect') ? 'grid' : 'none';
-  document.getElementById('areaFields').style.display = (m === 'area') ? 'grid' : 'none';
-  recalc();
-}
-
-function fmt(n, d=2) { return (Math.round(n * Math.pow(10,d)) / Math.pow(10,d)).toFixed(d); }
-function fmtM3(n) { return fmt(n) + ' m\u00b3'; }
-
-// ══════════════════════ TANK ROWS ══════════════════════
-window._tankRowCount = 0;
-window._currentCalcId = null;
-
-function addTankRow(idVal, diaVal, hVal) {
-  window._tankRowCount++;
-  const tbody = document.getElementById('tankTableBody');
+// ══════════════════════ SHELL COURSE ROWS ══════════════════════
+function addCourseRow(heightVal, nomIdVal) {
+  const tbody = document.getElementById('courseTableBody');
+  const n = tbody.children.length;
   const tr = document.createElement('tr');
   tr.innerHTML = `
-    <td></td>
-    <td><input type="text" class="t-id" value="${idVal || ('TK-' + window._tankRowCount)}" oninput="recalc()"></td>
-    <td><select class="t-roof" onchange="recalc()">
-      <option value="floating">Floating</option>
-      <option value="fixed">Fixed</option>
-      <option value="ifrt">Fixed-cum-Floating (IFRT)</option>
+    <td>${n+1}</td>
+    <td><input type="number" step="0.01" min="0" class="c-height" value="${heightVal||''}" oninput="generateTable()"></td>
+    <td><select class="c-source" onchange="onCourseSourceChange(this)">
+      <option value="nominal">Nominal ID</option>
+      <option value="measured">Measured Circumference</option>
     </select></td>
-    <td><input type="number" step="0.01" min="0" class="t-dia" value="${diaVal || ''}" oninput="recalc()"></td>
-    <td><input type="number" step="0.01" min="0" class="t-h" value="${hVal || ''}" oninput="recalc()"></td>
-    <td><input class="area-out t-vol" disabled value="0.00"></td>
-    <td><input type="checkbox" class="t-force"></td>
-    <td><button class="rm-row-btn" onclick="removeTankRow(this)" title="Remove tank">&times;</button></td>`;
+    <td><input type="number" step="0.01" min="0" class="c-nomid" value="${nomIdVal||''}" oninput="generateTable()"></td>
+    <td><input type="number" step="0.01" min="0" class="c-circ" value="" disabled oninput="generateTable()"></td>
+    <td><input type="number" step="0.001" min="0" class="c-thick" value="" disabled oninput="generateTable()"></td>
+    <td><input class="area-out c-effid" disabled value="—"></td>
+    <td>${n === 0 ? '' : '<button class="rm-row-btn" onclick="removeCourseRow(this)" title="Remove">&times;</button>'}</td>`;
   tbody.appendChild(tr);
-  tr.querySelector('.t-force').addEventListener('change', recalc);
-  recalc();
+  generateTable();
 }
-
-function removeTankRow(btn) {
-  const rows = document.querySelectorAll('#tankTableBody tr');
-  if (rows.length <= 1) return; // keep at least one row
+function removeCourseRow(btn) {
   btn.closest('tr').remove();
-  recalc();
+  Array.from(document.querySelectorAll('#courseTableBody tr')).forEach((tr,i) => { tr.children[0].textContent = i+1; });
+  generateTable();
+}
+function onCourseSourceChange(sel) {
+  const tr = sel.closest('tr');
+  const isNominal = sel.value === 'nominal';
+  tr.querySelector('.c-nomid').disabled = !isNominal;
+  tr.querySelector('.c-circ').disabled = isNominal;
+  tr.querySelector('.c-thick').disabled = isNominal;
+  generateTable();
 }
 
-// ══════════════════════ CALCULATION ══════════════════════
-function recalc() {
-  const rows = Array.from(document.querySelectorAll('#tankTableBody tr'));
-  if (rows.length === 0) { return; }
-
-  const wallHeight = parseFloat(document.getElementById('wallHeight').value) || 0;
-
-  let planArea = 0;
-  if (window._areaMethod === 'rect') {
-    const L = parseFloat(document.getElementById('dikeLength').value) || 0;
-    const W = parseFloat(document.getElementById('dikeWidth').value) || 0;
-    planArea = L * W;
-    document.getElementById('planAreaDisplay').value = fmt(planArea) + ' m\u00b2';
-  } else {
-    planArea = parseFloat(document.getElementById('planAreaDirect').value) || 0;
-  }
-
-  const tanks = rows.map(tr => {
-    const dia = parseFloat(tr.querySelector('.t-dia').value) || 0;
-    const h = parseFloat(tr.querySelector('.t-h').value) || 0;
-    const vol = (Math.PI / 4) * dia * dia * h;
-    tr.querySelector('.t-vol').value = fmt(vol);
-    return { tr, id: tr.querySelector('.t-id').value || '—', dia, h, vol, forced: tr.querySelector('.t-force').checked, roofType: tr.querySelector('.t-roof').value };
-  });
-
-  // Largest = a manually-forced row if any is checked, else the max-volume tank
-  let largest = tanks.find(t => t.forced);
-  if (!largest) {
-    largest = tanks.reduce((best, t) => (t.vol > (best ? best.vol : -1) ? t : best), null);
-  }
-  tanks.forEach(t => t.tr.classList.toggle('largest-row', !!(largest && t === largest)));
-
-  // Required capacity depends only on the largest tank + percentage, not on
-  // wall height/freeboard - compute it first so OISD-118's freeboard rule
-  // (which is itself a function of required capacity) has something to work from.
-  const largestVol = largest ? largest.vol : 0;
-  const requiredPct = parseFloat(document.getElementById('requiredPercent').value);
-  const hasPct = !isNaN(requiredPct);
-  const requiredVol = hasPct ? largestVol * (requiredPct / 100) : null;
-
-  // OISD-118 (2025 revision): freeboard = max(200mm, 10% of calculated dyke
-  // capacity expressed as a height over the plan area) - this is a genuine
-  // read of "10% of calculated dyke capacity, whichever is higher" converted
-  // from volume to height via plan area; auto-computed and locked while this
-  // profile is active. NFPA 30 / Custom have no equivalent rule, so freeboard
-  // stays a plain editable input for those.
-  const isOISDProfile = document.getElementById('dikeRegProfile').value === 'OISD_118';
-  const freeboardInput = document.getElementById('freeboard');
-  let freeboard;
-  if (isOISDProfile) {
-    const tenPctHeight = (hasPct && planArea > 0) ? (0.10 * requiredVol) / planArea : 0;
-    freeboard = Math.max(0.2, tenPctHeight);
-    freeboardInput.value = fmt(freeboard);
-    freeboardInput.disabled = true;
-  } else {
-    freeboardInput.disabled = false;
-    freeboard = parseFloat(freeboardInput.value) || 0;
-  }
-  const effHeight = Math.max(0, wallHeight - freeboard);
-  document.getElementById('effHeightDisplay').value = fmt(effHeight) + ' m';
-
-  let displacement = 0;
-  tanks.forEach(t => {
-    const isLargest = largest && t === largest;
-    if (!isLargest && t.dia > 0) {
-      const crossSection = (Math.PI / 4) * t.dia * t.dia;
-      displacement += crossSection * Math.min(effHeight, t.h || effHeight);
+function getCourses() {
+  return Array.from(document.querySelectorAll('#courseTableBody tr')).map(tr => {
+    const height = parseFloat(tr.querySelector('.c-height').value) || 0;
+    const source = tr.querySelector('.c-source').value;
+    let effId;
+    if (source === 'nominal') {
+      effId = parseFloat(tr.querySelector('.c-nomid').value) || 0;
+    } else {
+      const circ = parseFloat(tr.querySelector('.c-circ').value) || 0;
+      const thick = (parseFloat(tr.querySelector('.c-thick').value) || 0) / 12; // in -> ft
+      effId = circ > 0 ? (circ / Math.PI) - 2 * thick : 0;
     }
+    tr.querySelector('.c-effid').value = effId > 0 ? fmt(effId, 3) : '—';
+    return { height, effId };
   });
+}
 
-  // OISD-118 (2025) also names tank pad/foundation volume, fire wall volume,
-  // and a margin for pipes/supports as additional deductions from enclosure
-  // capacity - kept as general-purpose optional fields (not profile-gated)
-  // since the physical volumes exist regardless of which standard you're
-  // checking against.
-  const padVol = parseFloat(document.getElementById('padVolume').value) || 0;
-  const fireWallVol = parseFloat(document.getElementById('fireWallVolume').value) || 0;
-  const marginVol = parseFloat(document.getElementById('marginVolume').value) || 0;
-  const extraDeductions = padVol + fireWallVol + marginVol;
+// ══════════════════════ DEADWOOD ROWS ══════════════════════
+function addDeadwoodRow() {
+  const tbody = document.getElementById('deadwoodTableBody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td><input type="text" class="d-desc" placeholder="e.g. Roof column"></td>
+    <td><select class="d-type" onchange="onDeadwoodTypeChange(this)">
+      <option value="cylinder">Cylinder</option>
+      <option value="fixed">Fixed Volume</option>
+    </select></td>
+    <td><input type="number" step="0.1" min="0" class="d-dia" oninput="generateTable()"></td>
+    <td><input type="number" step="0.1" min="0" class="d-vol" disabled oninput="generateTable()"></td>
+    <td><input type="number" step="1" min="1" value="1" class="d-qty" oninput="generateTable()"></td>
+    <td><input type="number" step="0.01" min="0" value="0" class="d-bot" oninput="generateTable()"></td>
+    <td><input type="number" step="0.01" min="0" class="d-top" oninput="generateTable()"></td>
+    <td><button class="rm-row-btn" onclick="this.closest('tr').remove(); generateTable();" title="Remove">&times;</button></td>`;
+  tbody.appendChild(tr);
+  generateTable();
+}
+function onDeadwoodTypeChange(sel) {
+  const tr = sel.closest('tr');
+  const isCyl = sel.value === 'cylinder';
+  tr.querySelector('.d-dia').disabled = !isCyl;
+  tr.querySelector('.d-vol').disabled = isCyl;
+  generateTable();
+}
 
-  const grossVolume = planArea * effHeight;
-  const netAvailable = grossVolume - displacement - extraDeductions;
-  const surplus = hasPct ? (netAvailable - requiredVol) : null;
+function getDeadwoodItems() {
+  return Array.from(document.querySelectorAll('#deadwoodTableBody tr')).map(tr => {
+    const type = tr.querySelector('.d-type').value;
+    const qty = parseFloat(tr.querySelector('.d-qty').value) || 0;
+    const bot = parseFloat(tr.querySelector('.d-bot').value) || 0;
+    const top = parseFloat(tr.querySelector('.d-top').value) || 0;
+    let crossSectionFt2 = 0, fixedVol = 0;
+    if (type === 'cylinder') {
+      const diaFt = (parseFloat(tr.querySelector('.d-dia').value) || 0) / 12; // in -> ft
+      crossSectionFt2 = (Math.PI/4) * diaFt * diaFt;
+    } else {
+      fixedVol = parseFloat(tr.querySelector('.d-vol').value) || 0;
+    }
+    return { type, qty, bot, top, crossSectionFt2, fixedVol };
+  }).filter(d => d.top > d.bot);
+}
 
-  document.getElementById('rPlanArea').textContent = planArea ? fmt(planArea) + ' m\u00b2' : '—';
-  document.getElementById('rEffHeight').textContent = fmt(effHeight) + ' m';
-  document.getElementById('rGrossVol').textContent = fmtM3(grossVolume);
-  document.getElementById('rDisplacement').textContent = fmtM3(displacement + extraDeductions);
-  document.getElementById('rNetAvailable').textContent = fmtM3(netAvailable);
-  document.getElementById('rLargestId').textContent = largest ? largest.id : '—';
-  document.getElementById('rLargestVol').textContent = fmtM3(largestVol);
-  document.getElementById('rRequiredPct').textContent = hasPct ? (requiredPct + '%') : 'not set';
-  document.getElementById('rRequiredVol').textContent = hasPct ? fmtM3(requiredVol) : '—';
-  document.getElementById('rSurplus').textContent = hasPct ? (surplus >= 0 ? '+' : '') + fmtM3(surplus) : '—';
+function deadwoodDeductionAt(H, items) {
+  let total = 0;
+  for (const item of items) {
+    const submergedTop = Math.min(H, item.top);
+    const submergedHeight = Math.max(0, submergedTop - item.bot);
+    if (submergedHeight <= 0) continue;
+    if (item.type === 'cylinder') {
+      total += item.crossSectionFt2 * submergedHeight * item.qty;
+    } else {
+      const fullRange = item.top - item.bot;
+      const frac = fullRange > 0 ? submergedHeight / fullRange : 0;
+      total += item.fixedVol * frac * item.qty;
+    }
+  }
+  return total;
+}
 
-  const badge = document.getElementById('dikeBadge');
-  if (!hasPct) { badge.className = 'badge unset'; badge.textContent = 'Not evaluated'; }
-  else if (surplus >= 0) { badge.className = 'badge pass'; badge.textContent = 'Pass'; }
-  else { badge.className = 'badge fail'; badge.textContent = 'Deficit'; }
+// ══════════════════════ BOTTOM SHAPE ══════════════════════
+function onBottomTypeChange() {
+  const isCone = document.getElementById('bottomType').value === 'cone_center';
+  document.getElementById('slopeField').style.display = isCone ? 'flex' : 'none';
+  document.getElementById('coneRiseField').style.display = isCone ? 'flex' : 'none';
+  generateTable();
+}
 
-  const maxScale = Math.max(netAvailable, requiredVol || 0, 1);
-  const availPct = Math.min(100, (netAvailable / maxScale) * 100);
-  const reqPct = Math.min(100, ((requiredVol || 0) / maxScale) * 100);
-  const barAvail = document.getElementById('barAvailable');
-  barAvail.style.width = availPct + '%';
-  barAvail.textContent = fmtM3(netAvailable);
-  const barReq = document.getElementById('barRequired');
-  barReq.style.width = reqPct + '%';
-  barReq.textContent = hasPct ? fmtM3(requiredVol) : 'not set';
-  barReq.className = 'bar-fill ' + (!hasPct ? 'required-pass' : (surplus >= 0 ? 'required-pass' : 'required-fail'));
+// Cross-sectional area at height H, for a cylinder of radius R with an
+// optional center-sump cone bottom of given slope (rise/run). Verified
+// against numerical integration during development.
+function crossSectionArea(H, R, bottomType, slope, coneRise) {
+  const fullArea = Math.PI * R * R;
+  if (bottomType !== 'cone_center' || H <= 0) return H > 0 ? fullArea : 0;
+  if (H >= coneRise) return fullArea;
+  const wetRadius = Math.min(H / slope, R);
+  return Math.PI * wetRadius * wetRadius;
+}
 
-  // OISD-118 aggregate capacity cap - separate from the containment-volume
-  // check. Per the 2025 revision, this limit does not apply to a single tank
-  // in a dyke, only to a group - so it's only shown with 2+ tanks.
-  const isOISD = document.getElementById('dikeRegProfile').value === 'OISD_118';
-  const aggCard = document.getElementById('aggregateCard');
-  if (isOISD && tanks.length > 1) {
-    aggCard.style.display = 'block';
-    const totalVol = tanks.reduce((sum, t) => sum + t.vol, 0);
-    const allFloating = tanks.every(t => t.roofType === 'floating');
-    const limit = allFloating ? OISD_AGGREGATE_LIMIT_FLOATING_M3 : OISD_AGGREGATE_LIMIT_FIXED_M3;
-    document.getElementById('aggGroupType').textContent = allFloating ? 'All floating roof' : 'Fixed roof, IFRT, or mixed (treated as fixed)';
-    document.getElementById('aggTotalVol').textContent = fmtM3(totalVol);
-    document.getElementById('aggLimit').textContent = fmtM3(limit);
-    const aggBadge = document.getElementById('aggregateBadge');
-    if (totalVol > limit) { aggBadge.className = 'badge fail'; aggBadge.textContent = 'Exceeds limit'; }
-    else { aggBadge.className = 'badge pass'; aggBadge.textContent = 'Within limit'; }
-  } else {
-    aggCard.style.display = 'none';
+function volumeAt(H, courses, bottomType, slope) {
+  // Sum volume course by course using each course's own diameter, capped
+  // at that course's height range; the bottom-shape correction only
+  // applies within the lowest course's diameter (bottom shape is a
+  // geometric feature of the tank floor / lowest course).
+  let vol = 0;
+  let baseElev = 0;
+  const R0 = courses.length ? courses[0].effId / 2 : 0;
+  const coneRise = bottomType === 'cone_center' ? slope * R0 : 0;
+
+  for (let i = 0; i < courses.length; i++) {
+    const c = courses[i];
+    const R = c.effId / 2;
+    const courseTop = baseElev + c.height;
+    if (H <= baseElev) break;
+    const localH = Math.min(H, courseTop) - baseElev;
+    if (i === 0 && bottomType === 'cone_center') {
+      // Integrate the coned bottom analytically within this course.
+      // The cone-region term below already equals the FULL cone volume
+      // once localH >= coneRise (since coneEnd = min(h2, coneRise) caps
+      // at coneRise) - only the cylindrical part above coneRise needs
+      // adding separately. (Verified against brute-force integration;
+      // an earlier draft double-counted the cone volume here.)
+      const h1 = 0, h2 = localH;
+      const coneEnd = Math.min(h2, coneRise);
+      if (coneEnd > h1) {
+        vol += (Math.PI * Math.pow(coneEnd, 3)) / (3 * slope * slope);
+      }
+      if (h2 > coneRise) {
+        const cylPart = h2 - coneRise;
+        vol += Math.PI * R * R * cylPart;
+      }
+    } else {
+      vol += Math.PI * R * R * localH;
+    }
+    baseElev = courseTop;
+  }
+  return vol;
+}
+
+// ══════════════════════ TABLE GENERATION ══════════════════════
+window._lastTable = [];
+window._lastSummary = {};
+
+function generateTable() {
+  const courses = getCourses();
+  if (!courses.length || courses.some(c => !c.height || !c.effId)) {
+    document.getElementById('outputTableBody').innerHTML = '';
+    document.getElementById('totalHeightOut').textContent = '—';
+    document.getElementById('grossCapOut').textContent = '—';
+    document.getElementById('safeFillCapOut').textContent = '—';
+    window._lastTable = [];
+    return;
+  }
+  const totalHeight = courses.reduce((s,c) => s + c.height, 0);
+  const bottomType = document.getElementById('bottomType').value;
+  const slope = parseFloat(document.getElementById('bottomSlope').value) || 0;
+  const R0 = courses[0].effId / 2;
+  const coneRise = bottomType === 'cone_center' ? slope * R0 : 0;
+  document.getElementById('coneRiseDisplay').value = coneRise ? fmt(coneRise,3) + ' ft' : '—';
+
+  const deadwood = getDeadwoodItems();
+  const hasRoof = document.getElementById('hasFloatingRoof').checked;
+  const roofLanded = parseFloat(document.getElementById('roofLandedHeight').value) || 0;
+  const roofDisp = parseFloat(document.getElementById('roofDisplacement').value) || 0;
+
+  const inc = Math.max(0.001, parseFloat(document.getElementById('increment').value) || 0.5);
+  const maxOverride = parseFloat(document.getElementById('maxHeightOverride').value);
+  const maxH = !isNaN(maxOverride) && maxOverride > 0 ? maxOverride : totalHeight;
+
+  const rows = [];
+  for (let H = 0; H <= maxH + 1e-9; H += inc) {
+    const Hc = Math.min(H, maxH);
+    let vol = volumeAt(Hc, courses, bottomType, slope);
+    vol -= deadwoodDeductionAt(Hc, deadwood);
+    if (hasRoof && Hc >= roofLanded) vol -= roofDisp;
+    vol = Math.max(0, vol);
+    rows.push({ h: Hc, vol });
+    if (Hc >= maxH) break;
   }
 
-  window._lastCalc = { planArea, effHeight, grossVolume, displacement, extraDeductions, netAvailable, largest, largestVol, requiredPct: hasPct ? requiredPct : null, requiredVol, surplus, tanks, freeboard, padVol, fireWallVol, marginVol };
+  window._lastTable = rows;
+  const tbody = document.getElementById('outputTableBody');
+  tbody.innerHTML = rows.map(r => `<tr><td>${fmt(r.h,3)}</td><td>${fmt(r.vol,2)}</td><td>${fmt(r.vol/FT3_PER_BBL,2)}</td><td>${fmt(r.vol/FT3_PER_USGAL,1)}</td></tr>`).join('');
+
+  const grossCap = rows.length ? rows[rows.length-1].vol : 0;
+  document.getElementById('totalHeightOut').textContent = fmt(totalHeight,2) + ' ft';
+  document.getElementById('grossCapOut').textContent = fmt(grossCap,1) + ' ft\u00b3 (' + fmt(grossCap/FT3_PER_BBL,1) + ' bbl)';
+
+  const safeFillH = parseFloat(document.getElementById('safeFillHeight').value);
+  let safeFillCap = null;
+  if (!isNaN(safeFillH)) {
+    let v = volumeAt(Math.min(safeFillH, totalHeight), courses, bottomType, slope);
+    v -= deadwoodDeductionAt(safeFillH, deadwood);
+    if (hasRoof && safeFillH >= roofLanded) v -= roofDisp;
+    safeFillCap = Math.max(0, v);
+  }
+  document.getElementById('safeFillCapOut').textContent = safeFillCap !== null ? fmt(safeFillCap,1) + ' ft\u00b3 (' + fmt(safeFillCap/FT3_PER_BBL,1) + ' bbl)' : '—';
+
+  window._lastSummary = { totalHeight, grossCap, safeFillH: isNaN(safeFillH)?null:safeFillH, safeFillCap, bottomType, slope, coneRise, hasRoof, roofLanded, roofDisp, increment: inc, courses, deadwood };
 }
 
-// ══════════════════════ SAVE / PRINT ══════════════════════
-function gatherCalcData() {
-  const g = id => (document.getElementById(id) ? document.getElementById(id).value : '') || '';
-  const u = window._tpUser || {};
-  const c = window._lastCalc || {};
-  return {
-    uid: u.uid || '', userEmail: u.email || '', userName: ((u.firstName||'')+' '+(u.lastName||'')).trim(),
-    company: g('companyName'), dikeId: g('dikeId'), location: g('dikeLocation'),
-    recordType: g('recordType') || 'research',
-    areaMethod: window._areaMethod,
-    dikeLength: parseFloat(g('dikeLength')), dikeWidth: parseFloat(g('dikeWidth')),
-    planAreaDirect: parseFloat(g('planAreaDirect')),
-    wallHeight: parseFloat(g('wallHeight')) || 0, freeboard: parseFloat(g('freeboard')) || 0,
-    padVolume: parseFloat(g('padVolume')) || 0, fireWallVolume: parseFloat(g('fireWallVolume')) || 0, marginVolume: parseFloat(g('marginVolume')) || 0,
-    planArea: c.planArea || 0, effHeight: c.effHeight || 0,
-    grossVolume: c.grossVolume || 0, displacement: c.displacement || 0, netAvailable: c.netAvailable || 0,
-    largestTankId: c.largest ? c.largest.id : '', largestTankVol: c.largestVol || 0,
-    regulatoryProfile: g('dikeRegProfile'), requiredPercent: c.requiredPct,
-    requiredVol: c.requiredVol, surplus: c.surplus,
-    tanks: (c.tanks || []).map(t => ({ id: t.id, dia: t.dia, h: t.h, vol: t.vol, forced: t.forced, roofType: t.roofType })),
-    downloaded: false,
-    createdAt: new Date().toISOString()
-  };
+function downloadCSV() {
+  if (!window._lastTable.length) { alert('Generate the table first.'); return; }
+  let csv = 'Height (ft),Volume (ft3),Volume (bbl),Volume (US gal)\n';
+  window._lastTable.forEach(r => {
+    csv += `${r.h.toFixed(3)},${r.vol.toFixed(2)},${(r.vol/FT3_PER_BBL).toFixed(2)},${(r.vol/FT3_PER_USGAL).toFixed(1)}\n`;
+  });
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const tankId = document.getElementById('tankId').value.trim() || 'tank';
+  a.href = url; a.download = `strapping-table-${tankId}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
-async function saveDikeCalc() {
+// ══════════════════════ SAVE ══════════════════════
+async function saveStrappingCalc() {
   const errEl = document.getElementById('errorMsg'), okEl = document.getElementById('okMsg');
   errEl.classList.remove('show'); okEl.classList.remove('show');
-  recalc();
-  const dikeId = document.getElementById('dikeId').value.trim();
-  const wallHeight = parseFloat(document.getElementById('wallHeight').value);
-  if (!dikeId) { errEl.textContent = 'Dike / Bund ID is required.'; errEl.classList.add('show'); return; }
-  if (!wallHeight || wallHeight <= 0) { errEl.textContent = 'Dike wall height is required.'; errEl.classList.add('show'); return; }
+  generateTable();
+  const tankId = document.getElementById('tankId').value.trim();
+  if (!tankId) { errEl.textContent = 'Tank ID is required.'; errEl.classList.add('show'); return; }
+  if (!window._lastTable.length) { errEl.textContent = 'Generate a table before saving.'; errEl.classList.add('show'); return; }
   try {
-    const data = gatherCalcData();
-    const id = await window.fbDike.addCalc(data);
-    window._currentCalcId = id;
-    okEl.textContent = 'Calculation saved.';
+    const g = id => (document.getElementById(id) ? document.getElementById(id).value : '') || '';
+    const u = window._tpUser || {};
+    const s = window._lastSummary;
+    const data = {
+      uid: u.uid || '', userEmail: u.email || '', userName: ((u.firstName||'')+' '+(u.lastName||'')).trim(),
+      company: g('companyName'), tankId: g('tankId'), location: g('siteLocation'),
+      recordType: g('recordType') || 'research',
+      courses: s.courses, bottomType: s.bottomType, slope: s.slope, coneRise: s.coneRise,
+      deadwoodCount: s.deadwood.length, hasFloatingRoof: s.hasRoof, roofLandedHeight: s.roofLanded, roofDisplacement: s.roofDisp,
+      totalHeight: s.totalHeight, grossCapacityFt3: s.grossCap, safeFillHeight: s.safeFillH, safeFillCapacityFt3: s.safeFillCap,
+      increment: s.increment,
+      downloaded: false,
+      createdAt: new Date().toISOString()
+    };
+    await window.fbStrapping.addCalc(data);
+    okEl.textContent = 'Summary saved. Use Download CSV to keep the full table.';
     okEl.classList.add('show');
   } catch (e) {
     errEl.textContent = 'Save failed: ' + e.message;
@@ -817,81 +754,11 @@ async function saveDikeCalc() {
   }
 }
 
-function printReport(html) {
-  const printCSS = `<style>@media print{@page{margin:14mm;}body{margin:0;}}
-    @media screen{body{background:#eee;}.report-wrap{max-width:900px;margin:20px auto;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.15);padding:28px;}}
-    .print-bar{position:fixed;top:0;left:0;right:0;background:#0a0e14;color:#c9a84c;padding:10px 16px;font-family:Arial,sans-serif;font-size:13px;display:flex;gap:12px;align-items:center;justify-content:center;z-index:9999;}
-    .print-bar button{background:#c9a84c;color:#0a0e14;border:none;padding:7px 16px;border-radius:6px;font-weight:bold;cursor:pointer;font-size:13px;}
-    .print-bar button.sec{background:transparent;color:#c9a84c;border:1px solid #c9a84c;}
-    @media print{.print-bar{display:none;}}</style>`;
-  const bar = `<div class="print-bar">
-      <span>Report ready \u2014 use <strong>Save as PDF</strong> in the print dialog.</span>
-      <button onclick="window.print()">Save as PDF</button>
-      <button class="sec" onclick="window.close()">Close</button>
-    </div>`;
-  const wrapped = html.replace('</head>', printCSS + '</head>')
-                      .replace('<body>', '<body>' + bar + '<div class="report-wrap">')
-                      .replace('</body>', '</div></body>');
-  const w = window.open('', '_blank');
-  if (!w) { alert('Please allow pop-ups to download the PDF report.'); return; }
-  w.document.open(); w.document.write(wrapped); w.document.close();
-  w.onload = () => { setTimeout(() => { try { w.focus(); w.print(); } catch(e){} }, 400); };
-}
-
-function printDikeReport() {
-  recalc();
-  const g = id => (document.getElementById(id) ? document.getElementById(id).value : '') || '\u2014';
-  const c = window._lastCalc || {};
-  const tankRows = (c.tanks || []).map(t => `<tr><td>${t.id}</td><td>${t.roofType||''}</td><td>${fmt(t.dia)}</td><td>${fmt(t.h)}</td><td>${fmt(t.vol)}</td><td>${(c.largest && t===c.largest) ? 'Largest (excluded from displacement)' : ''}</td></tr>`).join('');
-  const hasPct = c.requiredPct !== null && c.requiredPct !== undefined;
-  const isOISD = g('dikeRegProfile') === 'OISD_118';
-  let aggSection = '';
-  if (isOISD && (c.tanks||[]).length > 1) {
-    const totalVol = (c.tanks||[]).reduce((s,t)=>s+t.vol,0);
-    const allFloating = (c.tanks||[]).every(t => t.roofType === 'floating');
-    const limit = allFloating ? 120000 : 60000;
-    aggSection = `<h2>Aggregate capacity check (OISD-118)</h2>
-<table><tr><th>Group composition</th><td>${allFloating?'All floating roof':'Fixed roof, or mixed (treated as fixed)'}</td><th>Aggregate volume</th><td>${fmtM3(totalVol)}</td><th>Limit</th><td>${fmtM3(limit)}</td><th>Status</th><td>${totalVol>limit?'Exceeds limit':'Within limit'}</td></tr></table>`;
-  }
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Dike Capacity \u2014 ${g('dikeId')}</title>
-<style>body{font-family:Arial,sans-serif;color:#222;font-size:12px;} h1{font-size:18px;margin-bottom:4px;} h2{font-size:14px;margin:18px 0 6px;}
-table{border-collapse:collapse;width:100%;margin-bottom:14px;} th,td{border:1px solid #ccc;padding:5px 6px;text-align:center;font-size:11px;}
-th{background:#f2f2f2;} .meta td{text-align:left;}</style></head>
-<body>
-<h1>Dike / Bund Capacity \u2014 ${g('dikeId')}</h1>
-<p style="color:#666;margin-bottom:14px;">Company: ${g('companyName')} &middot; Location: ${g('dikeLocation')}</p>
-<table class="meta">
-<tr><th>Plan area</th><td>${fmt(c.planArea||0)} m&sup2;</td><th>Wall height</th><td>${g('wallHeight')} m</td><th>Freeboard</th><td>${fmt(c.freeboard||0)} m</td></tr>
-<tr><th>Effective height</th><td>${fmt(c.effHeight||0)} m</td><th>Regulatory basis</th><td colspan="3">${g('dikeRegProfile')}</td></tr>
-<tr><th>Tank pad volume</th><td>${fmt(c.padVol||0)} m&sup3;</td><th>Fire wall volume</th><td>${fmt(c.fireWallVol||0)} m&sup3;</td><th>Other margin</th><td>${fmt(c.marginVol||0)} m&sup3;</td></tr>
-</table>
-<h2>Tanks in this dike</h2>
-<table><tr><th>Tank ID</th><th>Roof Type</th><th>Diameter (m)</th><th>Height (m)</th><th>Volume (m&sup3;)</th><th>Note</th></tr>${tankRows}</table>
-<h2>Result</h2>
-<table>
-<tr><th>Gross dike volume</th><td>${fmtM3(c.grossVolume||0)}</td><th>Displacement + deductions</th><td>${fmtM3((c.displacement||0)+(c.extraDeductions||0))}</td></tr>
-<tr><th>Net available capacity</th><td>${fmtM3(c.netAvailable||0)}</td><th>Largest tank volume</th><td>${fmtM3(c.largestVol||0)}</td></tr>
-<tr><th>Required %</th><td>${hasPct ? c.requiredPct+'%' : 'not set'}</td><th>Required capacity</th><td>${hasPct ? fmtM3(c.requiredVol) : '\u2014'}</td></tr>
-<tr><th>Surplus / deficit</th><td colspan="3">${hasPct ? ((c.surplus>=0?'+':'')+fmtM3(c.surplus)) : '\u2014'}</td></tr>
-</table>
-${aggSection}
-<div style="margin-top:20px;padding:14px 16px;border:1px solid #c9a84c;border-radius:6px;background:#faf7ef;font-size:10.5px;line-height:1.5;color:#3a3320;">
-<strong style="text-transform:uppercase;color:#8a6d1a;">Indicative calculation only</strong><br>
-This report is a geometric containment estimate, not a certified regulatory compliance demonstration. The OISD-118 figures applied (100% containment, freeboard per the 2025 revision's max(200mm, 10% of capacity) rule, 120,000/60,000 m&sup3; aggregate caps) are sourced from the OISD/DOC/06/2025/34 revision text provided to this tool. NFPA 30's 100% baseline is corroborated by API 2610 Section 9.2.2, which cites the same rule directly and separately describes a 110%-or-rainfall-event freeboard practice. PDVSA AG-212-PT's 150% + displacement figure and 300mm freeboard are drawn from a proprietary internal PDVSA standard (Venezuela), not a public national code - confirm its applicability before relying on it.
-</div>
-</body></html>`;
-  printReport(html);
-}
-
-window.addEventListener('dike-user-ready', () => { init(); });
-document.addEventListener('DOMContentLoaded', () => { init(); });
-let _inited = false;
-function init() {
-  if (_inited) return; _inited = true;
-  onDikeProfileChange();
-  addTankRow('TK-1');
-  addTankRow('TK-2');
-}
+document.addEventListener('DOMContentLoaded', () => {
+  addCourseRow();
+  onBottomTypeChange();
+  generateTable();
+});
 </script>
 </body>
 </html>

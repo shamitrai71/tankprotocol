@@ -174,6 +174,338 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /ventingCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyVenting() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyVenting())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /settlementCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`: auto-logged on each calculation, "research" by
+      // default (private), "official" visible to the rest of the company,
+      // admins can always read either way. Only the `downloaded` flag is
+      // mutable after save.
+      function sameCompanySettlement() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanySettlement())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /shellThicknessCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`: auto-logged on each calculation,
+      // "research" by default (private), "official" visible to the rest of
+      // the company, admins can always read either way. Only the
+      // `downloaded` flag is mutable after save.
+      function sameCompanyShell() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyShell())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /inspectionIntervalCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`: auto-logged
+      // on each calculation, "research" by default (private), "official"
+      // visible to the rest of the company, admins can always read either
+      // way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyInspection() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyInspection())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /brittleFractureCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`: auto-logged on each assessment,
+      // "research" by default (private), "official" visible to the rest
+      // of the company, admins can always read either way. Only the
+      // `downloaded` flag is mutable after save.
+      function sameCompanyBrittle() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyBrittle())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /strappingTableCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`: auto-logged on
+      // each generated table's summary, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyStrapping() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyStrapping())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /windGirderCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`: auto-logged on each calculation,
+      // "research" by default (private), "official" visible to the rest
+      // of the company, admins can always read either way. Only the
+      // `downloaded` flag is mutable after save.
+      function sameCompanyWindGirder() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyWindGirder())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /roofVentCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyRoofVent() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyRoofVent())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /seismicCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanySeismic() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanySeismic())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /freeboardCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`: auto-logged on each calculation, "research" by
+      // default (private), "official" visible to the rest of the company,
+      // admins can always read either way. Only the `downloaded` flag is
+      // mutable after save.
+      function sameCompanyFreeboard() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyFreeboard())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /shellDesignCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`: auto-logged on each calculation,
+      // "research" by default (private), "official" visible to the rest
+      // of the company, admins can always read either way. Only the
+      // `downloaded` flag is mutable after save.
+      function sameCompanyShellDesign() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyShellDesign())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /roofDesignCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`: auto-logged on
+      // each calculation, "research" by default (private), "official"
+      // visible to the rest of the company, admins can always read either
+      // way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyRoofDesign() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyRoofDesign())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /nozzleReinforcementCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`: auto-logged on each calculation, "research" by
+      // default (private), "official" visible to the rest of the company,
+      // admins can always read either way. Only the `downloaded` flag is
+      // mutable after save.
+      function sameCompanyNozzle() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyNozzle())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
     match /rimSealSurveys/{id} {
 
       // Colleagues at the same company need to see each other's surveys on the
