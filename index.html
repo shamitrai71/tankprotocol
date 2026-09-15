@@ -521,37 +521,33 @@ body::after {
 /* ═══════════════════ HOME / LANDING PAGE ═══════════════════ */
 .home-wrap { max-width: 1280px; margin: 0 auto; padding: 8px 4px 40px; }
 .hero-card {
-  background: linear-gradient(135deg, rgba(201,168,76,0.14), rgba(201,168,76,0.03));
+  background: linear-gradient(135deg, rgba(201,168,76,0.14), rgba(201,168,76,0.05));
   border: 1px solid rgba(201,168,76,0.35);
-  border-radius: var(--radius);
-  padding: 20px 24px;
+  border-radius: 12px;
+  padding: 20px;
   margin-bottom: 24px;
-  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
-  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 10px;
+  text-decoration: none;
+  transition: all 0.2s;
 }
-.hero-card::before {
-  content: ''; position: absolute; top: -40%; right: -10%; width: 220px; height: 220px;
-  background: radial-gradient(circle, rgba(201,168,76,0.18), transparent 70%);
-  pointer-events: none;
-}
+.hero-card:hover { border-color: rgba(201,168,76,0.55); transform: translateY(-2px); }
+.hero-card-top { display: flex; align-items: center; gap: 10px; }
 .hero-icon {
-  font-size: 1.7rem; flex-shrink: 0;
-  width: 48px; height: 48px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
   background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  box-shadow: 0 6px 18px rgba(201,168,76,0.3);
 }
-.hero-body { flex: 1; min-width: 220px; }
 .hero-eyebrow {
-  font-family: var(--body); font-size: 0.66rem; font-weight: 700; letter-spacing: 1.3px;
-  text-transform: uppercase; color: var(--gold-light); margin-bottom: 3px;
+  font-family: var(--body); font-size: 0.62rem; font-weight: 700; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--gold-light);
 }
-.hero-title {
-  font-family: var(--display); font-weight: 800; font-size: 1.25rem; color: var(--text-bright);
-  margin-bottom: 5px; letter-spacing: 0.2px;
+.hero-title { font-family: var(--body); font-weight: 700; font-size: 0.92rem; color: var(--text-bright); }
+.hero-desc { color: var(--text-dim); font-size: 0.8rem; line-height: 1.5; }
+.hero-cta {
+  align-self: flex-start;
+  font-family: var(--body); font-size: 0.78rem; font-weight: 600; color: var(--gold-light);
+  display: inline-flex; align-items: center; gap: 5px;
 }
-.hero-desc { color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; max-width: 600px; margin-bottom: 12px; }
-.hero-cta { flex-shrink: 0; padding: 8px 18px; font-size: 0.82rem; }
 
 .usage-strip { margin-bottom: 32px; }
 .usage-strip-title {
@@ -3986,14 +3982,16 @@ body.editing .report-delete-btn { display: block; }
     <div class="home-wrap">
 
       <!-- HERO: Emission Calculator -->
-      <a href="floating-roof-tank-calculator.html" class="hero-card" style="text-decoration:none;">
-        <div class="hero-icon">⚗</div>
-        <div class="hero-body">
-          <div class="hero-eyebrow">Most Used &middot; AP-42 / API MPMS 19.2</div>
-          <div class="hero-title">Floating Roof Emission Calculator</div>
-          <div class="hero-desc">Evaporative loss estimates for external and internal floating roof tanks &mdash; rim-seal loss factors by seal type, deck-fitting losses, and roof-landing venting, all sourced directly from EPA AP-42 Chapter 7.1 and API MPMS 19.2.</div>
-          <span class="btn-primary hero-cta">Open Calculator →</span>
+      <a href="floating-roof-tank-calculator.html" class="hero-card">
+        <div class="hero-card-top">
+          <div class="hero-icon">⚗</div>
+          <div>
+            <div class="hero-eyebrow">Most Used &middot; AP-42 / API MPMS 19.2</div>
+            <div class="hero-title">Floating Roof Emission Calculator</div>
+          </div>
         </div>
+        <div class="hero-desc">Evaporative loss estimates for external and internal floating roof tanks &mdash; rim-seal loss factors by seal type, deck-fitting losses, and roof-landing venting, sourced from EPA AP-42 Chapter 7.1 and API MPMS 19.2.</div>
+        <span class="hero-cta">Open →</span>
       </a>
 
       <!-- RECENT / MOST USED -->
