@@ -518,6 +518,95 @@ body::after {
   padding: 28px;
 }
 
+/* ═══════════════════ HOME / LANDING PAGE ═══════════════════ */
+.home-wrap { max-width: 1280px; margin: 0 auto; padding: 8px 4px 40px; }
+.hero-card {
+  background: linear-gradient(135deg, rgba(201,168,76,0.14), rgba(201,168,76,0.03));
+  border: 1px solid rgba(201,168,76,0.35);
+  border-radius: var(--radius);
+  padding: 36px 40px;
+  margin-bottom: 28px;
+  display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  position: relative; overflow: hidden;
+}
+.hero-card::before {
+  content: ''; position: absolute; top: -40%; right: -10%; width: 320px; height: 320px;
+  background: radial-gradient(circle, rgba(201,168,76,0.18), transparent 70%);
+  pointer-events: none;
+}
+.hero-icon {
+  font-size: 3.2rem; flex-shrink: 0;
+  width: 84px; height: 84px; border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  box-shadow: 0 10px 30px rgba(201,168,76,0.3);
+}
+.hero-body { flex: 1; min-width: 260px; }
+.hero-eyebrow {
+  font-family: var(--body); font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--gold-light); margin-bottom: 6px;
+}
+.hero-title {
+  font-family: var(--display); font-weight: 800; font-size: 1.9rem; color: var(--text-bright);
+  margin-bottom: 8px; letter-spacing: 0.3px;
+}
+.hero-desc { color: var(--text); font-size: 0.95rem; line-height: 1.6; max-width: 640px; margin-bottom: 18px; }
+.hero-cta { flex-shrink: 0; }
+
+.usage-strip { margin-bottom: 32px; }
+.usage-strip-title {
+  font-family: var(--body); font-size: 0.74rem; font-weight: 700; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px;
+}
+.usage-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.usage-chip {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--glass); border: 1px solid var(--glass-border); border-radius: 10px;
+  padding: 10px 16px; text-decoration: none; color: var(--text); font-size: 0.84rem;
+  transition: all 0.18s;
+}
+.usage-chip:hover { border-color: var(--gold); background: var(--glass-hover); transform: translateY(-1px); }
+.usage-chip .uc-icon { font-size: 1.1rem; }
+.usage-chip .uc-badge {
+  font-family: var(--body); font-size: 0.62rem; color: var(--gold-light);
+  background: var(--gold-dim); border-radius: 8px; padding: 2px 7px; margin-left: 2px;
+}
+.usage-empty { color: var(--text-dim); font-size: 0.84rem; font-style: italic; }
+
+.category-section { margin-bottom: 30px; }
+.category-title {
+  font-family: var(--display); font-weight: 700; font-size: 1.05rem; color: var(--text-bright);
+  margin-bottom: 14px; display: flex; align-items: center; gap: 9px;
+}
+.category-title .cat-icon { font-size: 1.15rem; }
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+.tool-card {
+  background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px;
+  padding: 20px; display: flex; flex-direction: column; gap: 10px;
+  transition: all 0.2s;
+}
+.tool-card:hover { border-color: rgba(201,168,76,0.4); background: var(--glass-hover); transform: translateY(-2px); }
+.tool-card-top { display: flex; align-items: center; gap: 10px; }
+.tool-card-icon {
+  width: 38px; height: 38px; border-radius: 9px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+  background: rgba(201,168,76,0.12);
+}
+.tool-card-title { font-family: var(--body); font-weight: 700; font-size: 0.92rem; color: var(--text-bright); }
+.tool-card-desc { color: var(--text-dim); font-size: 0.8rem; line-height: 1.5; flex: 1; }
+.tool-card-cta {
+  align-self: flex-start; margin-top: 4px;
+  font-family: var(--body); font-size: 0.78rem; font-weight: 600; color: var(--gold-light);
+  text-decoration: none; display: inline-flex; align-items: center; gap: 5px;
+}
+.tool-card-cta:hover { color: var(--gold); gap: 8px; }
+
+@media (max-width: 640px) {
+  .hero-card { padding: 24px 20px; }
+  .hero-title { font-size: 1.5rem; }
+  .tool-grid { grid-template-columns: 1fr; }
+}
+
 .profile-avatar-wrap {
   text-align: center;
   margin-bottom: 20px;
@@ -3868,25 +3957,8 @@ body.editing .report-delete-btn { display: block; }
     </div>
 
     <div class="topbar-nav">
-      <a href="floating-roof-tank-calculator.html" class="nav-btn">⚗ Calculator</a>
-      <a href="rim-seal-survey.html" class="nav-btn">🎯 Rim Seal Survey</a>
-      <a href="dike-bund-calculator.html" class="nav-btn">🧱 Dike Capacity</a>
-      <a href="spacing-calculator.html" class="nav-btn">📏 Tank Spacing</a>
-      <a href="firewater-calculator.html" class="nav-btn">🚒 Fire Water Demand</a>
-      <a href="venting-calculator.html" class="nav-btn">💨 Tank Venting</a>
-      <a href="settlement-calculator.html" class="nav-btn">📐 Tank Settlement</a>
-      <a href="shell-thickness-calculator.html" class="nav-btn">🔩 Shell Thickness</a>
-      <a href="inspection-interval-calculator.html" class="nav-btn">🗓️ Inspection Interval</a>
-      <a href="brittle-fracture-calculator.html" class="nav-btn">🧨 Brittle Fracture</a>
-      <a href="strapping-table-calculator.html" class="nav-btn">📊 Capacity Table</a>
-      <a href="wind-girder-calculator.html" class="nav-btn">💨 Wind Girder</a>
-      <a href="roof-vent-calculator.html" class="nav-btn">🌫️ Roof Vapor Venting</a>
-      <a href="seismic-calculator.html" class="nav-btn">🌋 Seismic Design</a>
-      <a href="freeboard-calculator.html" class="nav-btn">🌊 Seismic Freeboard</a>
-      <a href="shell-design-calculator.html" class="nav-btn">🔩 Shell Design</a>
-      <a href="roof-design-calculator.html" class="nav-btn">🏠 Roof Design</a>
-      <a href="nozzle-reinforcement-calculator.html" class="nav-btn">🔧 Nozzle Reinforcement</a>
-      <button class="nav-btn active" onclick="showPage('profilePage', this)">👤 Profile</button>
+      <button class="nav-btn active" onclick="showPage('homePage', this)">🏠 Home</button>
+      <button class="nav-btn" onclick="showPage('profilePage', this)">👤 Profile</button>
       <a href="#" onclick="openAdminOverlay();return false;" id="adminNavBtn" class="nav-btn" style="display:none;">⬡ Admin Panel</a>
     </div>
 
@@ -3899,24 +3971,7 @@ body.editing .report-delete-btn { display: block; }
       <div class="topbar-kebab-wrap">
         <button class="topbar-kebab-btn" type="button" aria-label="Menu" onclick="toggleKebabMenu(this)">⋮</button>
         <div class="topbar-kebab-menu">
-          <a href="floating-roof-tank-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">⚗ Calculator</a>
-          <a href="rim-seal-survey.html" class="kebab-item" onclick="closeKebabMenu(this);">🎯 Rim Seal Survey</a>
-          <a href="dike-bund-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🧱 Dike Capacity</a>
-          <a href="spacing-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">📏 Tank Spacing</a>
-          <a href="firewater-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🚒 Fire Water Demand</a>
-          <a href="venting-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">💨 Tank Venting</a>
-          <a href="settlement-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">📐 Tank Settlement</a>
-          <a href="shell-thickness-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🔩 Shell Thickness</a>
-          <a href="inspection-interval-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🗓️ Inspection Interval</a>
-          <a href="brittle-fracture-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🧨 Brittle Fracture</a>
-          <a href="strapping-table-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">📊 Capacity Table</a>
-          <a href="wind-girder-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">💨 Wind Girder</a>
-          <a href="roof-vent-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🌫️ Roof Vapor Venting</a>
-          <a href="seismic-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🌋 Seismic Design</a>
-          <a href="freeboard-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🌊 Seismic Freeboard</a>
-          <a href="shell-design-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🔩 Shell Design</a>
-          <a href="roof-design-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🏠 Roof Design</a>
-          <a href="nozzle-reinforcement-calculator.html" class="kebab-item" onclick="closeKebabMenu(this);">🔧 Nozzle Reinforcement</a>
+          <button class="kebab-item" onclick="closeKebabMenu(this); showPage('homePage', document.querySelector('.nav-btn.active') || document.querySelector('.nav-btn'));">🏠 Home</button>
           <button class="kebab-item" onclick="closeKebabMenu(this); showPage('profilePage', document.querySelector('.nav-btn.active') || document.querySelector('.nav-btn'));">👤 Profile</button>
           <a href="#" id="adminNavBtnMobile" class="kebab-item" style="display:none;" onclick="closeKebabMenu(this); openAdminOverlay(); return false;">⬡ Admin Panel</a>
           <div class="kebab-divider"></div>
@@ -3927,7 +3982,152 @@ body.editing .report-delete-btn { display: block; }
   </div>
 
   <!-- PROFILE PAGE -->
-  <div class="page-content active" id="profilePage">
+  <div class="page-content active" id="homePage">
+    <div class="home-wrap">
+
+      <!-- HERO: Emission Calculator -->
+      <a href="floating-roof-tank-calculator.html" class="hero-card" style="text-decoration:none;">
+        <div class="hero-icon">⚗</div>
+        <div class="hero-body">
+          <div class="hero-eyebrow">Most Used &middot; AP-42 / API MPMS 19.2</div>
+          <div class="hero-title">Floating Roof Emission Calculator</div>
+          <div class="hero-desc">Evaporative loss estimates for external and internal floating roof tanks &mdash; rim-seal loss factors by seal type, deck-fitting losses, and roof-landing venting, all sourced directly from EPA AP-42 Chapter 7.1 and API MPMS 19.2.</div>
+          <span class="btn-primary hero-cta">Open Calculator →</span>
+        </div>
+      </a>
+
+      <!-- RECENT / MOST USED -->
+      <div class="usage-strip">
+        <div class="usage-strip-title">Your Tools</div>
+        <div class="usage-row" id="usageRow">
+          <span class="usage-empty">Loading your recent activity…</span>
+        </div>
+      </div>
+
+      <!-- CATEGORY: Emissions & Venting -->
+      <div class="category-section">
+        <div class="category-title"><span class="cat-icon">🌫️</span> Emissions &amp; Venting</div>
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🌫️</div><div class="tool-card-title">Roof Vapor Venting</div></div>
+            <div class="tool-card-desc">External floating roof bleeder vents and internal floating roof tank circulation vents (API 650 Appendix C/H).</div>
+            <a href="roof-vent-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY: Inspection & Fitness-for-Service -->
+      <div class="category-section">
+        <div class="category-title"><span class="cat-icon">🔍</span> Inspection &amp; Fitness-for-Service (API 653)</div>
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🔩</div><div class="tool-card-title">Shell Thickness</div></div>
+            <div class="tool-card-desc">Minimum shell thickness, corrosion rate, and remaining life for an in-service tank.</div>
+            <a href="shell-thickness-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🗓️</div><div class="tool-card-title">Inspection Interval</div></div>
+            <div class="tool-card-desc">External, UT, and internal inspection intervals from corrosion rate and remaining thickness.</div>
+            <a href="inspection-interval-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🧨</div><div class="tool-card-title">Brittle Fracture</div></div>
+            <div class="tool-card-desc">Guided decision-tree assessment following API 653 §5's brittle fracture flowchart.</div>
+            <a href="brittle-fracture-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">📐</div><div class="tool-card-title">Tank Settlement</div></div>
+            <div class="tool-card-desc">Shell out-of-plane and bottom settlement evaluation against API 653 Annex B allowables.</div>
+            <a href="settlement-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🎯</div><div class="tool-card-title">Rim Seal Survey</div></div>
+            <div class="tool-card-desc">Walk-around rim-seal gap survey against EPA/CPCB/EN regulatory profiles.</div>
+            <a href="rim-seal-survey.html" class="tool-card-cta">Open →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY: Layout & Containment -->
+      <div class="category-section">
+        <div class="category-title"><span class="cat-icon">🧱</span> Layout &amp; Containment</div>
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🧱</div><div class="tool-card-title">Dike Capacity</div></div>
+            <div class="tool-card-desc">Secondary containment sizing under NFPA 30, API 2610, OISD-118, and PDVSA methods.</div>
+            <a href="dike-bund-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">📏</div><div class="tool-card-title">Tank Spacing</div></div>
+            <div class="tool-card-desc">Shell-to-shell and property-line spacing under NFPA 30 and OISD-118.</div>
+            <a href="spacing-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">📊</div><div class="tool-card-title">Capacity Table</div></div>
+            <div class="tool-card-desc">Multi-course strapping table generator with deadwood and floating-roof displacement.</div>
+            <a href="strapping-table-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY: Fire & Safety -->
+      <div class="category-section">
+        <div class="category-title"><span class="cat-icon">🚒</span> Fire &amp; Safety</div>
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🚒</div><div class="tool-card-title">Fire Water Demand</div></div>
+            <div class="tool-card-desc">Cooling and foam water demand under OISD-116 and API RP 2021.</div>
+            <a href="firewater-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">💨</div><div class="tool-card-title">Tank Venting</div></div>
+            <div class="tool-card-desc">Normal and emergency venting requirements per API 2000.</div>
+            <a href="venting-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- CATEGORY: New-Tank Design -->
+      <div class="category-section">
+        <div class="category-title"><span class="cat-icon">🏗️</span> New-Tank Design (API 650)</div>
+        <div class="tool-grid">
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">💨</div><div class="tool-card-title">Wind Girder</div></div>
+            <div class="tool-card-desc">Top and intermediate wind girder section modulus, and unstiffened shell height.</div>
+            <a href="wind-girder-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🔩</div><div class="tool-card-title">Shell Design</div></div>
+            <div class="tool-card-desc">New-tank shell course thickness by the 1-Foot Method or Variable Design Point Method.</div>
+            <a href="shell-design-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🏠</div><div class="tool-card-title">Roof Design</div></div>
+            <div class="tool-card-desc">Supported cone, self-supporting cone, and self-supporting dome/umbrella roof design.</div>
+            <a href="roof-design-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🔧</div><div class="tool-card-title">Nozzle Reinforcement</div></div>
+            <div class="tool-card-desc">Area-replacement check for shell openings larger than NPS 2.</div>
+            <a href="nozzle-reinforcement-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🌋</div><div class="tool-card-title">Seismic Design</div></div>
+            <div class="tool-card-desc">Site ground motion, base shear, overturning moment, and anchorage determination.</div>
+            <a href="seismic-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+          <div class="tool-card">
+            <div class="tool-card-top"><div class="tool-card-icon">🌊</div><div class="tool-card-title">Seismic Freeboard</div></div>
+            <div class="tool-card-desc">Sloshing wave height and minimum required freeboard.</div>
+            <a href="freeboard-calculator.html" class="tool-card-cta">Open →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="page-content" id="profilePage">
 
 <!-- HIDDEN FILE INPUTS -->
 
@@ -6567,11 +6767,90 @@ function loadDashboard() {
     renderPerms();
   }
 
-  // Reset to profile page
-  showPage('profilePage', document.querySelector('.nav-btn'));
+  // Land on the home page (not profile)
+  showPage('homePage', document.querySelector('.nav-btn'));
   // Init rich profile
   if (typeof initProfile === 'function') setTimeout(initProfile, 50);
+  // Populate the "Your Tools" recent/most-used strip
+  loadUsageStrip(u.uid);
 
+}
+
+// ─── HOME PAGE: RECENT / MOST USED TOOLS ─────────────────────
+// Queried directly from each tool's own xCalcs collection (populated when a
+// user clicks "Calculate & Save") rather than a separate pageview tracker -
+// no new writes needed anywhere else in the app. Deliberately queries with
+// only the `uid` equality filter (no orderBy) to avoid requiring a Firestore
+// composite index per collection - sorts client-side instead.
+const HOME_TOOLS = [
+  { col: 'rimSealSurveys',           file: 'rim-seal-survey.html',                  name: 'Rim Seal Survey',        icon: '🎯' },
+  { col: 'dikeCalcs',                file: 'dike-bund-calculator.html',             name: 'Dike Capacity',          icon: '🧱' },
+  { col: 'spacingCalcs',             file: 'spacing-calculator.html',               name: 'Tank Spacing',           icon: '📏' },
+  { col: 'fireWaterCalcs',           file: 'firewater-calculator.html',             name: 'Fire Water Demand',      icon: '🚒' },
+  { col: 'ventingCalcs',             file: 'venting-calculator.html',               name: 'Tank Venting',           icon: '💨' },
+  { col: 'settlementCalcs',          file: 'settlement-calculator.html',            name: 'Tank Settlement',        icon: '📐' },
+  { col: 'shellThicknessCalcs',      file: 'shell-thickness-calculator.html',       name: 'Shell Thickness',        icon: '🔩' },
+  { col: 'inspectionIntervalCalcs',  file: 'inspection-interval-calculator.html',   name: 'Inspection Interval',    icon: '🗓️' },
+  { col: 'brittleFractureCalcs',     file: 'brittle-fracture-calculator.html',      name: 'Brittle Fracture',       icon: '🧨' },
+  { col: 'strappingTableCalcs',      file: 'strapping-table-calculator.html',       name: 'Capacity Table',         icon: '📊' },
+  { col: 'windGirderCalcs',          file: 'wind-girder-calculator.html',           name: 'Wind Girder',            icon: '💨' },
+  { col: 'roofVentCalcs',            file: 'roof-vent-calculator.html',             name: 'Roof Vapor Venting',     icon: '🌫️' },
+  { col: 'seismicCalcs',             file: 'seismic-calculator.html',               name: 'Seismic Design',         icon: '🌋' },
+  { col: 'freeboardCalcs',           file: 'freeboard-calculator.html',             name: 'Seismic Freeboard',      icon: '🌊' },
+  { col: 'shellDesignCalcs',         file: 'shell-design-calculator.html',          name: 'Shell Design',           icon: '🔩' },
+  { col: 'roofDesignCalcs',          file: 'roof-design-calculator.html',           name: 'Roof Design',            icon: '🏠' },
+  { col: 'nozzleReinforcementCalcs', file: 'nozzle-reinforcement-calculator.html',  name: 'Nozzle Reinforcement',   icon: '🔧' },
+];
+
+async function loadUsageStrip(uid) {
+  const rowEl = document.getElementById('usageRow');
+  if (!rowEl) return;
+  try {
+    const token = await window.fb.auth.currentUser.getIdToken();
+    const results = await Promise.all(HOME_TOOLS.map(async (t) => {
+      try {
+        const body = {
+          structuredQuery: {
+            from: [{ collectionId: t.col }],
+            where: { fieldFilter: { field: { fieldPath: 'uid' }, op: 'EQUAL', value: { stringValue: uid } } },
+            limit: 20
+          }
+        };
+        const res = await fetch(`${window.fb._restBase}:runQuery`, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        if (!res.ok) return { ...t, count: 0, lastUsed: null };
+        const rows = await res.json();
+        const docs = (rows || []).filter(r => r.document).map(r => window.fb._decodeFields(r.document.fields));
+        const count = docs.length;
+        const lastUsed = docs.reduce((max, d) => {
+          const t2 = d.createdAt ? Date.parse(d.createdAt) : 0;
+          return t2 > max ? t2 : max;
+        }, 0);
+        return { ...t, count, lastUsed: lastUsed || null };
+      } catch (e) {
+        return { ...t, count: 0, lastUsed: null };
+      }
+    }));
+
+    const used = results.filter(r => r.count > 0);
+    if (used.length === 0) {
+      rowEl.innerHTML = '<span class="usage-empty">Tools you use will show up here once you save a calculation.</span>';
+      return;
+    }
+
+    const recent = [...used].sort((a, b) => (b.lastUsed || 0) - (a.lastUsed || 0)).slice(0, 4);
+    const mostUsedCol = used.reduce((best, r) => (r.count > (best ? best.count : 0) ? r : best), null);
+
+    rowEl.innerHTML = recent.map(t => {
+      const isMostUsed = mostUsedCol && t.col === mostUsedCol.col && mostUsedCol.count > 1;
+      return `<a href="${t.file}" class="usage-chip"><span class="uc-icon">${t.icon}</span>${t.name}${isMostUsed ? '<span class="uc-badge">Most used</span>' : ''}</a>`;
+    }).join('');
+  } catch (e) {
+    rowEl.innerHTML = '<span class="usage-empty">Tools you use will show up here once you save a calculation.</span>';
+  }
 }
 
 function saveProfile() {
