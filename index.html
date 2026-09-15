@@ -524,34 +524,34 @@ body::after {
   background: linear-gradient(135deg, rgba(201,168,76,0.14), rgba(201,168,76,0.03));
   border: 1px solid rgba(201,168,76,0.35);
   border-radius: var(--radius);
-  padding: 36px 40px;
-  margin-bottom: 28px;
-  display: flex; align-items: center; gap: 28px; flex-wrap: wrap;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
   position: relative; overflow: hidden;
 }
 .hero-card::before {
-  content: ''; position: absolute; top: -40%; right: -10%; width: 320px; height: 320px;
+  content: ''; position: absolute; top: -40%; right: -10%; width: 220px; height: 220px;
   background: radial-gradient(circle, rgba(201,168,76,0.18), transparent 70%);
   pointer-events: none;
 }
 .hero-icon {
-  font-size: 3.2rem; flex-shrink: 0;
-  width: 84px; height: 84px; border-radius: 20px;
+  font-size: 1.7rem; flex-shrink: 0;
+  width: 48px; height: 48px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  box-shadow: 0 10px 30px rgba(201,168,76,0.3);
+  box-shadow: 0 6px 18px rgba(201,168,76,0.3);
 }
-.hero-body { flex: 1; min-width: 260px; }
+.hero-body { flex: 1; min-width: 220px; }
 .hero-eyebrow {
-  font-family: var(--body); font-size: 0.72rem; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; color: var(--gold-light); margin-bottom: 6px;
+  font-family: var(--body); font-size: 0.66rem; font-weight: 700; letter-spacing: 1.3px;
+  text-transform: uppercase; color: var(--gold-light); margin-bottom: 3px;
 }
 .hero-title {
-  font-family: var(--display); font-weight: 800; font-size: 1.9rem; color: var(--text-bright);
-  margin-bottom: 8px; letter-spacing: 0.3px;
+  font-family: var(--display); font-weight: 800; font-size: 1.25rem; color: var(--text-bright);
+  margin-bottom: 5px; letter-spacing: 0.2px;
 }
-.hero-desc { color: var(--text); font-size: 0.95rem; line-height: 1.6; max-width: 640px; margin-bottom: 18px; }
-.hero-cta { flex-shrink: 0; }
+.hero-desc { color: var(--text-dim); font-size: 0.82rem; line-height: 1.5; max-width: 600px; margin-bottom: 12px; }
+.hero-cta { flex-shrink: 0; padding: 8px 18px; font-size: 0.82rem; }
 
 .usage-strip { margin-bottom: 32px; }
 .usage-strip-title {
@@ -6086,7 +6086,7 @@ function closeAdminMobileGate() {
   document.body.style.overflow = '';
   closeKebabMenu();
   showView('dashView');
-  if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+  if (typeof showPage === 'function') { try { showPage('homePage'); } catch(e){} }
 }
 
 // If the gate is showing and the viewport grows to desktop size, upgrade to the
@@ -6123,7 +6123,7 @@ function closeAdminOverlay() {
   closeKebabMenu();                    // don't leave a kebab hanging open
   closeAdminSidebar();                 // don't leave the drawer open underneath
   showView('dashView');
-  if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+  if (typeof showPage === 'function') { try { showPage('homePage'); } catch(e){} }
 }
 
 function openAdminOverlay() {
@@ -6514,8 +6514,8 @@ function declineDisclaimer() {
 }
 
 // The actual routing, performed only once the disclaimer is satisfied.
-// The CALCULATOR is the portal/home for every role. index.html hosts the
-// profile + admin panel, which are destinations you navigate TO from there.
+// index.html's home page (all tools, hero calculator) is the portal/home for
+// every role. Profile and Admin Panel are destinations you navigate TO from there.
 function proceedAfterDisclaimer(user) {
   const wasFreshLogin = _routingAfterLogin;   // true only when they just signed in
   _routingAfterLogin = false;
@@ -6524,28 +6524,26 @@ function proceedAfterDisclaimer(user) {
 
   const isAdmin = (user.role === 'super_admin' || user.role === 'admin');
 
-  // A fresh sign-in always lands on the calculator — the main portal.
-  if (wasFreshLogin && !_cameFromCalculator()) {
-    window.location.href = 'floating-roof-tank-calculator.html';
-    return;
-  }
-
-  // Otherwise they arrived here deliberately (Profile / Admin Panel / reload).
   if (isAdmin) {
     startUsersWatcher();
     loadReportsREST();
   }
-  loadDashboard();
+  loadDashboard();   // lands on homePage by default and loads the usage strip
   showView('dashView');
 
-  // ?admin=1 → open the Admin Panel; anything else → the profile page.
+  // ?admin=1 → open the Admin Panel. ?portal=1 → the profile page (this is
+  // what every calculator's "Profile" link points at). Anything else
+  // (including a fresh sign-in) → stay on the home page loadDashboard() just set.
   const wantsAdmin = window.location.search.indexOf('admin=1') !== -1;
   if (wantsAdmin && user.role === 'super_admin' && typeof openAdminOverlay === 'function') {
     try { openAdminOverlay(); } catch(e){}
     return;
   }
-  if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
-  if (typeof initProfile === 'function') { try { initProfile(); } catch(e){} }
+  const wantsProfile = window.location.search.indexOf('portal=1') !== -1;
+  if (wantsProfile) {
+    if (typeof showPage === 'function') { try { showPage('profilePage'); } catch(e){} }
+    if (typeof initProfile === 'function') { try { initProfile(); } catch(e){} }
+  }
 }
 
 // Detect a deliberate arrival at index.html (Profile / Admin Panel / Back),
