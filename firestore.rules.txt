@@ -591,6 +591,64 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /overfillLevelsCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyOverfill() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyOverfill())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /waterSprayCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyWaterSpray() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyWaterSpray())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
     match /rimSealSurveys/{id} {
 
       // Colleagues at the same company need to see each other's surveys on the
