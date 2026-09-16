@@ -649,6 +649,189 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /lightningProtectionCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`: auto-logged on each calculation, "research" by
+      // default (private), "official" visible to the rest of the company,
+      // admins can always read either way. Only the `downloaded` flag is
+      // mutable after save.
+      function sameCompanyLightning() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyLightning())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /oisd129InspectionCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyOISD129() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyOISD129())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /hydrotestFillingCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyHydrotest() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyHydrotest())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /foamSystemCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`: auto-logged on each calculation, "research"
+      // by default (private), "official" visible to the rest of the
+      // company, admins can always read either way. Only the `downloaded`
+      // flag is mutable after save.
+      function sameCompanyFoam() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyFoam())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /oisd117FireWaterCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyOISD117() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyOISD117())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /nfpa30VentCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyNfpa30Vent() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyNfpa30Vent())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
     match /rimSealSurveys/{id} {
 
       // Colleagues at the same company need to see each other's surveys on the
