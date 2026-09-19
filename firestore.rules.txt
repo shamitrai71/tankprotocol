@@ -1095,6 +1095,440 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    match /eodrCalibrationCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyEODR() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyEODR())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is803ShellCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`: auto-logged on each calculation, "research"
+      // by default (private), "official" visible to the rest of the
+      // company, admins can always read either way. Only the `downloaded`
+      // flag is mutable after save.
+      function sameCompanyIS803() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS803())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is803VentCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyIS803Vent() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS803Vent())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is803RoofCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyIS803Roof() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS803Roof())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is803AltShellCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`: auto-logged on each calculation, "research" by
+      // default (private), "official" visible to the rest of the company,
+      // admins can always read either way. Only the `downloaded` flag is
+      // mutable after save.
+      function sameCompanyIS803Alt() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS803Alt())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is803FloatingRoofCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyIS803Floating() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS803Floating())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is1893SeismicCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`/`is803FloatingRoofCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyIS1893() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS1893())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /is1893Part2Calcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`/`is803FloatingRoofCalcs`/
+      // `is1893SeismicCalcs`: auto-logged on each calculation, "research"
+      // by default (private), "official" visible to the rest of the
+      // company, admins can always read either way. Only the `downloaded`
+      // flag is mutable after save.
+      function sameCompanyIS1893P2() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyIS1893P2())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /en14015AnchorageCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`/`is803FloatingRoofCalcs`/
+      // `is1893SeismicCalcs`/`is1893Part2Calcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyEN14015() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyEN14015())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /en14015NozzleCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`/`is803FloatingRoofCalcs`/
+      // `is1893SeismicCalcs`/`is1893Part2Calcs`/`en14015AnchorageCalcs`:
+      // auto-logged on each calculation, "research" by default (private),
+      // "official" visible to the rest of the company, admins can always
+      // read either way. Only the `downloaded` flag is mutable after save.
+      function sameCompanyEN14015Nozzle() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyEN14015Nozzle())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /en14015ShellCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`/`is803FloatingRoofCalcs`/
+      // `is1893SeismicCalcs`/`is1893Part2Calcs`/`en14015AnchorageCalcs`/
+      // `en14015NozzleCalcs`: auto-logged on each calculation, "research"
+      // by default (private), "official" visible to the rest of the
+      // company, admins can always read either way. Only the `downloaded`
+      // flag is mutable after save.
+      function sameCompanyEN14015Shell() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyEN14015Shell())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
+    match /en14015WindGirderCalcs/{id} {
+      // Same shape as `reports`/`dikeCalcs`/`spacingCalcs`/`fireWaterCalcs`/
+      // `ventingCalcs`/`settlementCalcs`/`shellThicknessCalcs`/
+      // `inspectionIntervalCalcs`/`brittleFractureCalcs`/
+      // `strappingTableCalcs`/`windGirderCalcs`/`roofVentCalcs`/
+      // `seismicCalcs`/`freeboardCalcs`/`shellDesignCalcs`/
+      // `roofDesignCalcs`/`nozzleReinforcementCalcs`/`bottomPlateCalcs`/
+      // `nozzleLoadsCalcs`/`frangibleRoofCalcs`/`overfillLevelsCalcs`/
+      // `waterSprayCalcs`/`lightningProtectionCalcs`/`oisd129InspectionCalcs`/
+      // `hydrotestFillingCalcs`/`foamSystemCalcs`/`oisd117FireWaterCalcs`/
+      // `nfpa30VentCalcs`/`nfpa30SpacingCalcs`/`cafsCalcs`/
+      // `oisd110StaticCalcs`/`fireEquipmentCalcs`/`marineFoamCalcs`/
+      // `ifrBuoyancyCalcs`/`tempRoofSupportCalcs`/`annularPlateCalcs`/
+      // `eodrCalibrationCalcs`/`is803ShellCalcs`/`is803VentCalcs`/
+      // `is803RoofCalcs`/`is803AltShellCalcs`/`is803FloatingRoofCalcs`/
+      // `is1893SeismicCalcs`/`is1893Part2Calcs`/`en14015AnchorageCalcs`/
+      // `en14015NozzleCalcs`/`en14015ShellCalcs`: auto-logged on each
+      // calculation, "research" by default (private), "official" visible
+      // to the rest of the company, admins can always read either way.
+      // Only the `downloaded` flag is mutable after save.
+      function sameCompanyEN14015Wind() {
+        return isSignedIn() &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.company == resource.data.company;
+      }
+
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+      allow read: if isSignedIn() && (
+        resource.data.uid == request.auth.uid ||
+        isAdmin() ||
+        (resource.data.get('recordType','research') == 'official' && sameCompanyEN14015Wind())
+      );
+      allow update: if isSignedIn()
+                    && resource.data.uid == request.auth.uid
+                    && request.resource.data.diff(resource.data)
+                         .affectedKeys().hasOnly(['downloaded']);
+      allow delete: if false;
+    }
+
     match /rimSealSurveys/{id} {
 
       // Colleagues at the same company need to see each other's surveys on the
